@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 from nicegui import app, ui
 
+from pages.original_oib import original_oib
+
+
 # --- Define the Pages ---
 # We define our pages first. The create_menu() function will be
 # called inside each page function to add the shared navigation.
@@ -65,22 +68,22 @@ def page_bible_audio(q: str | None = None):
 '''
 🏛️ The Original Bible Suite
 
-Original Lemma Bible: A clean reading text of the original Hebrew & Greek, with instant pop-up parsing and dictionary (lemma) forms for every word.
+Original Reader’s Bible (ORB): A clean reading text of the original Hebrew & Greek, with instant pop-up parsing and dictionary (lemma) forms for every word.
 
-Original Interlinear Bible: The original Hebrew & Greek text with a word-for-word, in-line English translation directly beneath each word.
+Original Interlinear Bible (OIB): The original Hebrew & Greek text with a word-for-word, in-line English translation directly beneath each word.
 
-Original Parallel Bible: The original Hebrew & Greek text displayed side-by-side with a flowing English translation, aligned by verse.
+Original Parallel Bible (OPB): The original Hebrew & Greek text displayed side-by-side with a flowing English translation, aligned by verse.
 
-Original Discourse Bible: The original Hebrew & Greek text dynamically structured by clause, designed to reveal argument flow and narrative structure.
+Original Discourse Bible (ODB): The original Hebrew & Greek text dynamically structured by clause, designed to reveal argument flow and narrative structure.
 
-Original Linguistic Bible: The original Hebrew & Greek text featuring expert linguistic notes on key grammatical, syntactical, and lexical details.
+Original Linguistic Bible (OLB): The original Hebrew & Greek text featuring expert linguistic notes on key grammatical, syntactical, and lexical details.
 '''
 
-@ui.page('/original/lemma')
+@ui.page('/original/reader')
 def page_original_lemma(q: str | None = None):
     create_menu()
     with ui.column().classes('w-full items-center'):
-        ui.label('Original Lemma Bible').classes('text-2xl mt-4')
+        ui.label("Original Reader's Bible").classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/original/interlinear')
@@ -88,7 +91,8 @@ def page_original_interlinear(q: str | None = None):
     create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Original Interlinear Bible').classes('text-2xl mt-4')
-        ui.label('Enjoy')
+        # example
+        original_oib(q=q)
 
 @ui.page('/original/parallel')
 def page_original_parallel(q: str | None = None):
