@@ -188,6 +188,7 @@ def original_oib(q: str | None = None):
             }
             /* Transliteration Layers (Phonetic & SBL) */
             wsbl, wphono {
+                direction: ltr;
                 display: block;
                 font-size: 0.8rem;
                 color: #7f8c8d;
@@ -195,6 +196,7 @@ def original_oib(q: str | None = None):
             }
             /* Morphology Layer */
             wmorph {
+                direction: ltr;
                 display: block;
                 font-family: monospace;
                 font-size: 0.7rem;
@@ -210,6 +212,7 @@ def original_oib(q: str | None = None):
                 cursor: pointer;
             }
             wsn {
+                direction: ltr;
                 display: block;
                 font-size: 0.7rem;
                 color: #8e44ad;

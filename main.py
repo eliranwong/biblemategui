@@ -29,36 +29,41 @@ def page_home(q: str | None = None):
 # Bible
 
 @ui.page('/bible/chapter')
-def page_bible_chapter(q: str | None = None):
-    create_menu()
+def page_bible_chapter(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Read Bible Chapter(s)').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/compare/chapter')
-def page_compare_chapter(q: str | None = None):
-    create_menu()
+def page_compare_chapter(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Compare Bible Chapter(s)').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/bible/verse')
-def page_bible_verse(q: str | None = None):
-    create_menu()
+def page_bible_verse(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Read Bible Verse(s)').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/compare/verse')
-def page_compare_verse(q: str | None = None):
-    create_menu()
+def page_compare_verse(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Compare Bible Verse(s)').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/bible/audio')
-def page_bible_audio(q: str | None = None):
-    create_menu()
+def page_bible_audio(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Bible Audio').classes('text-2xl mt-4')
         ui.label('Enjoy')
@@ -68,7 +73,7 @@ def page_bible_audio(q: str | None = None):
 '''
 🏛️ The Original Bible Suite
 
-Original Reader’s Bible (ORB): A clean reading text of the original Hebrew & Greek, with instant pop-up parsing and dictionary (lemma) forms for every word.
+Original Reader’s Bible (ORB): The standard text of the original Hebrew & Greek, with instant pop-up parsing and dictionary (lemma) forms for every word.
 
 Original Interlinear Bible (OIB): The original Hebrew & Greek text with a word-for-word, in-line English translation directly beneath each word.
 
@@ -80,37 +85,42 @@ Original Linguistic Bible (OLB): The original Hebrew & Greek text featuring expe
 '''
 
 @ui.page('/original/reader')
-def page_original_lemma(q: str | None = None):
-    create_menu()
+def page_original_reader(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label("Original Reader's Bible").classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/original/interlinear')
-def page_original_interlinear(q: str | None = None):
-    create_menu()
+def page_original_interlinear(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Original Interlinear Bible').classes('text-2xl mt-4')
         # example
         original_oib(q=q)
 
 @ui.page('/original/parallel')
-def page_original_parallel(q: str | None = None):
-    create_menu()
+def page_original_parallel(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Original Parallel Bible').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/original/discourse')
-def page_original_discourse(q: str | None = None):
-    create_menu()
+def page_original_discourse(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Original Discourse Bible').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/original/linguistic')
-def page_original_linguistic(q: str | None = None):
-    create_menu()
+def page_original_linguistic(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Original Linguistic Bible').classes('text-2xl mt-4')
         ui.label('Enjoy')
@@ -118,64 +128,73 @@ def page_original_linguistic(q: str | None = None):
 # Tools
 
 @ui.page('/tool/indexes')
-def page_tool_indexes(q: str | None = None):
-    create_menu()
+def page_tool_indexes(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Resource Indexes').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/tool/translations')
-def page_tool_translations(q: str | None = None):
-    create_menu()
+def page_tool_translations(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-centermorphology'):
         ui.label('Interlinear, Literal & Dynamic Translations').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/tool/discourse')
-def page_tool_discourse(q: str | None = None):
-    create_menu()
+def page_tool_discourse(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Discourse Analysis').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/tool/morphology')
-def page_tool_morphology(q: str | None = None):
-    create_menu()
+def page_tool_morphology(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Morphological Data').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/tool/commentary')
-def page_tool_commentary(q: str | None = None):
-    create_menu()
+def page_tool_commentary(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Bible Commentaries').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/tool/timelines')
-def page_tool_timelines(q: str | None = None):
-    create_menu()
+def page_tool_timelines(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Bible Timelines').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/tool/chronology')
-def page_tool_chronology(q: str | None = None):
-    create_menu()
+def page_tool_chronology(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Bible Chronology').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/tool/xref')
-def page_tool_xref(q: str | None = None):
-    create_menu()
+def page_tool_xref(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Bible Cross-references').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/tool/tske')
-def page_tool_tske(q: str | None = None):
-    create_menu()
+def page_tool_tske(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('The Treasury of Scripture Knowledge (Enhanced)').classes('text-2xl mt-4')
         ui.label('Enjoy')
@@ -183,71 +202,81 @@ def page_tool_tske(q: str | None = None):
 # Search
 
 @ui.page('/search/bible')
-def page_search_bible(q: str | None = None):
-    create_menu()
+def page_search_bible(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Bible').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/search/parallels')
-def page_search_parallels(q: str | None = None):
-    create_menu()
+def page_search_parallels(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Parallels').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/search/promises')
-def page_search_promises(q: str | None = None):
-    create_menu()
+def page_search_promises(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Promises').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/search/topics')
-def page_search_topics(q: str | None = None):
-    create_menu()
+def page_search_topics(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Topics').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/search/names')
-def page_search_names(q: str | None = None):
-    create_menu()
+def page_search_names(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Names').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/search/characters')
-def page_search_characters(q: str | None = None):
-    create_menu()
+def page_search_characters(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Characters').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/search/locations')
-def page_search_locations(q: str | None = None):
-    create_menu()
+def page_search_locations(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Locations').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/search/dictionary')
-def page_search_dictionary(q: str | None = None):
-    create_menu()
+def page_search_dictionary(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Dictionary').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/search/encyclopedia')
-def page_search_encyclopedia(q: str | None = None):
-    create_menu()
+def page_search_encyclopedia(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Encyclopedia').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/search/lexicon')
-def page_search_lexicon(q: str | None = None):
-    create_menu()
+def page_search_lexicon(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Lexicon').classes('text-2xl mt-4')
         ui.label('Enjoy')
@@ -255,22 +284,25 @@ def page_search_lexicon(q: str | None = None):
 # About
 
 @ui.page('/about')
-def page_about(q: str | None = None):
-    create_menu() # Add the shared menu
+def page_about(q: str | None = None, m: bool = True):
+    if m:
+        create_menu() # Add the shared menu
     with ui.column().classes('w-full items-center'):
         ui.label('About Us').classes('text-2xl mt-4')
         ui.label('We are a team that loves Jesus.')
 
 @ui.page('/source')
-def page_source(q: str | None = None):
-    create_menu() # Add the shared menu
+def page_source(q: str | None = None, m: bool = True):
+    if m:
+        create_menu() # Add the shared menu
     with ui.column().classes('w-full items-center'):
         ui.label('Source Code').classes('text-2xl mt-4')
         ui.label('https://github.com/eliranwong/biblemate_web')
 
 @ui.page('/contact')
-def page_contact(q: str | None = None):
-    create_menu() # Add the shared menu
+def page_contact(q: str | None = None, m: bool = True):
+    if m:
+        create_menu() # Add the shared menu
     with ui.column().classes('w-full items-center'):
         ui.label('Contact Page').classes('text-2xl mt-4')
         ui.label('Get in touch with us!')
@@ -278,36 +310,41 @@ def page_contact(q: str | None = None):
 # AI Features
 
 @ui.page('/ai/commentary')
-def page_ai_qna(q: str | None = None):
-    create_menu()
+def page_ai_qna(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('AI Commentary').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/ai/qna')
-def page_ai_qna(q: str | None = None):
-    create_menu()
+def page_ai_qna(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Question & Answer').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/ai/chat')
-def page_ai_chat(q: str | None = None):
-    create_menu()
+def page_ai_chat(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Chat Mode').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/ai/partner')
-def page_ai_partner(q: str | None = None):
-    create_menu()
+def page_ai_partner(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Partner Mode').classes('text-2xl mt-4')
         ui.label('Enjoy')
 
 @ui.page('/ai/agent')
-def page_ai_agent(q: str | None = None):
-    create_menu()
+def page_ai_agent(q: str | None = None, m: bool = True):
+    if m:
+        create_menu()
     with ui.column().classes('w-full items-center'):
         ui.label('Agent Mode').classes('text-2xl mt-4')
         ui.label('Enjoy')
@@ -368,7 +405,7 @@ def create_menu():
                     # Original Bible Suite
                     with ui.button('Original').props('flat color=white'):
                         with ui.menu():
-                            ui.menu_item('Original Lemma Bible', on_click=lambda: ui.navigate.to('/original/lemma'))
+                            ui.menu_item('Original Reader’s Bible', on_click=lambda: ui.navigate.to('/original/reader'))
                             ui.menu_item('Original Interlinear Bible', on_click=lambda: ui.navigate.to('/original/interlinear'))
                             ui.menu_item('Original Parallel Bible', on_click=lambda: ui.navigate.to('/original/parallel'))
                             ui.menu_item('Original Discourse Bible', on_click=lambda: ui.navigate.to('/original/discourse'))
@@ -444,8 +481,8 @@ def create_menu():
 
         # Original Bible Suite
         with ui.expansion('Original', icon='book'):
-            ui.item('Original Lemma Bible', on_click=lambda: (
-                ui.navigate.to('/original/lemma'),
+            ui.item('Original Reader’s Bible', on_click=lambda: (
+                ui.navigate.to('/original/reader'),
                 app.storage.user.update(left_drawer_open=False)
             )).props('clickable')
             ui.item('Original Interlinear Bible', on_click=lambda: (
