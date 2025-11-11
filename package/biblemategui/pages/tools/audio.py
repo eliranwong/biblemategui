@@ -1,6 +1,6 @@
 from nicegui import ui
 import asyncio, os
-from biblemateweb import BIBLEMATEWEB_DATA
+from biblemategui import BIBLEMATEGUI_DATA
 
 # Bible chapter data
 bible_chapter = [
@@ -16,7 +16,7 @@ bb = "CSB"
 b = 19
 c = 23
 
-bible_audio_dir = os.path.join(BIBLEMATEWEB_DATA, "audio", "bibles", bb, "default")
+bible_audio_dir = os.path.join(BIBLEMATEGUI_DATA, "audio", "bibles", bb, "default")
 bible_audio = [os.path.join(bible_audio_dir, "19_23", f"{bb}_{b}_{c}_{verse[0]}.mp3") for verse in bible_chapter]
 
 class BibleAudioPlayer:

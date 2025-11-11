@@ -1,8 +1,8 @@
 from nicegui import ui
-from biblemateweb.css.original import ORIGINAL_CSS
-from biblemateweb.fx.bible import *
-from biblemateweb.fx.original import *
-from biblemateweb.js.sync_scrolling import *
+from biblemategui.css.original import ORIGINAL_CSS
+from biblemategui.fx.bible import *
+from biblemategui.fx.original import *
+from biblemategui.js.sync_scrolling import *
 import re
 
 
@@ -124,7 +124,7 @@ def original_interlinear(b=1, c=1, v=1, area=1, tab1=None, tab2=None, **_):
 
     # Render the HTML inside a styled container
     # REMEMBER: sanitize=False is required to keep your onclick/onmouseover attributes
-    ui.html(f'<div class="bible-text">{content}</div>', sanitize=False).classes(f'w-full pb-[60vh] {(tab1+"_chapter") if area == 1 else (tab2+"_chapter")}')
+    ui.html(f'<div class="bible-text">{content}</div>', sanitize=False).classes(f'w-full pb-[70vh] {(tab1+"_chapter") if area == 1 else (tab2+"_chapter")}')
 
     # After the page is built and ready, run our JavaScript
     if (not area == 1) and tab1 and tab2:

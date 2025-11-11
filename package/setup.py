@@ -2,8 +2,8 @@ from setuptools import setup
 from setuptools.command.install import install
 import os, shutil, platform, sys
 
-version = "0.0.11"
-with open(os.path.join("biblemateweb", "version.txt"), "w", encoding="utf-8") as fileObj:
+version = "0.0.12"
+with open(os.path.join("biblemategui", "version.txt"), "w", encoding="utf-8") as fileObj:
     fileObj.write(version)
 
 # package name
@@ -74,9 +74,9 @@ setup(
     keywords="mcp agent biblemate ai anthropic azure chatgpt cohere deepseek genai github googleai groq llamacpp mistral ollama openai vertexai xai",
     url="https://biblemate.ai",
     project_urls={
-        "Source": "https://github.com/eliranwong/biblemateweb",
-        "Tracker": "https://github.com/eliranwong/biblemateweb/issues",
-        "Documentation": "https://github.com/eliranwong/biblemateweb/wiki",
+        "Source": "https://github.com/eliranwong/biblemategui",
+        "Tracker": "https://github.com/eliranwong/biblemategui/issues",
+        "Documentation": "https://github.com/eliranwong/biblemategui/wiki",
         "Funding": "https://www.paypal.me/MarvelBible",
     },
     classifiers=[
