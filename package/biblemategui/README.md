@@ -10,6 +10,16 @@ and
 
 https://github.com/eliranwong/UniqueBible
 
+## Recent Updates
+
+[Cross-Highlighting & Synchronized Scrolling](https://youtu.be/TDyT1ioesmY)
+
+[![Watch the video](https://img.youtube.com/vi/TDyT1ioesmY/maxresdefault.jpg)](https://youtu.be/TDyT1ioesmY)
+
+[UI Overview](https://youtu.be/UL8b1O97560)
+
+[![Watch the video](https://img.youtube.com/vi/UL8b1O97560/maxresdefault.jpg)](https://youtu.be/UL8b1O97560)
+
 # Supported Platforms
 
 1. Web Mode to run on popular web browsers
@@ -30,7 +40,7 @@ Open:
 
 http://localhost:33355
 
-## Coutomization
+## Customization
 
 Server Side:
 
@@ -44,17 +54,9 @@ http://localhost:33355/settings
 
 A Storage Secret Key is necessary for deployment.
 
-You generate a random key by running `openssl rand -hex 32` or `openssl rand -base64 32`
+You may generate a random key by running `openssl rand -hex 32` or `openssl rand -base64 32`
 
-## Recent Updates
-
-[Cross-Highlighting & Synchronized Scrolling](https://youtu.be/TDyT1ioesmY)
-
-[![Watch the video](https://img.youtube.com/vi/TDyT1ioesmY/maxresdefault.jpg)](https://youtu.be/TDyT1ioesmY)
-
-[UI Overview](https://youtu.be/UL8b1O97560)
-
-[![Watch the video](https://img.youtube.com/vi/UL8b1O97560/maxresdefault.jpg)](https://youtu.be/UL8b1O97560)
+Save it as the value of `config.storage_secret` in ~/biblemate/biblemategui.config, then restart `biblemategui`.
 
 ## Use Existing UniqueBible App Data
 
@@ -79,3 +81,20 @@ ln -s ~/UniqueBible/marvelData/bibles/MAB.bible OLB.bible
 ## Server Setup
 
 Please read https://nicegui.io/documentation/section_configuration_deployment#server_hosting
+
+## Supported Parameters with URL
+
+
+* t: str | None = None, # Token for using custom data: allow users to pass a custom token, which won't be stored, via a parameter when using public devices. For personal devices, enable persistent settings using `custom_token`.
+* k: bool | None = True, # keep valid specified parameters in history
+* m: bool | None = True, # display menu
+* l: int | None = None, # layout; either: 1 (bible area only) or 2 (bible & tool areas) or 3 (tool area only)
+* bbt: str | None = None, # bible bible text
+* bb: int | None = None, # bible book
+* bc: int | None = None, # bible chapter
+* bv: int | None = None, # bible verse
+* tbt: str | None = None, # tool bible text
+* tb: int | None = None, # tool book
+* tc: int | None = None, # tool chapter
+* tv: int | None = None, # tool verse
+* tool: str | None = None, # supported options: bible, ...

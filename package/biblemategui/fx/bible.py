@@ -27,7 +27,10 @@ def regexp(expr, item, case_sensitive=False):
 
 def getBibleVersionList() -> List[str]:
     """Returns a list of available Bible versions"""
-    return sorted(["ORB", "OIB", "OPB", "ODB", "OLB"]+list(config.bibles.keys())+list(config.bibles_custom.keys()))
+    bibleVersionList = ["ORB", "OIB", "OPB", "ODB", "OLB"]+list(config.bibles.keys())
+    if app.storage.client["custom"]:
+        bibleVersionList += list(config.bibles_custom.keys())
+    return sorted(bibleVersionList)
 
 def getBiblePath(bible) -> str:
     if bible in ["ORB", "OIB", "OPB", "ODB", "OLB"]:
@@ -80,40 +83,6 @@ def getBibleVerseList(db, b, c) -> list:
         cursor.execute(query, (b, c))
         verseList = sorted([verse[0] for verse in cursor.fetchall()])
     return verseList
-
-def change_area_1_bible_chapter(version, book=1, chapter=1):
-    app.storage.user['bible_book_number']= book
-    app.storage.user['bible_chapter_number']= chapter
-    app.storage.user['bible_verse_number']= 1
-    if version == "ORB":
-        config.load_area_1_content(config.original_reader, version)
-    elif version == "OIB":
-        config.load_area_1_content(config.original_interlinear, version)
-    elif version == "OPB":
-        config.load_area_1_content(config.original_parallel, version)
-    elif version == "ODB":
-        config.load_area_1_content(config.original_discourse, version)
-    elif version == "OLB":
-        config.load_area_1_content(config.original_linguistic, version)
-    else:
-        config.load_area_1_content(config.bible_translation, version)
-
-def change_area_2_bible_chapter(version, book=1, chapter=1):
-    app.storage.user['bible_book_number']= book
-    app.storage.user['bible_chapter_number']= chapter
-    app.storage.user['bible_verse_number']= 1
-    if version == "ORB":
-        config.load_area_2_content(config.original_reader, version)
-    elif version == "OIB":
-        config.load_area_2_content(config.original_interlinear, version)
-    elif version == "OPB":
-        config.load_area_2_content(config.original_parallel, version)
-    elif version == "ODB":
-        config.load_area_2_content(config.original_discourse, version)
-    elif version == "OLB":
-        config.load_area_2_content(config.original_linguistic, version)
-    else:
-        config.load_area_2_content(config.bible_translation, version)
 
 def change_bible_chapter_verse(_, book, chapter, verse):
     ui.run_javascript(f'scrollToVerse("v{book}.{chapter}.{verse}")')

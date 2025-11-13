@@ -22,6 +22,7 @@ def write_user_config():
     """Writes the current configuration to the user's config file."""
     configurations = f"""config.hot_reload="{config.hot_reload}
 config.avatar="{config.avatar}"
+config.custom_token="{config.custom_token}"
 config.storage_secret="{config.storage_secret}"
 config.port={config.port}"""
     writeTextFile(CONFIG_FILE_BACKUP, configurations)
@@ -29,6 +30,7 @@ config.port={config.port}"""
 # restore config backup after upgrade
 default_config = '''config.hot_reload=False
 config.avatar=""
+config.custom_token=""
 config.storage_secret="REPLACE_ME_WITH_A_REAL_SECRET"
 config.port=33355'''
 
@@ -67,5 +69,24 @@ config.original_linguistic = original_linguistic
 config.bible_translation = bible_translation
 
 # general settings; stored on sever side
-config.bibles = {os.path.basename(i)[:-6]: i for i in glob.glob(os.path.join(BIBLEMATEGUI_DATA, "bibles", "*.bible"))}
-config.bibles_custom = {os.path.basename(i)[:-6]: i for i in glob.glob(os.path.join(BIBLEMATEGUI_DATA_CUSTOM, "bibles", "*.bible"))}
+config.bibles = dict(sorted({os.path.basename(i)[:-6]: i for i in glob.glob(os.path.join(BIBLEMATEGUI_DATA, "bibles", "*.bible"))}.items()))
+config.bibles_custom = dict(sorted({os.path.basename(i)[:-6]: i for i in glob.glob(os.path.join(BIBLEMATEGUI_DATA_CUSTOM, "bibles", "*.bible"))}.items()))
+config.available_tools = ["audio", "chronology"]
+
+# User Default Settings
+
+USER_DEFAULT_SETTINGS = {
+    'primary_color': '#2196F3', # A nice 'blue' hex code
+    'avatar': '',
+    'custom_token': '',
+    'default_bible': 'NET',
+    'default_commentary': 'CBSC',
+    'default_encyclopedia': 'ISBE',
+    'default_lexicon': 'Morphology',
+    'ai_backend': 'googleai',
+    'api_endpoint': '',
+    'api_key': '',
+    'language': 'English',
+    'dark_mode': False,
+    'fullscreen': False,
+}
