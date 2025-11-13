@@ -44,7 +44,9 @@ http://localhost:33355/settings
 
 A Storage Secret Key is necessary for deployment.
 
-You generate a random key by running `openssl rand -hex 32` or `openssl rand -base64 32`
+You may generate a random key by running `openssl rand -hex 32` or `openssl rand -base64 32`
+
+Save it as the value of `config.storage_secret` in ~/biblemate/biblemategui.config, then restart `biblemategui`.
 
 ## Recent Updates
 
