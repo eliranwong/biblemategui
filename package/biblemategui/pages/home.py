@@ -87,8 +87,6 @@ class BibleMateGUI:
 
     def create_home_layout(self):
         """Create two scrollable areas with responsive layout"""
-
-        ui.query('.nicegui-content').classes('w-full h-full !p-0 !b-0 !m-0 !gap-0')
         
         # listen to the resize event
         ui.on('resize', self.check_breakpoint)
@@ -98,27 +96,27 @@ class BibleMateGUI:
         ui.add_head_html(ORIGINAL_JS) # for interactive highlighting
 
         # Create self.splitter
-        self.splitter = ui.splitter(value=100, horizontal=self.is_portrait).classes('w-full').style('height: calc(100vh - 64px)')
+        self.splitter = ui.splitter(value=100, horizontal=self.is_portrait).classes('w-full').style('height: 100vh')
         
         # Area 1
         with self.splitter.before:
             previous_tabs1 = sorted([i for i in app.storage.user.keys() if i.startswith("tab1_")])
             default_number_of_tabs1 = 3
 
-            self.area1_wrapper = ui.column().classes('w-full h-full')
+            self.area1_wrapper = ui.column().classes('w-full h-full !gap-0')
             with self.area1_wrapper:
                 self.area1_tabs = ui.tabs().classes('w-full')
                 with self.area1_tabs:
                     if previous_tabs1:
                         for i in range(1, len(previous_tabs1)+1):
                             tab_id = f'tab1_{i}'
-                            ui.tab(f'tab1_{i}', label=app.storage.user.get(previous_tabs1[i-1]).get("label", f'Bible {i}'))
+                            ui.tab(f'tab1_{i}', label=app.storage.user.get(previous_tabs1[i-1]).get("label", f'Bible {i}')).classes('text-secondary')
                             self.area1_tab_counter += 1
                         self.area1_tab_loaded = self.area1_tab_counter
                     if len(previous_tabs1) < default_number_of_tabs1:
                         for i in range(len(previous_tabs1)+1, default_number_of_tabs1+1):
                             tab_id = f'tab1_{i}'
-                            ui.tab(tab_id, label=f'Bible {i}')
+                            ui.tab(tab_id, label=f'Bible {i}').classes('text-secondary')
                             self.area1_tab_counter += 1
                 
                 self.area1_tab_panels_container = ui.tab_panels(self.area1_tabs, value='tab1_1').classes('w-full h-full')
@@ -155,20 +153,20 @@ class BibleMateGUI:
             previous_tabs2 = sorted([i for i in app.storage.user.keys() if i.startswith("tab2_")])
             default_number_of_tabs2 = 5
 
-            self.area2_wrapper = ui.column().classes('w-full h-full')
+            self.area2_wrapper = ui.column().classes('w-full h-full !gap-0')
             with self.area2_wrapper:
                 self.area2_tabs = ui.tabs().classes('w-full')
                 with self.area2_tabs:
                     if previous_tabs2:
                         for i in range(1, len(previous_tabs2)+1):
                             tab_id = f'tab2_{i}'
-                            ui.tab(f'tab2_{i}', label=app.storage.user.get(previous_tabs2[i-1]).get("label", f'Tool {i}'))
+                            ui.tab(f'tab2_{i}', label=app.storage.user.get(previous_tabs2[i-1]).get("label", f'Tool {i}')).classes('text-secondary')
                             self.area2_tab_counter += 1
                         self.area2_tab_loaded = self.area2_tab_counter
                     if len(previous_tabs2) < default_number_of_tabs2:
                         for i in range(len(previous_tabs2)+1, default_number_of_tabs2+1):
                             tab_id = f'tab2_{i}'
-                            ui.tab(tab_id, label=f'Tool {i}')
+                            ui.tab(tab_id, label=f'Tool {i}').classes('text-secondary')
                             self.area2_tab_counter += 1
                 
                 self.area2_tab_panels_container = ui.tab_panels(self.area2_tabs, value='tab2_1').classes('w-full h-full')
@@ -368,7 +366,7 @@ class BibleMateGUI:
         new_tab_name = f'tab1_{self.area1_tab_counter}'
         # Add new tab
         with self.area1_tabs:
-            ui.tab(new_tab_name, label=f'Bible {self.area1_tab_counter}')
+            ui.tab(new_tab_name, label=f'Bible {self.area1_tab_counter}').classes('text-secondary')
         # Add new tab panel
         with self.area1_tab_panels_container:
             with ui.tab_panel(new_tab_name).classes('w-full h-full !p-0 !b-0 !m-0 !gap-0'):
@@ -412,7 +410,7 @@ class BibleMateGUI:
         new_tab_name = f'tab2_{self.area2_tab_counter}'
         # Add new tab
         with self.area2_tabs:
-            ui.tab(new_tab_name, label=f'Tool {self.area2_tab_counter}')
+            ui.tab(new_tab_name, label=f'Tool {self.area2_tab_counter}').classes('text-secondary')
         # Add new tab panel
         with self.area2_tab_panels_container:
             with ui.tab_panel(new_tab_name).classes('w-full h-full !p-0 !b-0 !m-0 !gap-0'):
@@ -456,7 +454,7 @@ class BibleMateGUI:
     def create_menu(self):
         """Create the responsive header and navigation drawer."""
         # --- Header ---
-        with ui.header(elevated=True).classes('bg-primary text-white'):
+        with ui.header(elevated=True).classes('bg-primary text-white p-0'):
             # We use 'justify-between' to push the left and right groups apart
             with ui.row().classes('w-full items-center justify-between no-wrap'):
                 
@@ -496,43 +494,43 @@ class BibleMateGUI:
                     
                     #with ui.row().classes('gt-xs items-center overflow-x-auto overflow-y-hidden no-wrap'):                            
                     # Bibles
-                    with ui.button(icon='book').props('flat color=white round').tooltip('Bibles'):
+                    with ui.button(icon='local_library').props('flat color=white round').tooltip('Bibles'):
                         with ui.menu():
                             ui.menu_item('Add Bible Tab', on_click=self.add_tab_area1)
                             ui.menu_item('Remove Bible Tab', on_click=self.remove_tab_area1)
                             ui.separator()
-                            ui.menu_item('Original Reader’s Bible', on_click=lambda: self.load_area_1_content(title='ORB'))
-                            ui.menu_item('Original Interlinear Bible', on_click=lambda: self.load_area_1_content(title='OIB'))
-                            ui.menu_item('Original Parallel Bible', on_click=lambda: self.load_area_1_content(title='OPB'))
-                            ui.menu_item('Original Discourse Bible', on_click=lambda: self.load_area_1_content(title='ODB'))
-                            ui.menu_item('Original Linguistic Bible', on_click=lambda: self.load_area_1_content(title='OLB'))
+                            ui.menu_item('Original Reader’s Bible', on_click=lambda: self.load_area_1_content(title='ORB')).tooltip('ORB')
+                            ui.menu_item('Original Interlinear Bible', on_click=lambda: self.load_area_1_content(title='OIB')).tooltip('OIB')
+                            ui.menu_item('Original Parallel Bible', on_click=lambda: self.load_area_1_content(title='OPB')).tooltip('OPB')
+                            ui.menu_item('Original Discourse Bible', on_click=lambda: self.load_area_1_content(title='ODB')).tooltip('ODB')
+                            ui.menu_item('Original Linguistic Bible', on_click=lambda: self.load_area_1_content(title='OLB')).tooltip('OLB')
                             ui.separator()
                             if app.storage.client["custom"] and config.bibles_custom:
                                 for i in config.bibles_custom:
-                                    ui.menu_item(i, on_click=partial(self.load_area_1_content, title=i))
+                                    ui.menu_item(i, on_click=partial(self.load_area_1_content, title=i)).tooltip(config.bibles_custom[i][0])
                                 ui.separator()
                             for i in config.bibles:
                                 if (app.storage.client["custom"] and not i in config.bibles_custom) or not app.storage.client["custom"]:
-                                    ui.menu_item(i, on_click=partial(self.load_area_1_content, title=i))
+                                    ui.menu_item(i, on_click=partial(self.load_area_1_content, title=i)).tooltip(config.bibles[i][0])
 
-                    with ui.button(icon='menu_book').props('flat color=white round').tooltip('Parallel Bibles'):
+                    with ui.button(icon='devices_fold').props('flat color=white round').tooltip('Parallel Bibles'):
                         with ui.menu():
                             ui.menu_item('Add Parallel Tab', on_click=self.add_tab_area2)
                             ui.menu_item('Remove Parallel Tab', on_click=self.remove_tab_area2)
                             ui.separator()
-                            ui.menu_item('Original Reader’s Bible', on_click=lambda: self.load_area_2_content(title='ORB'))
-                            ui.menu_item('Original Interlinear Bible', on_click=lambda: self.load_area_2_content(title='OIB'))
-                            ui.menu_item('Original Parallel Bible', on_click=lambda: self.load_area_2_content(title='OPB'))
-                            ui.menu_item('Original Discourse Bible', on_click=lambda: self.load_area_2_content(title='ODB'))
-                            ui.menu_item('Original Linguistic Bible', on_click=lambda: self.load_area_2_content(title='OLB'))
+                            ui.menu_item('Original Reader’s Bible', on_click=lambda: self.load_area_2_content(title='ORB')).tooltip('ORB')
+                            ui.menu_item('Original Interlinear Bible', on_click=lambda: self.load_area_2_content(title='OIB')).tooltip('OIB')
+                            ui.menu_item('Original Parallel Bible', on_click=lambda: self.load_area_2_content(title='OPB')).tooltip('OPB')
+                            ui.menu_item('Original Discourse Bible', on_click=lambda: self.load_area_2_content(title='ODB')).tooltip('ODB')
+                            ui.menu_item('Original Linguistic Bible', on_click=lambda: self.load_area_2_content(title='OLB')).tooltip('OLB')
                             ui.separator()
                             if app.storage.client["custom"] and config.bibles_custom:
                                 for i in config.bibles_custom:
-                                    ui.menu_item(i, on_click=partial(self.load_area_2_content, title=i))
+                                    ui.menu_item(i, on_click=partial(self.load_area_2_content, title=i)).tooltip(config.bibles_custom[i][0])
                                 ui.separator()
                             for i in config.bibles:
                                 if (app.storage.client["custom"] and not i in config.bibles_custom) or not app.storage.client["custom"]:
-                                    ui.menu_item(i, on_click=partial(self.load_area_2_content, title=i))
+                                    ui.menu_item(i, on_click=partial(self.load_area_2_content, title=i)).tooltip(config.bibles[i][0])
                             
 
                     # Bible Tools
@@ -572,7 +570,7 @@ class BibleMateGUI:
                             ui.menu_item('Encyclopedia', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             ui.menu_item('Lexicon', on_click=lambda: self.load_area_2_content(self.work_in_progress))
 
-                    with ui.button(icon='bolt').props('flat color=white round').tooltip('AI'):
+                    with ui.button(icon='auto_awesome').props('flat color=white round').tooltip('AI'):
                         with ui.menu():
                             ui.menu_item('AI Commentary', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             ui.menu_item('AI Q&A', on_click=lambda: self.load_area_2_content(self.work_in_progress))
@@ -585,6 +583,19 @@ class BibleMateGUI:
                             ui.menu_item('Bible Only', on_click=lambda: self.swap_layout(1))
                             ui.menu_item('Tool Only', on_click=lambda: self.swap_layout(3))
                             ui.menu_item('Bible & Tool', on_click=lambda: self.swap_layout(2))
+                            ui.separator()
+                            with ui.menu_item() as dark_mode_menu_item:
+                                dark_mode_label = ui.label("Light Mode" if app.storage.user["dark_mode"] else "Dark Mode").classes('flex items-center')
+                            def toggle_dark_mode_menu_item(text_label: ui.label):
+                                app.storage.user['dark_mode'] = not app.storage.user['dark_mode']
+                                #text_label.set_text("Light Mode" if app.storage.user["dark_mode"] else "Dark Mode")
+                                ui.run_javascript('location.reload()')
+                            dark_mode_menu_item.on('click', lambda: toggle_dark_mode_menu_item(dark_mode_label))
+                            def toggleFullscreen(): # ui.fullscreen().toggle does not work in this case
+                                app.storage.user["fullscreen"] = not app.storage.user["fullscreen"]
+                            with ui.row():
+                                ui.menu_item('Fullscreen', on_click=toggleFullscreen)
+                                ui.switch().bind_value(app.storage.user, 'fullscreen')
                             ui.separator()
                             ui.menu_item('Preferences', on_click=lambda: ui.navigate.to('/settings'))
 
@@ -602,83 +613,85 @@ class BibleMateGUI:
                 self.load_area_2_content(self.work_in_progress),
                 app.storage.user.update(left_drawer_open=False)
             )).props('clickable')
+            ui.switch('Dark Mode').bind_value(app.storage.user, 'dark_mode').on_value_change(lambda: ui.run_javascript('location.reload()'))
+            ui.switch('Fullscreen').bind_value(app.storage.user, 'fullscreen')
 
             # Bibles
-            with ui.expansion('Original', icon='book').props('header-class="text-primary"'):
+            with ui.expansion('Bibles', icon='local_library').props('header-class="text-secondary"'):
                 ui.item('Original Reader’s Bible', on_click=lambda: (
                     self.load_area_1_content(title='ORB'),
                     app.storage.user.update(left_drawer_open=False)
-                )).props('clickable')
+                )).props('clickable').tooltip('ORB')
                 ui.item('Original Interlinear Bible', on_click=lambda: (
                     self.load_area_1_content(title='OIB'),
                     app.storage.user.update(left_drawer_open=False)
-                )).props('clickable')
+                )).props('clickable').tooltip('OIB')
                 ui.item('Original Parallel Bible', on_click=lambda: (
                     self.load_area_1_content(title='OPB'),
                     app.storage.user.update(left_drawer_open=False)
-                )).props('clickable')
+                )).props('clickable').tooltip('OPB')
                 ui.item('Original Discourse Bible', on_click=lambda: (
                     self.load_area_1_content(title='ODB'),
                     app.storage.user.update(left_drawer_open=False)
-                )).props('clickable')
+                )).props('clickable').tooltip('ODB')
                 ui.item('Original Linguistic Bible', on_click=lambda: (
                     self.load_area_1_content(title='OLB'),
                     app.storage.user.update(left_drawer_open=False)
-                )).props('clickable')
+                )).props('clickable').tooltip('OLB')
                 ui.separator()
                 if app.storage.client["custom"] and config.bibles_custom:
                     for i in config.bibles_custom:
                         ui.item(i, on_click=lambda: (
                             self.load_area_1_content(title=i),
                             app.storage.user.update(left_drawer_open=False)
-                        )).props('clickable')
+                        )).props('clickable').tooltip(config.bibles_custom[i][0])
                     ui.separator()
                 for i in config.bibles:
                     if (app.storage.client["custom"] and not i in config.bibles_custom) or not app.storage.client["custom"]:
                         ui.item(i, on_click=lambda: (
                             self.load_area_1_content(title=i),
                             app.storage.user.update(left_drawer_open=False)
-                        )).props('clickable')
+                        )).props('clickable').tooltip(config.bibles[i][0])
 
             # Parallel Bibles
-            with ui.expansion('Original', icon='book').props('header-class="text-primary"'):
+            with ui.expansion('Parallel Bibles', icon='devices_fold').props('header-class="text-secondary"'):
                 ui.item('Original Reader’s Bible', on_click=lambda: (
                     self.load_area_2_content(title='ORB'),
                     app.storage.user.update(left_drawer_open=False)
-                )).props('clickable')
+                )).props('clickable').tooltip('ORB')
                 ui.item('Original Interlinear Bible', on_click=lambda: (
                     self.load_area_2_content(title='OIB'),
                     app.storage.user.update(left_drawer_open=False)
-                )).props('clickable')
+                )).props('clickable').tooltip('OIB')
                 ui.item('Original Parallel Bible', on_click=lambda: (
                     self.load_area_2_content(title='OPB'),
                     app.storage.user.update(left_drawer_open=False)
-                )).props('clickable')
+                )).props('clickable').tooltip('OPB')
                 ui.item('Original Discourse Bible', on_click=lambda: (
                     self.load_area_2_content(title='ODB'),
                     app.storage.user.update(left_drawer_open=False)
-                )).props('clickable')
+                )).props('clickable').tooltip('ODB')
                 ui.item('Original Linguistic Bible', on_click=lambda: (
                     self.load_area_2_content(title='OLB'),
                     app.storage.user.update(left_drawer_open=False)
-                )).props('clickable')
+                )).props('clickable').tooltip('OLB')
                 ui.separator()
                 if app.storage.client["custom"] and config.bibles_custom:
                     for i in config.bibles_custom:
                         ui.item(i, on_click=lambda: (
                             self.load_area_2_content(title=i),
                             app.storage.user.update(left_drawer_open=False)
-                        )).props('clickable')
+                        )).props('clickable').tooltip(config.bibles_custom[i][0])
                     ui.separator()
                 for i in config.bibles:
                     if (app.storage.client["custom"] and not i in config.bibles_custom) or not app.storage.client["custom"]:
                         ui.item(i, on_click=lambda: (
                             self.load_area_2_content(title=i),
                             app.storage.user.update(left_drawer_open=False)
-                        )).props('clickable')
+                        )).props('clickable').tooltip(config.bibles[i][0])
 
             # Bible Tools
-            with ui.expansion('Tools', icon='build').props('header-class="text-primary"'):
+            with ui.expansion('Tools', icon='build').props('header-class="text-secondary"'):
                 ui.item('Bible Verse', on_click=lambda: (
                     self.load_area_2_content(self.work_in_progress),
                     app.storage.user.update(left_drawer_open=False)
@@ -730,7 +743,7 @@ class BibleMateGUI:
                 )).props('clickable')
 
             # Search
-            with ui.expansion('Search', icon='search').props('header-class="text-primary"'):
+            with ui.expansion('Search', icon='search').props('header-class="text-secondary"'):
                 ui.item('Bibles', on_click=lambda: (
                     self.load_area_2_content(self.work_in_progress),
                     app.storage.user.update(left_drawer_open=False)
@@ -773,7 +786,7 @@ class BibleMateGUI:
                 )).props('clickable')
             
             # AI
-            with ui.expansion('AI', icon='bolt').props('header-class="text-primary"'):
+            with ui.expansion('AI', icon='auto_awesome').props('header-class="text-secondary"'):
                 ui.item('AI Commentary', on_click=lambda: (
                     self.load_area_2_content(self.work_in_progress),
                     app.storage.user.update(left_drawer_open=False)
@@ -795,13 +808,23 @@ class BibleMateGUI:
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
 
-            # About Expansion
-            '''with ui.expansion('About Us', icon='info'):
-                ui.item('Our Church', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
+            # Preferences
+            with ui.expansion('Settings', icon='auto_awesome').props('header-class="text-secondary"'):
+                ui.item('Bible Only', on_click=lambda: (
+                    self.swap_layout(1),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
-                ui.item('Contact', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
+                ui.item('Tool Only', on_click=lambda: (
+                    self.swap_layout(2),
                     app.storage.user.update(left_drawer_open=False)
-                )).props('clickable')'''
+                )).props('clickable')
+                ui.item('Bible & Tool', on_click=lambda: (
+                    self.swap_layout(3),
+                    app.storage.user.update(left_drawer_open=False)
+                )).props('clickable')
+                ui.separator()
+                ui.item('Preferences', on_click=lambda: (
+                    ui.navigate.to('/settings'),
+                    app.storage.user.update(left_drawer_open=False)
+                )).props('clickable')
+                ui.separator()

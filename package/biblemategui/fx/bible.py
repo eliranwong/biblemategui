@@ -36,7 +36,7 @@ def getBibleVersionList() -> List[str]:
 def getBiblePath(bible) -> str:
     if bible in ["ORB", "OIB", "OPB", "ODB", "OLB", "BHS5", "OGNT"]:
         bible = "OHGB"
-    return config.bibles_custom[bible] if bible in config.bibles_custom else config.bibles[bible]
+    return config.bibles_custom[bible][-1] if bible in config.bibles_custom else config.bibles[bible][-1]
 
 def getBibleChapter(db, b, c) -> str: # html output
     query = "SELECT Scripture FROM Bible WHERE Book=? AND Chapter=?"
@@ -144,7 +144,7 @@ class BibleSelector:
         self.book_options = [BibleBooks.abbrev["eng"][str(i)][0] for i in getBibleBookList(getBiblePath(self.selected_version)) if str(i) in BibleBooks.abbrev["eng"]]
         self.chapter_options = getBibleChapterList(getBiblePath(self.selected_version), self.selected_book)
         self.verse_options = getBibleVerseList(getBiblePath(self.selected_version), self.selected_book, self.selected_chapter)
-        with ui.row().classes('w-full'):
+        with ui.row().classes('w-full justify-center'):
             # Bible
             self.version_select = ui.select(
                 options=self.version_options,

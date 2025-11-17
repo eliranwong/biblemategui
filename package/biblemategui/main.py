@@ -28,18 +28,23 @@ def page_home(
     Home page that accepts optional parameters.
     Example: /?bb=1&bc=1&bv=1
     """
-
     def set_default_settings():
         """Sets the default settings in app.storage.user if they don't already exist."""
         for key, value in USER_DEFAULT_SETTINGS.items():
             if key not in app.storage.user:
                 app.storage.user[key] = value
-
     # Call this once on startup to populate the default user storage
     set_default_settings()
 
+    # spacing
+    ui.query('.nicegui-content').classes('w-full h-full !p-0 !b-0 !m-0 !gap-0')
+
+    # primary color
+    ui.colors(primary=app.storage.user["primary_colour"], secondary=app.storage.user["secondary_colour"])
+
     # Bind app state to user storage
     ui.dark_mode().bind_value(app.storage.user, 'dark_mode')
+    app.storage.user["fullscreen"] = False
     ui.fullscreen().bind_value(app.storage.user, 'fullscreen')
 
     if d is not None:
@@ -118,49 +123,47 @@ def page_home(
         ... # TODO - decides later
 
 # Settings
-
-"""
-@ui.page('/settings')
-def page_Settings(q: str | None = None, m: bool = True):
-    if m:
-        BibleMateGUI().create_menu()
-    ...
-"""
-
 @ui.page('/settings')
 def page_Settings():
     """The main settings page for the BibleMate AI app."""
-
     def set_default_settings():
         """Sets the default settings in app.storage.user if they don't already exist."""
         for key, value in USER_DEFAULT_SETTINGS.items():
             if key not in app.storage.user:
                 app.storage.user[key] = value
-
     # We can call this again to be safe, especially if new settings are added in updates.
     set_default_settings()
 
+    # primary color
+    ui.colors(primary=app.storage.user["primary_colour"], secondary=app.storage.user["secondary_colour"])
+
     # Bind app state to user storage
     ui.dark_mode().bind_value(app.storage.user, 'dark_mode')
+    app.storage.user["fullscreen"] = False
     ui.fullscreen().bind_value(app.storage.user, 'fullscreen')
 
     with ui.card().classes('w-full max-w-2xl mx-auto p-6 shadow-xl rounded-lg'):
-        ui.label('BibleMate AI Settings').classes('text-3xl font-bold text-gray-800 mb-6')
+        ui.label('BibleMate AI Settings').classes('text-3xl font-bold text-secondary mb-6')
         
         # --- Appearance Section ---
         with ui.expansion('Appearance', icon='palette').classes('w-full rounded-lg'):
             with ui.column().classes('w-full p-4'):
                 ui.color_input(label='Primary Color') \
-                    .bind_value(app.storage.user, 'primary_color') \
-                    .tooltip('Manual hex code or color picker for app theme.')
-                
-                ui.switch('Dark Mode') \
-                    .bind_value(app.storage.user, 'dark_mode') \
-                    .tooltip('Toggle dark mode for the app.')
-
-                ui.switch('Fullscreen') \
-                    .bind_value(app.storage.user, 'fullscreen') \
-                    .tooltip('Toggle fullscreen mode for the app.')
+                    .bind_value(app.storage.user, 'primary_colour') \
+                    .tooltip('Manual hex code or color picker for app theme.') \
+                    .on_value_change(lambda: ui.run_javascript('location.reload()'))
+                ui.color_input(label='Secondary Color') \
+                    .bind_value(app.storage.user, 'secondary_colour') \
+                    .tooltip('Manual hex code or color picker for app theme.') \
+                    .on_value_change(lambda: ui.run_javascript('location.reload()'))
+                with ui.row().classes('w-full'):
+                    ui.label("Dark Mode").classes('flex items-center')
+                    ui.space()
+                    ui.switch().bind_value(app.storage.user, 'dark_mode').tooltip('Toggle dark mode for the app.').on_value_change(lambda: ui.run_javascript('location.reload()'))
+                with ui.row().classes('w-full'):
+                    ui.label("Fullscreen").classes('flex items-center')
+                    ui.space()
+                    ui.switch().bind_value(app.storage.user, 'fullscreen').tooltip('Toggle fullscreen mode for the app.')
 
         # --- User & Custom Data Section ---
         with ui.expansion('User & Custom Data', icon='person').classes('w-full rounded-lg'):

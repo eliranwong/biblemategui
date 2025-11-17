@@ -1,7 +1,7 @@
 from pathlib import Path
 from agentmake import readTextFile, writeTextFile
 from biblemategui import config
-import os, glob
+import os, glob, apsw
 
 BIBLEMATEGUI_APP_DIR = os.path.dirname(os.path.realpath(__file__))
 BIBLEMATEGUI_USER_DIR = os.path.join(os.path.expanduser("~"), "biblemate")
@@ -55,15 +55,35 @@ def load_config():
 load_config()
 
 # bibles resources
+
+def getBibleInfo(db):
+    abb = os.path.basename(db)[:-6]
+    try:
+        with apsw.Connection(db) as connn:
+            query = "SELECT Title FROM Details limit 1"
+            cursor = connn.cursor()
+            cursor.execute(query)
+            info = cursor.fetchone()
+    except:
+        try:
+            with apsw.Connection(db) as connn:
+                query = "SELECT Scripture FROM Verses WHERE Book=? AND Chapter=? AND Verse=? limit 1"
+                cursor = connn.cursor()
+                cursor.execute(query, (0, 0, 0))
+                info = cursor.fetchone()
+        except:
+            return abb
+    return info[0] if info else abb
+
 bibles_dir = os.path.join(BIBLEMATEGUI_DATA, "bibles")
 if os.path.isdir(bibles_dir):
-    config.bibles = dict(sorted({os.path.basename(i)[:-6]: i for i in glob.glob(os.path.join(bibles_dir, "*.bible"))}.items()))
+    config.bibles = dict(sorted({os.path.basename(i)[:-6]: (getBibleInfo(i), i) for i in glob.glob(os.path.join(bibles_dir, "*.bible"))}.items()))
 else:
     Path(bibles_dir).mkdir(parents=True, exist_ok=True)
     config.bibles = {}
 bibles_dir_custom = os.path.join(BIBLEMATEGUI_DATA_CUSTOM, "bibles")
 if os.path.isdir(bibles_dir_custom):
-    config.bibles_custom = dict(sorted({os.path.basename(i)[:-6]: i for i in glob.glob(os.path.join(bibles_dir_custom, "*.bible"))}.items()))
+    config.bibles_custom = dict(sorted({os.path.basename(i)[:-6]: (getBibleInfo(i), i) for i in glob.glob(os.path.join(bibles_dir_custom, "*.bible"))}.items()))
 else:
     Path(bibles_dir_custom).mkdir(parents=True, exist_ok=True)
     config.bibles_custom = {}
@@ -86,7 +106,8 @@ config.available_tools = ["audio", "chronology"]
 # User Default Settings
 
 USER_DEFAULT_SETTINGS = {
-    'primary_color': '#2196F3', # A nice 'blue' hex code
+    'primary_colour': '#2dbda5',
+    'secondary_colour': '#7af0d2',
     'avatar': '',
     'custom_token': '',
     'default_bible': 'NET',
@@ -97,8 +118,7 @@ USER_DEFAULT_SETTINGS = {
     'api_endpoint': '',
     'api_key': '',
     'language': 'English',
-    'dark_mode': False,
-    'fullscreen': False,
+    'dark_mode': True,
     'left_drawer_open': False,
     'sync': True, # TODO - add disable sync option later
 }
