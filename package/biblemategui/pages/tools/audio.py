@@ -41,7 +41,7 @@ class BibleAudioPlayer:
                 with ui.list().props('bordered separator').classes('w-full'):
                     for *_, verse_num, verse_text in self.text_list:
                         verse_text = re.sub('<[^<>]*?>', '', verse_text).strip()
-                        with ui.item().classes(f'w-full hover:bg-gray-{500 if app.storage.client["dark_mode"] else 50}'):
+                        with ui.item().classes(f'w-full hover:bg-gray-{500 if app.storage.user["dark_mode"] else 50}'):
                             with ui.item_section().props('avatar'):
                                 # Audio control button
                                 btn = ui.button(icon='volume_off', 

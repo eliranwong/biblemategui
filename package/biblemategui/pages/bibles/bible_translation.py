@@ -17,6 +17,7 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
 
     # Fix known issues
     content = content.replace("<br<", "<br><")
+    content = content.replace("<heb> </heb>", "<heb>&nbsp;</heb>")
 
     # convert verse link, like '<vid id="v19.117.1" onclick="luV(1)">'
     content = re.sub(r'<vid id="v([0-9]+?)\.([0-9]+?)\.([0-9]+?)" onclick="luV\(([0-9]+?)\)">', r'<vid id="v\1.\2.\3" onclick="luV(\1, \2, \3)">', content)
@@ -49,7 +50,6 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
             wform, heb, bdbheb, bdbarc, hu {{
                 font-family: 'SBL Hebrew', 'Ezra SIL', serif;
                 font-size: 1.6rem;
-                color: #2c3e50;
                 direction: rtl;
                 display: inline-block;
                 line-height: 1.2em;
@@ -62,7 +62,6 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
                 display: block;
                 font-family: 'SBL Hebrew', serif;
                 font-size: 1rem;
-                color: #555;
                 cursor: pointer;
             }}
         </style>
@@ -90,7 +89,6 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
             wform, grk, kgrk, gu {{
                 font-family: 'SBL Greek', 'Galatia SIL', 'Times New Roman', serif; /* CHANGED */
                 font-size: 1.6rem;
-                color: #2c3e50;
                 direction: ltr;
                 display: inline-block;
                 line-height: 1.2em;
@@ -103,13 +101,12 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
                 display: block;
                 font-family: 'SBL Greek', 'Galatia SIL', 'Times New Roman', serif; /* CHANGED */
                 font-size: 1rem;
-                color: #555;
                 cursor: pointer;
             }}
         </style>
         """)
 
-    ui.add_head_html(ORIGINAL_CSS)
+    ui.add_head_html(get_original_css(app.storage.user['dark_mode']))
 
     # Bible Selection menu
     bible_selector = BibleSelector(on_version_changed=gui.change_area_1_bible_chapter if area == 1 else gui.change_area_2_bible_chapter, on_book_changed=gui.change_area_1_bible_chapter if area == 1 else gui.change_area_2_bible_chapter, on_chapter_changed=gui.change_area_1_bible_chapter if area == 1 else gui.change_area_2_bible_chapter, on_verse_changed=change_bible_chapter_verse)

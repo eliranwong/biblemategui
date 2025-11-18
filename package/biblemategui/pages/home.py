@@ -7,7 +7,7 @@ from biblemategui import config, BIBLEMATEGUI_APP_DIR
 from biblemategui.pages.ai.chat import ai_chat
 
 from biblemategui.js.bible import BIBLE_JS
-from biblemategui.js.original import ORIGINAL_JS
+from biblemategui.js.original import get_original_js
 
 # Import for page content
 from biblemategui.pages.bibles.original_reader import original_reader
@@ -93,7 +93,7 @@ class BibleMateGUI:
         
         # Inject JS
         ui.add_head_html(BIBLE_JS) # for active verse scrolling
-        ui.add_head_html(ORIGINAL_JS) # for interactive highlighting
+        ui.add_head_html(get_original_js(app.storage.user['dark_mode'])) # for interactive highlighting
 
         # Create self.splitter
         self.splitter = ui.splitter(value=100, horizontal=self.is_portrait).classes('w-full').style('height: 100vh')

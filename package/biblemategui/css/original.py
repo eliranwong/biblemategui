@@ -1,69 +1,69 @@
-ORIGINAL_CSS = """
+def get_original_css(dark_mode):
+    return f"""
 <style>
     /* Each verse acts as a container for word blocks */
-    verse {
+    verse {{
         display: block;
         margin-bottom: 20px;
         line-height: 1.3;
-    }
+    }}
     /* The interlinear word block container */
-    .int {
+    .int {{
         display: inline-block;
         vertical-align: top;
         text-align: center;
-        margin: 0 4px 10px 4px;
+        margin: 0px;
         padding: 4px 8px;
-        background: white;
         border-radius: 6px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         border: 1px solid #eee;
         transition: background-color 0.2s; /* Smooth highlight transition */
-    }
+    }}
     /* Target all block elements inside .int to tighten their spacing */
-    .int > *, .int > ref > * {
+    .int > *, .int > ref > * {{
         line-height: 1.1;
         margin-top: 1px;
         margin-bottom: 1px;
-    }
+    }}
     /* Hover effects for interactive elements (even if JS isn't active here) */
-    .int:hover {
-        background-color: #f8fbff;
+    .int:hover {{
+        background-color: {'#333333' if dark_mode else '#f8fbff'};
         border-color: #d6eaf8;
-    }
+    }}
 
     /* Transliteration Layers (Phonetic & SBL) - shared with Greek*/
-    wsbl, wphono {
+    wsbl, wphono {{
         direction: ltr;
-        display: block;
+        display: inline-block;
         font-size: 0.8rem;
         color: #7f8c8d;
         font-style: italic;
-    }
+    }}
     /* Morphology Layer */
-    wmorph {
+    wmorph {{
         direction: ltr;
-        display: block;
+        display: inline-block;
         font-family: monospace;
         font-size: 0.7rem;
         color: #27ae60;
         cursor: pointer;
-    }
-    wsn {
+    }}
+    wsn {{
         direction: ltr;
-        display: block;
+        display: inline-block;
         font-size: 0.7rem;
-        color: #8e44ad;
+        color: {'#ca96e0' if dark_mode else '#8e44ad'};
         cursor: pointer;
-    }
+    }}
     /* Gloss (Literal Meaning) Layer */
-    wgloss {
+    wgloss {{
         direction: ltr;
-        display: block;
+        display: inline-block;
         font-size: 0.85rem;
-        color: #d35400;
-    }
+        color: {'#f2ac7e' if dark_mode else '#D35400'};
+    }}
     /* Final Translation Layer */
-    wtrans {
+    wtrans {{
         direction: ltr;
         display: block;
         margin-top: 4px;
@@ -73,218 +73,219 @@ ORIGINAL_CSS = """
         font-weight: bold;
         color: #2980b9;
         min-height: 1.2em; /* Ensures empty translations don't collapse the block */
-    }
+    }}
 
     /* UBA css */
-    external {
+    external {{
         font-size: 80%;
-    }
-    red, z {
+    }}
+    red, z {{
         color: red;
-    }
-    blu {
+    }}
+    blu {{
         color: blue;
         font-size: 80%;
-    }
-    points {
+    }}
+    points {{
         color: gray;
         font-weight: bold;
         font-size: 80%;
-    }
-    bb {
+    }}
+    bb {{
         color: brown;
         font-weight: bold;
-    }
-    hp {
+    }}
+    hp {{
         color: brown;
         font-weight: bold;
         font-size: 80%;
-    }
-    highlight {
+    }}
+    highlight {{
         font-style: italic;
-    }
-    transliteration {
+    }}
+    transliteration {{
         color: gray;
-    }
-    div.section, div.point {
+    }}
+    div.section, div.point {{
         display: block;
         border: 1px solid green;
         border-radius: 5px;
         padding: 2px 5px;
         margin-top: 5px;
         margin-bottom: 5px;
-    }
-    div.remarks {
+    }}
+    div.remarks {{
         display: block;
         border: 1px solid gray;
         border-radius: 5px;
         padding: 2px 5px;
         margin-top: 5px;
         margin-bottom: 5px;
-    }
-    div.bhs, div.hebch {
+    }}
+    div.bhs, div.hebch {{
         direction: rtl;
-    }
-    div.info {
+    }}
+    div.info {{
         margin-left: 5%;
         margin-right: 5%;
-    }
-    div.menu {
+    }}
+    div.menu {{
         margin-left: 2%;
         margin-right: 2%;
-    }
-    div.vword {
+    }}
+    div.vword {{
         border: 1px solid #F5B041;
         border-radius: 5px;
         padding: 2px 5px;
         margin-top: 3px;
         margin-bottom: 3px;
-    }
-    div.translation {
+    }}
+    div.translation {{
         border: 1px solid #9B59B6;
         border-radius: 5px;
         padding: 2px 5px;
         margin-top: 3px;
         margin-bottom: 3px;
-    }
-    div.ew {
+    }}
+    div.ew {{
         margin-left: 5%;
         margin-right: 5%;
         font-size: 110%;
         display: inline-block;
-    }
-    div.mr {
+    }}
+    div.mr {{
         margin-left: 100;
-    }
-    div.nav {
+    }}
+    div.nav {{
         margin-left: 5%;
         margin-right: 5%;
-    }
-    div.refList {
+    }}
+    div.refList {{
         display: inline;
-    }
+    }}
     /* css for linguistic annotations */
                 
-    div.bhp, div.bhw, div.w, div.int {
+    div.bhp, div.bhw, div.w, div.int {{
         display: inline-block;
         text-align: center;
-    }
-    div.int {
+    }}
+    div.int {{
         vertical-align: text-top;
-    }
-    div.bhc {
+    }}
+    div.bhc {{
         direction: rtl;
         border: 1px solid #9B59B6;
         border-radius: 5px;
         padding: 2px 5px;
         margin-top: 3px;
         margin-bottom: 3px;
-    }
-    div.bhp {
+    }}
+    div.bhp {{
         border: 1px solid gray;
         border-radius: 5px;
         padding: 2px 5px;
         margin-top: 3px;
         margin-bottom: 3px;
-    }
-    div.bhw {
+    }}
+    div.bhw {{
         border: 1px solid #F5B041;
         border-radius: 5px;
         padding: 2px 5px;
         margin-top: 3px;
         margin-bottom: 3px;
-    }
-    clid {
-        color: #641E16;
+    }}
+    clid {{
+        color: {'#cfada9' if dark_mode else '#641E16'};
         font-weight: bold;
-    }
-    mclid {
-        color: #641E16;
+    }}
+    mclid {{
+        color: {'#cfada9' if dark_mode else '#641E16'};
         font-style: italic;
-    }
-    connector {
+    }}
+    connector {{
         color: #9B59B6;
-    }
-    ckind, ctyp, crela {
-        color: #00008B;
+    }}
+    ckind, ctyp, crela {{
+        color: {'#f5e798' if dark_mode else '#00008B'};
         display: inline-block;
-    }
-    ptyp {
+        direction: ltr;
+    }}
+    ptyp {{
         text-decoration: underline;
         color: gray;
-    }
-    pfunction {
-        color: #3498DB;
+    }}
+    pfunction {{
+        color: {'#7ce6d4' if dark_mode else '#3498DB'};
         font-size: 90%;
-    }
-    det {
+    }}
+    det {{
         font-weight: bold;
-    }
-    undet {
+    }}
+    undet {{
         font-style: italic;
-    }
-    prela {
+    }}
+    prela {{
         display: none;
-    }
-    hbint, gntint, gloss {
+    }}
+    hbint, gntint, gloss {{
         direction: ltr;
         vertical-align: super;
         display: inline-block;
-        color: #D35400;
-    }
-    gntint, gloss {
+        color: {'#f2ac7e' if dark_mode else '#D35400'};
+    }}
+    gntint, gloss {{
         font-size: 90%;
-    }
-    cllevel {
+    }}
+    cllevel {{
         color: #9B59B6;
-    }
-    clinfo {
-        color: #641E16;
+    }}
+    clinfo {{
+        color: {'#cfada9' if dark_mode else '#641E16'};
         font-weight: bold;
-    }
-    subclinfo {
-        color: #641E16;
+    }}
+    subclinfo {{
+        color: {'#cfada9' if dark_mode else '#641E16'};
         font-weight: bold;
         font-size: 80%;
-    }
-    funcinfo {
-        color: #3498DB;
+    }}
+    funcinfo {{
+        color: {'#7ce6d4' if dark_mode else '#3498DB'};
         font-size: 90%;
-    }
-    wordid {
+    }}
+    wordid {{
         text-decoration: underline;
         font-size: 80%;
         color: gray;
-    }
-    cit, clt, cst, cbhs, cbsb, cleb {
+    }}
+    cit, clt, cst, cbhs, cbsb, cleb {{
         display: block;
-    }
-    clt, cbsb {
-        color: #3498DB;
-    }
-    cst, cleb {
-        color: #00008B;
-    }
-    cbsb, cleb {
+    }}
+    clt, cbsb {{
+        color: {'#7ce6d4' if dark_mode else '#3498DB'};
+    }}
+    cst, cleb {{
+        color: {'#f5e798' if dark_mode else '#00008B'};
+    }}
+    cbsb, cleb {{
         direction: ltr;
-    }
-    div.cltrans {
+    }}
+    div.cltrans {{
         margin-left: 10px;
         margin-right: 10px;
         display: block;
-        border: 1px solid #00008B;
+        border: 1px solid {'#f5e798' if dark_mode else '#00008B'};
         border-radius: 5px;
         padding: 2px 5px;
         margin-top: 3px;
         margin-bottom: 3px;
-    }
-    div.wrap {
+    }}
+    div.wrap {{
         display: inline-block;
-    }
-    cl {
+    }}
+    cl {{
         display: table;
-    }
-    div.c {
+    }}
+    div.c {{
         vertical-align: top;
         text-align: left;
         border: 1px solid #9B59B6;
@@ -292,8 +293,8 @@ ORIGINAL_CSS = """
         padding: 2px 5px;
         margin-top: 3px;
         margin-bottom: 3px;
-    }
-    div.p {
+    }}
+    div.p {{
         display: inline-block;
         vertical-align: top;
         text-align: left;
@@ -302,29 +303,29 @@ ORIGINAL_CSS = """
         padding: 2px 5px;
         margin-top: 3px;
         margin-bottom: 3px;
-    }
-    div.w, div.int {
+    }}
+    div.w, div.int {{
         border: 1px solid #F5B041;
         border-radius: 5px;
         padding: 2px 5px;
         margin-top: 3px;
         margin-bottom: 3px;
-    }
+    }}
 
     /* css for clause segmentation */
 
-    div.bhsa {
+    div.bhsa {{
         direction: rtl;
         border-right: 5px solid #F5B041;
         margin-left: 5%;
         margin-right: 5%;
         padding: 5px 10px 5px 10px;
-    }
-    div.e {
+    }}
+    div.e {{
         border-left: 5px solid #F5B041;
         margin-left: 5%;
         margin-right: 5%;
         padding: 5px 10px 5px 10px;
-    }
+    }}
 </style>
 """

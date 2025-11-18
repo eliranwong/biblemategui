@@ -1,7 +1,7 @@
 from pathlib import Path
 from agentmake import readTextFile, writeTextFile
 from biblemategui import config
-import os, glob, apsw
+import os, glob, apsw, re
 
 BIBLEMATEGUI_APP_DIR = os.path.dirname(os.path.realpath(__file__))
 BIBLEMATEGUI_USER_DIR = os.path.join(os.path.expanduser("~"), "biblemate")
@@ -77,13 +77,13 @@ def getBibleInfo(db):
 
 bibles_dir = os.path.join(BIBLEMATEGUI_DATA, "bibles")
 if os.path.isdir(bibles_dir):
-    config.bibles = dict(sorted({os.path.basename(i)[:-6]: (getBibleInfo(i), i) for i in glob.glob(os.path.join(bibles_dir, "*.bible"))}.items()))
+    config.bibles = dict(sorted({os.path.basename(i)[:-6]: (getBibleInfo(i), i) for i in glob.glob(os.path.join(bibles_dir, "*.bible")) if not re.search("(MOB|MIB|MAB|MTB|MPB).bible$", i)}.items()))
 else:
     Path(bibles_dir).mkdir(parents=True, exist_ok=True)
     config.bibles = {}
 bibles_dir_custom = os.path.join(BIBLEMATEGUI_DATA_CUSTOM, "bibles")
 if os.path.isdir(bibles_dir_custom):
-    config.bibles_custom = dict(sorted({os.path.basename(i)[:-6]: (getBibleInfo(i), i) for i in glob.glob(os.path.join(bibles_dir_custom, "*.bible"))}.items()))
+    config.bibles_custom = dict(sorted({os.path.basename(i)[:-6]: (getBibleInfo(i), i) for i in glob.glob(os.path.join(bibles_dir_custom, "*.bible")) if not re.search("(MOB|MIB|MAB|MTB|MPB).bible$", i)}.items()))
 else:
     Path(bibles_dir_custom).mkdir(parents=True, exist_ok=True)
     config.bibles_custom = {}
