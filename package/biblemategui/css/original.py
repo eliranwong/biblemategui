@@ -77,19 +77,19 @@ def get_original_css(dark_mode):
 
     /* UBA css */
     external {{
-        font-size: 80%;
+        font-size: 0.8rem;
     }}
     red, z {{
         color: red;
     }}
     blu {{
         color: blue;
-        font-size: 80%;
+        font-size: 0.8rem;
     }}
     points {{
         color: gray;
         font-weight: bold;
-        font-size: 80%;
+        font-size: 0.8rem;
     }}
     bb {{
         color: brown;
@@ -98,7 +98,7 @@ def get_original_css(dark_mode):
     hp {{
         color: brown;
         font-weight: bold;
-        font-size: 80%;
+        font-size: 0.8rem;
     }}
     highlight {{
         font-style: italic;
@@ -150,7 +150,7 @@ def get_original_css(dark_mode):
     div.ew {{
         margin-left: 5%;
         margin-right: 5%;
-        font-size: 110%;
+        font-size: 1.1rem;
         display: inline-block;
     }}
     div.mr {{
@@ -216,7 +216,7 @@ def get_original_css(dark_mode):
     }}
     pfunction {{
         color: {'#7ce6d4' if dark_mode else '#3498DB'};
-        font-size: 90%;
+        font-size: 0.9rem;
     }}
     det {{
         font-weight: bold;
@@ -234,7 +234,7 @@ def get_original_css(dark_mode):
         color: {'#f2ac7e' if dark_mode else '#D35400'};
     }}
     gntint, gloss {{
-        font-size: 90%;
+        font-size: 0.9rem;
     }}
     cllevel {{
         color: #9B59B6;
@@ -246,15 +246,15 @@ def get_original_css(dark_mode):
     subclinfo {{
         color: {'#cfada9' if dark_mode else '#641E16'};
         font-weight: bold;
-        font-size: 80%;
+        font-size: 0.8rem;
     }}
     funcinfo {{
         color: {'#7ce6d4' if dark_mode else '#3498DB'};
-        font-size: 90%;
+        font-size: 0.9rem;
     }}
     wordid {{
         text-decoration: underline;
-        font-size: 80%;
+        font-size: 0.8rem;
         color: gray;
     }}
     cit, clt, cst, cbhs, cbsb, cleb {{

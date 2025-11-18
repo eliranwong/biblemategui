@@ -8,8 +8,10 @@ import os
 
 @ui.page('/')
 def page_home(
+    pc: str | None = None, # primary color
+    sc: str | None = None, # secondary color
+    fs: int | None = None, # font size in %
     d: bool | None = None, # dark mode
-    f: bool | None = None, # fullscreen # TODO
     t: str | None = None, # Token for using custom data: allow users to pass a custom token, which won't be stored, via a parameter when using public devices. For personal devices, enable persistent settings using `custom_token`.
     k: bool | None = True, # keep valid specified parameters in history
     m: bool | None = True, # display menu
@@ -39,18 +41,29 @@ def page_home(
     # spacing
     ui.query('.nicegui-content').classes('w-full h-full !p-0 !b-0 !m-0 !gap-0')
 
-    # primary color
+    # font-size
+    if fs:
+        app.storage.user["font_size"] = fs
+    ui.add_css(f"""
+        /* This targets the root HTML element and sets its font size */
+        html {{
+            font-size: {app.storage.user['font_size']}%;
+        }}
+    """)
+
+    # colors
+    if pc:
+        app.storage.user["primary_colour"] = pc
+    if sc:
+        app.storage.user["secondary_colour"] = sc
     ui.colors(primary=app.storage.user["primary_colour"], secondary=app.storage.user["secondary_colour"])
 
     # Bind app state to user storage
-    ui.dark_mode().bind_value(app.storage.user, 'dark_mode')
     app.storage.user["fullscreen"] = False
     ui.fullscreen().bind_value(app.storage.user, 'fullscreen')
-
+    ui.dark_mode().bind_value(app.storage.user, 'dark_mode')
     if d is not None:
         app.storage.user['dark_mode'] = d
-    if f is not None:
-        app.storage.user['fullscreen'] = f
 
     # manage custom resources
     if not config.custom_token or (t and t == config.custom_token) or (app.storage.user.setdefault('custom_token', "") == config.custom_token):
@@ -134,6 +147,14 @@ def page_Settings():
     # We can call this again to be safe, especially if new settings are added in updates.
     set_default_settings()
 
+    # Adjust font-size
+    ui.run_javascript(f"document.documentElement.style.fontSize = '{app.storage.user['font_size']}%'")
+    def set_font_size(value):
+        # Update the storage (automatic via bind, but good for explicit logic if needed later)
+        app.storage.user['font_size'] = value
+        # Update the HTML root element immediately via JS
+        ui.run_javascript(f"document.documentElement.style.fontSize = '{value}%'")
+
     # primary color
     ui.colors(primary=app.storage.user["primary_colour"], secondary=app.storage.user["secondary_colour"])
 
@@ -148,18 +169,32 @@ def page_Settings():
         # --- Appearance Section ---
         with ui.expansion('Appearance', icon='palette').classes('w-full rounded-lg'):
             with ui.column().classes('w-full p-4'):
+                # font-size
+                with ui.row().classes('w-full items-center'):
+                    ui.label("Font Size").classes('flex items-center font-bold mr-4')
+                    # We display the current % value next to the label for clarity
+                    ui.label().bind_text_from(app.storage.user, 'font_size', backward=lambda v: f'{int(v)}%').classes('text-sm text-gray-500')
+                ui.slider(min=50, max=200, step=5, value=app.storage.user['font_size']) \
+                    .bind_value(app.storage.user, 'font_size') \
+                    .on_value_change(lambda e: set_font_size(e.value)) \
+                    .props('label-always color=primary') \
+                    .classes('w-full mb-4') \
+                    .tooltip('Adjust the global font size (50% to 200%)')
+                # colors
                 ui.color_input(label='Primary Color') \
                     .bind_value(app.storage.user, 'primary_colour') \
                     .tooltip('Manual hex code or color picker for app theme.') \
-                    .on_value_change(lambda: ui.run_javascript('location.reload()'))
+                    .on_value_change(lambda e: ui.colors(primary=e.value))
                 ui.color_input(label='Secondary Color') \
                     .bind_value(app.storage.user, 'secondary_colour') \
                     .tooltip('Manual hex code or color picker for app theme.') \
-                    .on_value_change(lambda: ui.run_javascript('location.reload()'))
+                    .on_value_change(lambda e: ui.colors(secondary=e.value))
+                # dark mode
                 with ui.row().classes('w-full'):
                     ui.label("Dark Mode").classes('flex items-center')
                     ui.space()
                     ui.switch().bind_value(app.storage.user, 'dark_mode').tooltip('Toggle dark mode for the app.').on_value_change(lambda: ui.run_javascript('location.reload()'))
+                # fullscreen
                 with ui.row().classes('w-full'):
                     ui.label("Fullscreen").classes('flex items-center')
                     ui.space()

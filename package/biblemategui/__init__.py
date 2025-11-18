@@ -106,8 +106,9 @@ config.available_tools = ["audio", "chronology"]
 # User Default Settings
 
 USER_DEFAULT_SETTINGS = {
-    'primary_colour': '#2dbda5',
-    'secondary_colour': '#7af0d2',
+    'font_size': 100,
+    'primary_colour': '#12a189',
+    'secondary_colour': '#12a189',
     'avatar': '',
     'custom_token': '',
     'default_bible': 'NET',

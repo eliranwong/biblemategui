@@ -34,7 +34,7 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
             .bible-text {{
                 direction: rtl;
                 font-family: sans-serif;
-                font-size: 130%;
+                font-size: 1.3rem;
                 padding: 0px;
                 margin: 0px;
             }}
@@ -73,7 +73,7 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
             .bible-text {{
                 direction: ltr;
                 font-family: sans-serif;
-                font-size: 130%;
+                font-size: 1.3rem;
                 padding: 0px;
                 margin: 0px;
             }}
