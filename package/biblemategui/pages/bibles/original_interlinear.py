@@ -39,7 +39,7 @@ def original_interlinear(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, 
         ui.add_head_html(f"""
         <style>
             /* Main container for the Bible text - ensures RTL flow for verses */
-            .bible-text {{
+            .bible-text-heb {{
                 direction: rtl;
                 font-family: sans-serif;
                 padding: 0px;
@@ -77,7 +77,7 @@ def original_interlinear(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, 
         ui.add_head_html(f"""
         <style>
             /* Main container for the Bible text - LTR flow for Greek */
-            .bible-text {{
+            .bible-text-grk {{
                 direction: ltr;
                 font-family: sans-serif;
                 padding: 0px;
@@ -119,7 +119,7 @@ def original_interlinear(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, 
 
     # Render the HTML inside a styled container
     # REMEMBER: sanitize=False is required to keep your onclick/onmouseover attributes
-    ui.html(f'<div class="bible-text">{content}</div>', sanitize=False).classes(f'w-full pb-[70vh] {(tab1+"_chapter") if area == 1 else (tab2+"_chapter")}')
+    ui.html(f'''<div class="bible-text-{'heb' if "</heb>" in content else 'grk'}">{content}</div>''', sanitize=False).classes(f'w-full pb-[70vh] {(tab1+"_chapter") if area == 1 else (tab2+"_chapter")}')
 
     # After the page is built and ready, run our JavaScript
     if (not area == 1) and tab1 and tab2:

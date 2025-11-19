@@ -1,11 +1,40 @@
 #!/usr/bin/env python3
 from nicegui import ui
-from biblemategui import config, BIBLEMATEGUI_APP_DIR, USER_DEFAULT_SETTINGS
+from biblemategui import config, BIBLEMATEGUI_DATA, BIBLEMATEGUI_APP_DIR, USER_DEFAULT_SETTINGS
 from biblemategui.pages.home import *
+from biblemategui.js.tooltip import TOOLTIP_JS
+from biblemategui.css.tooltip import get_tooltip_css
 import os
 
-# Home Page
+def get_tooltip_data(word):
+    """Fetch tooltip data from database"""
+    import apsw, json
+    result = None
+    db = os.path.join(BIBLEMATEGUI_DATA, "morphology.sqlite")
+    with apsw.Connection(db) as connn:
+        query = "SELECT * FROM morphology WHERE WordID=?" if word.startswith("wh") else "SELECT * FROM morphology WHERE WordID=? and Book > 39"
+        cursor = connn.cursor()
+        cursor.execute(query, (int(word[2:] if word.startswith("wh") else word[1:]),))
+        result = cursor.fetchone()    
+    if result:
+        wordID, clauseID, book, chapter, verse, word, lexicalEntry, morphologyCode, morphology, lexeme, transliteration, pronunciation, interlinear, translation, gloss = result
+        description = f'''<{'heb' if word.startswith("wh") else 'grk'}>{word}</{'heb' if word.startswith("wh") else 'grk'}> | <{'heb' if word.startswith("wh") else 'grk'}>{lexeme}</{'heb' if word.startswith("wh") else 'grk'}><br>
+<clid>{morphology[:-1].replace(",", ", ")}</clid><br>
+<wgloss>{interlinear}</wgloss><br>
+<wtrans>{translation}</wtrans>'''
+        #links = json.loads(links_json)
+        return {'description': description, 'links': ""}
+    return None
 
+# API endpoint for tooltip data
+@app.get('/api/tooltip/{word}')
+async def tooltip_api(word: str):
+    data = get_tooltip_data(word)
+    if data:
+        return data
+    return {'error': 'Not found'}, 404
+
+# Home Page
 @ui.page('/')
 def page_home(
     pc: str | None = None, # primary color
@@ -53,10 +82,10 @@ def page_home(
 
     # colors
     if pc:
-        app.storage.user["primary_colour"] = pc
+        app.storage.user["primary_color"] = pc
     if sc:
-        app.storage.user["secondary_colour"] = sc
-    ui.colors(primary=app.storage.user["primary_colour"], secondary=app.storage.user["secondary_colour"])
+        app.storage.user["secondary_color"] = sc
+    ui.colors(primary=app.storage.user["primary_color"], secondary=app.storage.user["secondary_color"])
 
     # Bind app state to user storage
     app.storage.user["fullscreen"] = False
@@ -108,9 +137,12 @@ def page_home(
         app.storage.user['tool_verse_number'] = tv
     else:
         tv = app.storage.user.setdefault('tool_verse_number', 1)
-        
+
+    ui.add_head_html(get_tooltip_css(app.storage.user["dark_mode"]))
+    ui.add_body_html(TOOLTIP_JS)
+
+    # GUI object
     gui = BibleMateGUI()
-    
     # navigation menu
     if m:
         gui.create_menu() # Add the shared menu
@@ -156,7 +188,7 @@ def page_Settings():
         ui.run_javascript(f"document.documentElement.style.fontSize = '{value}%'")
 
     # primary color
-    ui.colors(primary=app.storage.user["primary_colour"], secondary=app.storage.user["secondary_colour"])
+    ui.colors(primary=app.storage.user["primary_color"], secondary=app.storage.user["secondary_color"])
 
     # Bind app state to user storage
     ui.dark_mode().bind_value(app.storage.user, 'dark_mode')
@@ -182,11 +214,11 @@ def page_Settings():
                     .tooltip('Adjust the global font size (50% to 200%)')
                 # colors
                 ui.color_input(label='Primary Color') \
-                    .bind_value(app.storage.user, 'primary_colour') \
+                    .bind_value(app.storage.user, 'primary_color') \
                     .tooltip('Manual hex code or color picker for app theme.') \
                     .on_value_change(lambda e: ui.colors(primary=e.value))
                 ui.color_input(label='Secondary Color') \
-                    .bind_value(app.storage.user, 'secondary_colour') \
+                    .bind_value(app.storage.user, 'secondary_color') \
                     .tooltip('Manual hex code or color picker for app theme.') \
                     .on_value_change(lambda e: ui.colors(secondary=e.value))
                 # dark mode

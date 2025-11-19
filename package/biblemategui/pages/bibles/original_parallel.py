@@ -27,6 +27,12 @@ def original_parallel(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, **_
     content = content.replace("<br<", "<br><")
     content = content.replace("<heb> </heb>", "<heb>&nbsp;</heb>")
 
+    # add tooltip
+    if "</heb>" in content:
+        content = re.sub('(<heb id=")(.*?)"(.*?)class="', r'\1\2" data-word="\2" \3class="tooltip-word ', content)
+    else:
+        content = re.sub('(<grk id=")(.*?)"(.*?)class="', r'\1\2" data-word="\2" \3class="tooltip-word ', content)
+
     # convert verse link, like '<vid id="v19.117.1" onclick="luV(1)">'
     content = re.sub(r'<vid id="v([0-9]+?)\.([0-9]+?)\.([0-9]+?)" onclick="luV\(([0-9]+?)\)">', r'<vid id="v\1.\2.\3" onclick="luV(\1, \2, \3)">', content)
     
@@ -39,7 +45,7 @@ def original_parallel(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, **_
         ui.add_head_html(f"""
         <style>
             /* Main container for the Bible text - ensures RTL flow for verses */
-            .bible-text {{
+            .bible-text-heb {{
                 direction: rtl;
                 font-family: sans-serif;
                 padding: 0px;
@@ -77,7 +83,7 @@ def original_parallel(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, **_
         ui.add_head_html(f"""
         <style>
             /* Main container for the Bible text - LTR flow for Greek */
-            .bible-text {{
+            .bible-text-grk {{
                 direction: ltr;
                 font-family: sans-serif;
                 padding: 0px;
@@ -120,7 +126,7 @@ def original_parallel(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, **_
 
     # Render the HTML inside a styled container
     # REMEMBER: sanitize=False is required to keep your onclick/onmouseover attributes
-    ui.html(f'<div class="bible-text">{content}</div>', sanitize=False).classes(f'w-full pb-[70vh] {(tab1+"_chapter") if area == 1 else (tab2+"_chapter")}')
+    ui.html(f'''<div class="bible-text-{'heb' if "</heb>" in content else 'grk'}">{content}</div>''', sanitize=False).classes(f'w-full pb-[70vh] {(tab1+"_chapter") if area == 1 else (tab2+"_chapter")}')
 
     # After the page is built and ready, run our JavaScript
     if (not area == 1) and tab1 and tab2:

@@ -56,7 +56,7 @@ def settings_page():
         with ui.expansion('Appearance', icon='palette').classes('w-full rounded-lg'):
             with ui.column().classes('w-full p-4'):
                 ui.color_input(label='Primary Color') \
-                    .bind_value(app.storage.user, 'primary_colour') \
+                    .bind_value(app.storage.user, 'primary_color') \
                     .tooltip('Manual hex code or color picker for app theme.')
                 
                 ui.switch('Dark Mode') \
