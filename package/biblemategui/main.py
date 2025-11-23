@@ -39,6 +39,7 @@ async def tooltip_api(word: str):
 def page_home(
     pc: str | None = None, # primary color
     sc: str | None = None, # secondary color
+    nc: str | None = None, # negative color
     fs: int | None = None, # font size in %
     s: bool | None = None, # sync
     d: bool | None = None, # dark mode
@@ -88,7 +89,9 @@ def page_home(
         app.storage.user["primary_color"] = pc
     if sc:
         app.storage.user["secondary_color"] = sc
-    ui.colors(primary=app.storage.user["primary_color"], secondary=app.storage.user["secondary_color"])
+    if nc:
+        app.storage.user["negative_color"] = nc
+    ui.colors(primary=app.storage.user["primary_color"], secondary=app.storage.user["secondary_color"], negative=app.storage.user["negative_color"])
 
     # sync
     if s is not None:
@@ -253,7 +256,7 @@ def page_Settings():
         ui.run_javascript(f"document.documentElement.style.fontSize = '{value}%'")
 
     # primary color
-    ui.colors(primary=app.storage.user["primary_color"], secondary=app.storage.user["secondary_color"])
+    ui.colors(primary=app.storage.user["primary_color"], secondary=app.storage.user["secondary_color"], negative=app.storage.user["negative_color"])
 
     # Bind app state to user storage
     ui.dark_mode().bind_value(app.storage.user, 'dark_mode')
@@ -286,6 +289,10 @@ def page_Settings():
                     .bind_value(app.storage.user, 'secondary_color') \
                     .tooltip('Manual hex code or color picker for app theme.') \
                     .on_value_change(lambda e: ui.colors(secondary=e.value))
+                ui.color_input(label='Negative Color') \
+                    .bind_value(app.storage.user, 'negative_color') \
+                    .tooltip('Manual hex code or color picker for app theme.') \
+                    .on_value_change(lambda e: ui.colors(negative=e.value))
                 # dark mode
                 with ui.row().classes('w-full'):
                     ui.label("Dark Mode").classes('flex items-center')

@@ -25,7 +25,9 @@ config.reload_after_sync={config.reload_after_sync}
 config.avatar="{config.avatar}"
 config.custom_token="{config.custom_token}"
 config.storage_secret="{config.storage_secret}"
-config.port={config.port}"""
+config.port={config.port}
+config.embedding_model="{config.embedding_model}"
+config.top_k={config.top_k}"""
     writeTextFile(CONFIG_FILE_BACKUP, configurations)
 
 # restore config backup after upgrade
@@ -34,7 +36,8 @@ config.reload_after_sync=False
 config.avatar=""
 config.custom_token=""
 config.storage_secret="REPLACE_ME_WITH_A_REAL_SECRET"
-config.port=33355'''
+config.embedding_model="paraphrase-multilingual"
+config.top_k=3'''
 
 def load_config():
     """Loads the user's configuration from the config file."""
@@ -111,6 +114,7 @@ USER_DEFAULT_SETTINGS = {
     'font_size': 100,
     'primary_color': '#12a189',
     'secondary_color': '#12a189',
+    'negative_color': '#ff384f',
     'avatar': '',
     'custom_token': '',
     'default_bible': 'NET',

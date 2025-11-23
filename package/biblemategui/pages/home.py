@@ -17,9 +17,12 @@ from biblemategui.pages.bibles.original_discourse import original_discourse
 from biblemategui.pages.bibles.original_linguistic import original_linguistic
 from biblemategui.pages.bibles.bible_translation import bible_translation
 
+from biblemategui.pages.tools.xrefs import xrefs
 from biblemategui.pages.tools.audio import bibles_audio
 from biblemategui.pages.tools.chronology import bible_chronology
+
 from biblemategui.pages.search.bible_verses import search_bible_verses
+from biblemategui.pages.search.bible_promises import search_bible_promises
 
 class BibleMateGUI:
     def __init__(self):
@@ -280,6 +283,10 @@ class BibleMateGUI:
     def get_content(self, title):
         if title.lower() == "audio":
             return bibles_audio
+        elif title.lower() == "xrefs":
+            return xrefs
+        elif title.lower() == "promises":
+            return search_bible_promises
         elif title.lower() == "search":
             return search_bible_verses
         elif title.lower() == "chronology":
@@ -641,7 +648,7 @@ class BibleMateGUI:
                             ui.menu_item('Compare Verse', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             ui.separator()
                             ui.menu_item('Bible Commentaries', on_click=lambda: self.load_area_2_content(self.work_in_progress))
-                            ui.menu_item('Cross-references', on_click=lambda: self.load_area_2_content(self.work_in_progress))
+                            ui.menu_item('Cross-references', on_click=lambda: self.load_area_2_content(title='Xrefs'))
                             ui.menu_item('Treasury of Scripture Knowledge', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             ui.menu_item('Discourse Analysis', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             ui.menu_item('Morphological Data', on_click=lambda: self.load_area_2_content(self.work_in_progress))
@@ -657,7 +664,7 @@ class BibleMateGUI:
                         with ui.menu():
                             ui.menu_item('Bibles', on_click=lambda: self.load_area_2_content(title='Search'))
                             ui.menu_item('Parallels', on_click=lambda: self.load_area_2_content(self.work_in_progress))
-                            ui.menu_item('Promises', on_click=lambda: self.load_area_2_content(self.work_in_progress))
+                            ui.menu_item('Promises', on_click=lambda: self.load_area_2_content(title='Promises'))
                             ui.menu_item('Topics', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             ui.menu_item('Names', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             ui.menu_item('Characters', on_click=lambda: self.load_area_2_content(self.work_in_progress))
@@ -826,7 +833,7 @@ class BibleMateGUI:
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Cross-references', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
+                    self.load_area_2_content(title='Xrefs'),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Treasury of Scripture Knowledge', on_click=lambda: (
@@ -865,7 +872,7 @@ class BibleMateGUI:
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Promises', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
+                    self.load_area_2_content(title='Promises'),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Topics', on_click=lambda: (

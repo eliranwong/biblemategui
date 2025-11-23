@@ -160,7 +160,7 @@ def search_bible_verses(gui=None, q='', **_):
         input_field = ui.input(
             value=q,
             autocomplete=BIBLE_BOOKS,
-            placeholder='Enter search item or refs (e.g. Deut 6:4; John 3:16-18)'
+            placeholder='Enter search items or refs (e.g. Deut 6:4; John 3:16-18)'
         ).classes('flex-grow text-lg') \
         .props('outlined dense clearable autofocus')
 
