@@ -17,8 +17,9 @@ def get_bible_content(user_input, bible="NET", sql_query=""):
     refs = []
     results = []
     if re.search(" [0-9]+?:[0-9]", user_input):
-        refs = parser.extractAllReferences(user_input)
+        refs = parser.extractAllReferences(user_input, tagged=(True if '<ref onclick="bcv(' in user_input else False))
     if refs:
+        refs = list(set(refs))
         query = "SELECT Scripture FROM Verses WHERE Book=? AND Chapter=? AND Verse =?"
         with apsw.Connection(db) as connn:
             cursor = connn.cursor()

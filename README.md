@@ -92,6 +92,7 @@ ln -s ~/UniqueBible/marvelData/bibles/MIB.bible OIB.bible
 ln -s ~/UniqueBible/marvelData/bibles/MPB.bible OPB.bible
 ln -s ~/UniqueBible/marvelData/bibles/MTB.bible ODB.bible
 ln -s ~/UniqueBible/marvelData/bibles/MAB.bible OLB.bible
+ln -s ~/agentmake/biblemate/data vectors
 ```
 
 ## Server Setup

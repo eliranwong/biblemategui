@@ -17,8 +17,8 @@ def search_bible_promises(gui=None, q='', **_):
 
     # --- Fuzzy Match Dialog ---
     with ui.dialog() as dialog, ui.card().classes('w-full max-w-md'):
-        ui.label("Did you mean...").classes('text-xl font-bold text-slate-700 mb-4')
-        ui.label("We couldn't find an exact match. Please select one of these topics:").classes('text-slate-500 mb-4')
+        ui.label("Did you mean...").classes('text-xl font-bold text-primary mb-4')
+        ui.label("We couldn't find an exact match. Please select one of these topics:").classes('text-secondary mb-4')
         
         # This container will hold the radio selection dynamically
         selection_container = ui.column().classes('w-full')
@@ -63,7 +63,8 @@ def search_bible_promises(gui=None, q='', **_):
             row.set_visibility(is_match)
             if is_match:
                 total_matches += 1
-        ui.notify(f"{total_matches} {'match' if not total_matches or total_matches == 1 else 'matches'} found!")
+        if total_matches:
+            ui.notify(f"{total_matches} {'match' if total_matches == 1 else 'matches'} found!")
 
     # ----------------------------------------------------------
     # Helper: Remove Verse
@@ -89,75 +90,32 @@ def search_bible_promises(gui=None, q='', **_):
     # ----------------------------------------------------------
     # Core: Fetch and Display
     # ----------------------------------------------------------
-    def handle_enter(e):
-        nonlocal SQL_QUERY
-        query = input_field.value.strip()
-        
-        db_file = os.path.join(BIBLEMATEGUI_DATA, "vectors", "collection.db")
-        sql_table = "PROMISES"
-        path = ""
-        options = []
-        try:
-            with apsw.Connection(db_file) as connection:
-                # search for exact match first
-                cursor = connection.cursor()
-                cursor.execute(f"SELECT * FROM {sql_table} WHERE entry = ?;", (query,))
-                rows = cursor.fetchall()
-                if not rows: # perform similarity search if no an exact match
-                    # convert query to vector
-                    query_vector = get_embeddings([query], config.embedding_model)[0]
-                    # fetch all entries
-                    cursor.execute(f"SELECT entry, entry_vector FROM {sql_table}")
-                    all_rows = cursor.fetchall()
-                    if not all_rows:
-                        return []
-                    # build a matrix
-                    entries, entry_vectors = zip(*[(row[0], np.array(json.loads(row[1]))) for row in all_rows if row[0] and row[1]])
-                    document_matrix = np.vstack(entry_vectors)
-                    # perform a similarity search
-                    similarities = cosine_similarity_matrix(query_vector, document_matrix)
-                    top_indices = np.argsort(similarities)[::-1][:config.top_k]
-                    # return top matches
-                    options = [entries[i] for i in top_indices]
-                elif len(rows) == 1: # single exact match
-                    path = rows[0][0]
-                else:
-                    options = [f"{path}+{entry}" for path, entry, _ in rows]
-        except Exception as ex:
-            print("Error during database operation:", ex)
-            ui.notify('Error during database operation!', type='negative')
-            return
 
-        if options:
-            def handle_selection(selected_option):
-                nonlocal path
-                if selected_option:
-                    print(selected_option, type(selected_option))
-                    dialog.close()
-                    if "+" in selected_option:
-                        path, _ = selected_option.split("+", 1)
-                    else:
-                        path = selected_option
-            selection_container.clear()
-            with selection_container:
-                # We use a radio button for selection
-                radio = ui.radio(options).classes('w-full').props('color=primary')
-                ui.button('Show Verses', on_click=lambda: handle_selection(radio.value)) \
-                    .classes('w-full mt-4 bg-blue-500 text-white shadow-md')    
-            dialog.open()
-        
-        print(path) # TODO
+    def show_verses(path):
+        nonlocal SQL_QUERY, verses_container, gui, dialog, input_field, topic_label
 
         db = os.path.join(BIBLEMATEGUI_DATA, "collections3.sqlite")
         with apsw.Connection(db) as connn:
-            sql_query = "SELECT Topic, Passages FROM PROMISES WHERE Tool=? AND Number=? limit 1"
             cursor = connn.cursor()
-            tool, number = path.split(".")
-            cursor.execute(sql_query, (int(tool), int(number)))
-            query = cursor.fetchone()
-        if query:
-            topic, query = query
-        else:
+            if re.search(r"^[0-9]+?\.[0-9]+?$", path):
+                sql_query = "SELECT Topic, Passages FROM PROMISES WHERE Tool=? AND Number=? limit 1"
+                tool, number = path.split(".")
+                cursor.execute(sql_query, (int(tool), int(number)))
+                if query := cursor.fetchone():
+                    topic, query = query
+            else:
+                topic = path
+                sql_query = "SELECT Passages FROM PROMISES WHERE Topic=?"
+                cursor.execute(sql_query, (path,))
+                query = "; ".join([i[0] for i in cursor.fetchall()])
+                if not query:
+                    sql_query = "SELECT Passages FROM PROMISES WHERE Topic LIKE ?"
+                    cursor.execute(sql_query, (f"%{path}%",))
+                    query = "; ".join([i[0] for i in cursor.fetchall()])
+        # 2. Update the existing label's text
+        topic_label.text = topic
+        topic_label.classes(remove='hidden')
+        if not query:
             ui.notify('No verses found!', type='negative')
             return
 
@@ -168,8 +126,7 @@ def search_bible_promises(gui=None, q='', **_):
             ui.notify('Display cleared', type='positive', position='top')
             return
 
-        active_bible_tab = gui.get_active_area1_tab()
-        verses = get_bible_content(query, bible=app.storage.user[active_bible_tab]["bt"] if active_bible_tab in app.storage.user else "NET", sql_query=SQL_QUERY)
+        verses = get_bible_content(query, bible=gui.get_area_1_bible_text(), sql_query=SQL_QUERY)
 
         if not verses:
             ui.notify('No verses found!', type='negative')
@@ -205,6 +162,63 @@ def search_bible_promises(gui=None, q='', **_):
         input_field.props(f'placeholder="Type to filter {len(verses)} results..."')
         ui.notify(f"{len(verses)} {'result' if not verses or len(verses) == 1 else 'results'} found!")
 
+    def handle_enter(e):
+        query = input_field.value.strip()
+        
+        db_file = os.path.join(BIBLEMATEGUI_DATA, "vectors", "collection.db")
+        sql_table = "PROMISES"
+        embedding_model="paraphrase-multilingual"
+        options = []
+        try:
+            with apsw.Connection(db_file) as connection:
+                # search for exact match first
+                cursor = connection.cursor()
+                cursor.execute(f"SELECT * FROM {sql_table} WHERE entry = ?;", (query,))
+                rows = cursor.fetchall()
+                if not rows: # perform similarity search if no an exact match
+                    # convert query to vector
+                    query_vector = get_embeddings([query], embedding_model)[0]
+                    # fetch all entries
+                    cursor.execute(f"SELECT entry, entry_vector FROM {sql_table}")
+                    all_rows = cursor.fetchall()
+                    if not all_rows:
+                        return []
+                    # build a matrix
+                    entries, entry_vectors = zip(*[(row[0], np.array(json.loads(row[1]))) for row in all_rows if row[0] and row[1]])
+                    document_matrix = np.vstack(entry_vectors)
+                    # perform a similarity search
+                    similarities = cosine_similarity_matrix(query_vector, document_matrix)
+                    top_indices = np.argsort(similarities)[::-1][:config.top_k]
+                    # return top matches
+                    options = [entries[i] for i in top_indices]
+                elif len(rows) == 1: # single exact match
+                    path = rows[0][0]
+                    show_verses(path)
+        except Exception as ex:
+            print("Error during database operation:", ex)
+            ui.notify('Error during database operation!', type='negative')
+            return
+
+        if options:
+            options = list(set(options))
+            def handle_selection(selected_option):
+                nonlocal dialog
+                if selected_option:
+                    dialog.close()
+                    if "+" in selected_option:
+                        path, _ = selected_option.split("+", 1)
+                    else:
+                        path = selected_option
+                    show_verses(path)
+
+            selection_container.clear()
+            with selection_container:
+                # We use a radio button for selection
+                radio = ui.radio(options).classes('w-full').props('color=primary')
+                ui.button('Show Verses', on_click=lambda: handle_selection(radio.value)) \
+                    .classes('w-full mt-4 bg-blue-500 text-white shadow-md')    
+            dialog.open()
+
     # ==============================================================================
     # 3. UI LAYOUT
     # ==============================================================================
@@ -219,6 +233,7 @@ def search_bible_promises(gui=None, q='', **_):
         input_field.on('keydown.enter', handle_enter)
         input_field.on('update:model-value', filter_verses)
 
+    topic_label = ui.label().classes('text-2xl font-serif hidden')
 
     # --- Main Content Area ---
     with ui.column().classes('w-full items-center'):

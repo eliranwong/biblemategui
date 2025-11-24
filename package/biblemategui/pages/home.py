@@ -23,6 +23,8 @@ from biblemategui.pages.tools.chronology import bible_chronology
 
 from biblemategui.pages.search.bible_verses import search_bible_verses
 from biblemategui.pages.search.bible_promises import search_bible_promises
+from biblemategui.pages.search.bible_parallels import search_bible_parallels
+from biblemategui.pages.search.bible_topics import search_bible_topics
 
 class BibleMateGUI:
     def __init__(self):
@@ -287,7 +289,11 @@ class BibleMateGUI:
             return xrefs
         elif title.lower() == "promises":
             return search_bible_promises
-        elif title.lower() == "search":
+        elif title.lower() == "parallels":
+            return search_bible_parallels
+        elif title.lower() == "topics":
+            return search_bible_topics
+        elif title.lower() == "verses":
             return search_bible_verses
         elif title.lower() == "chronology":
             return bible_chronology
@@ -361,7 +367,7 @@ class BibleMateGUI:
             print(traceback.format_exc())
 
     def is_tool(self, title):
-        tools = ("audio", "search", "chronology")
+        tools = ("audio", "verses", "chronology", "xrefs", "promises", "parallels", "topics")
         return True if title.lower() in tools else False
 
     def load_area_2_content(self, content=None, title="Tool", tab=None, args=None, keep=True, sync=True):
@@ -414,7 +420,17 @@ class BibleMateGUI:
         except:
             print(traceback.format_exc())
 
-    def change_area_1_bible_chapter(self, version, book=1, chapter=1, verse=1):
+    def get_area_1_bible_text():
+        active_bible_tab = self.get_active_area1_tab()
+        return app.storage.user[active_bible_tab]["bt"] if active_bible_tab in app.storage.user else app.storage.user['bible_book_text'] if 'bible_book_text' in app.storage.user else "NET"
+
+    def get_area_2_bible_text():
+        active_bible_tab = self.get_active_area2_tab()
+        return app.storage.user[active_bible_tab]["bt"] if active_bible_tab in app.storage.user else app.storage.user['tool_book_text'] if 'tool_book_text' in app.storage.user else "NET"
+
+    def change_area_1_bible_chapter(self, version=None, book=1, chapter=1, verse=1):
+        if version is None:
+            version = self.get_area_1_bible_text()
         app.storage.user['bible_book_text'] = version
         app.storage.user['bible_book_number'] = book
         app.storage.user['bible_chapter_number'] = chapter
@@ -440,7 +456,9 @@ class BibleMateGUI:
                 if config.reload_after_sync:
                     ui.run_javascript('location.reload()')
 
-    def change_area_2_bible_chapter(self, version, book=1, chapter=1, verse=1, sync=True):
+    def change_area_2_bible_chapter(self, version=None, book=1, chapter=1, verse=1, sync=True):
+        if version is None:
+            version = self.get_area_2_bible_text()
         app.storage.user['tool_book_text'] = version
         if sync and app.storage.user.get("sync"):
             app.storage.user['bible_book_number'] = book
@@ -662,10 +680,10 @@ class BibleMateGUI:
                     
                     with ui.button(icon='search').props('flat color=white round').tooltip('Search'):
                         with ui.menu():
-                            ui.menu_item('Bibles', on_click=lambda: self.load_area_2_content(title='Search'))
-                            ui.menu_item('Parallels', on_click=lambda: self.load_area_2_content(self.work_in_progress))
+                            ui.menu_item('Bibles', on_click=lambda: self.load_area_2_content(title='verses'))
+                            ui.menu_item('Parallels', on_click=lambda: self.load_area_2_content(title='Parallels'))
                             ui.menu_item('Promises', on_click=lambda: self.load_area_2_content(title='Promises'))
-                            ui.menu_item('Topics', on_click=lambda: self.load_area_2_content(self.work_in_progress))
+                            ui.menu_item('Topics', on_click=lambda: self.load_area_2_content(title='Topics'))
                             ui.menu_item('Names', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             ui.menu_item('Characters', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             ui.menu_item('Locations', on_click=lambda: self.load_area_2_content(self.work_in_progress))
@@ -864,11 +882,11 @@ class BibleMateGUI:
             # Search
             with ui.expansion('Search', icon='search').props('header-class="text-secondary"'):
                 ui.item('Bibles', on_click=lambda: (
-                    self.load_area_2_content(title='Search'),
+                    self.load_area_2_content(title='verses'),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Parallels', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
+                    self.load_area_2_content(title='Parallels'),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Promises', on_click=lambda: (
@@ -876,7 +894,7 @@ class BibleMateGUI:
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Topics', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
+                    self.load_area_2_content(title='Topics'),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Names', on_click=lambda: (

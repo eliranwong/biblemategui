@@ -208,10 +208,10 @@ def original_reader(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, **_):
         def search_bible(q=""):
             app.storage.user['tool_query'] = q
             gui.select_empty_area2_tab()
-            gui.load_area_2_content(title="Search")
+            gui.load_area_2_content(title="Verses")
         with ui.button(icon='more_vert').props(f'flat round color={"white" if app.storage.user["dark_mode"] else "black"}'):
             with ui.menu():
-                ui.menu_item('Previous Chapter', on_click=lambda: previous_chapter(bible_selector.get_selection()))
+                ui.menu_item('Prev Chapter', on_click=lambda: previous_chapter(bible_selector.get_selection()))
                 ui.menu_item('Next Chapter', on_click=lambda: next_chapter(bible_selector.get_selection()))
                 if area == 1:
                     ui.separator()

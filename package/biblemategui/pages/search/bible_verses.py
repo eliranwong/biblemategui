@@ -116,8 +116,7 @@ def search_bible_verses(gui=None, q='', **_):
             ui.notify('Display cleared', type='positive', position='top')
             return
 
-        active_bible_tab = gui.get_active_area1_tab()
-        verses = get_bible_content(query, bible=app.storage.user[active_bible_tab]["bt"] if active_bible_tab in app.storage.user else "NET", sql_query=SQL_QUERY)
+        verses = get_bible_content(query, bible=gui.get_area_1_bible_text(), sql_query=SQL_QUERY)
 
         if not verses:
             ui.notify('No verses found.', type='negative')

@@ -1,19 +1,30 @@
 from agentmake.plugins.uba.lib.BibleBooks import BibleBooks
-from biblemategui import BIBLEMATEGUI_DATA
+from biblemategui import BIBLEMATEGUI_DATA, config
 from biblemategui.fx.bible import get_bible_content
-from agentmake.plugins.uba.lib.BibleParser import BibleVerseParser
 from functools import partial
 from nicegui import ui, app
-import re, apsw, os
+from agentmake.utils.rag import get_embeddings, cosine_similarity_matrix
+import numpy as np
+import re, apsw, os, json
 
 
-def xrefs(gui=None, q='', **_):
+def search_bible_parallels(gui=None, q='', **_):
 
     SQL_QUERY = "PRAGMA case_sensitive_like = false; SELECT Book, Chapter, Verse, Scripture FROM Verses WHERE (Scripture REGEXP ?) ORDER BY Book, Chapter, Verse"
 
     # --- Data: 66 Bible Books & ID Mapping ---
     BIBLE_BOOKS = [BibleBooks.abbrev["eng"][str(i)][0] for i in range(1,67)]
 
+    # --- Fuzzy Match Dialog ---
+    with ui.dialog() as dialog, ui.card().classes('w-full max-w-md'):
+        ui.label("Did you mean...").classes('text-xl font-bold text-primary mb-4')
+        ui.label("We couldn't find an exact match. Please select one of these topics:").classes('text-secondary mb-4')
+        
+        # This container will hold the radio selection dynamically
+        selection_container = ui.column().classes('w-full')
+        
+        with ui.row().classes('w-full justify-end mt-4'):
+            ui.button('Cancel', on_click=dialog.close).props('flat color=grey')
 
     # ----------------------------------------------------------
     # Helper: Filter Logic
@@ -52,7 +63,8 @@ def xrefs(gui=None, q='', **_):
             row.set_visibility(is_match)
             if is_match:
                 total_matches += 1
-        ui.notify(f"{total_matches} {'match' if not total_matches or total_matches == 1 else 'matches'} found!")
+        if total_matches:
+            ui.notify(f"{total_matches} {'match' if total_matches == 1 else 'matches'} found!")
 
     # ----------------------------------------------------------
     # Helper: Remove Verse
@@ -78,30 +90,34 @@ def xrefs(gui=None, q='', **_):
     # ----------------------------------------------------------
     # Core: Fetch and Display
     # ----------------------------------------------------------
-    def handle_enter(e):
-        nonlocal SQL_QUERY
-        query = input_field.value.strip()
-        parser = BibleVerseParser(False)
-        refs = parser.extractAllReferences(query)
-        if not refs:
-            ui.notify('No verses found!', type='negative')
-            return
-        b, c, v, *_ = refs[0]
-        query = ""
-        db = os.path.join(BIBLEMATEGUI_DATA, "cross-reference.sqlite")
+
+    def show_verses(path):
+        nonlocal SQL_QUERY, verses_container, gui, dialog, input_field, topic_label
+
+        db = os.path.join(BIBLEMATEGUI_DATA, "collections3.sqlite")
         with apsw.Connection(db) as connn:
-            sql_query = "SELECT Information FROM ScrollMapper WHERE Book=? AND Chapter=? AND Verse=? limit 1"
             cursor = connn.cursor()
-            cursor.execute(sql_query, (b, c, v))
-            query = cursor.fetchone()
-        if query:
-            query = query[0]
-        else:
+            if re.search(r"^[0-9]+?\.[0-9]+?$", path):
+                sql_query = "SELECT Topic, Passages FROM PARALLEL WHERE Tool=? AND Number=? limit 1"
+                tool, number = path.split(".")
+                cursor.execute(sql_query, (int(tool), int(number)))
+                if query := cursor.fetchone():
+                    topic, query = query
+            else:
+                topic = path
+                sql_query = "SELECT Passages FROM PARALLEL WHERE Topic=?"
+                cursor.execute(sql_query, (path,))
+                query = "; ".join([i[0] for i in cursor.fetchall()])
+                if not query:
+                    sql_query = "SELECT Passages FROM PARALLEL WHERE Topic LIKE ?"
+                    cursor.execute(sql_query, (f"%{path}%",))
+                    query = "; ".join([i[0] for i in cursor.fetchall()])
+        # 2. Update the existing label's text
+        topic_label.text = topic
+        topic_label.classes(remove='hidden')
+        if not query:
             ui.notify('No verses found!', type='negative')
             return
-        
-        # Prepend the original verse reference to the query for context
-        query = parser.bcvToVerseReference(b, c, v) + "; " + query
 
         # Clear existing rows first
         verses_container.clear()
@@ -146,6 +162,63 @@ def xrefs(gui=None, q='', **_):
         input_field.props(f'placeholder="Type to filter {len(verses)} results..."')
         ui.notify(f"{len(verses)} {'result' if not verses or len(verses) == 1 else 'results'} found!")
 
+    def handle_enter(e):
+        query = input_field.value.strip()
+        
+        db_file = os.path.join(BIBLEMATEGUI_DATA, "vectors", "collection.db")
+        sql_table = "PARALLEL"
+        embedding_model="paraphrase-multilingual"
+        options = []
+        try:
+            with apsw.Connection(db_file) as connection:
+                # search for exact match first
+                cursor = connection.cursor()
+                cursor.execute(f"SELECT * FROM {sql_table} WHERE entry = ?;", (query,))
+                rows = cursor.fetchall()
+                if not rows: # perform similarity search if no an exact match
+                    # convert query to vector
+                    query_vector = get_embeddings([query], embedding_model)[0]
+                    # fetch all entries
+                    cursor.execute(f"SELECT entry, entry_vector FROM {sql_table}")
+                    all_rows = cursor.fetchall()
+                    if not all_rows:
+                        return []
+                    # build a matrix
+                    entries, entry_vectors = zip(*[(row[0], np.array(json.loads(row[1]))) for row in all_rows if row[0] and row[1]])
+                    document_matrix = np.vstack(entry_vectors)
+                    # perform a similarity search
+                    similarities = cosine_similarity_matrix(query_vector, document_matrix)
+                    top_indices = np.argsort(similarities)[::-1][:config.top_k]
+                    # return top matches
+                    options = [entries[i] for i in top_indices]
+                elif len(rows) == 1: # single exact match
+                    path = rows[0][0]
+                    show_verses(path)
+        except Exception as ex:
+            print("Error during database operation:", ex)
+            ui.notify('Error during database operation!', type='negative')
+            return
+
+        if options:
+            options = list(set(options))
+            def handle_selection(selected_option):
+                nonlocal dialog
+                if selected_option:
+                    dialog.close()
+                    if "+" in selected_option:
+                        path, _ = selected_option.split("+", 1)
+                    else:
+                        path = selected_option
+                    show_verses(path)
+
+            selection_container.clear()
+            with selection_container:
+                # We use a radio button for selection
+                radio = ui.radio(options).classes('w-full').props('color=primary')
+                ui.button('Show Verses', on_click=lambda: handle_selection(radio.value)) \
+                    .classes('w-full mt-4 bg-blue-500 text-white shadow-md')    
+            dialog.open()
+
     # ==============================================================================
     # 3. UI LAYOUT
     # ==============================================================================
@@ -160,6 +233,7 @@ def xrefs(gui=None, q='', **_):
         input_field.on('keydown.enter', handle_enter)
         input_field.on('update:model-value', filter_verses)
 
+    topic_label = ui.label().classes('text-2xl font-serif hidden')
 
     # --- Main Content Area ---
     with ui.column().classes('w-full items-center'):

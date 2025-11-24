@@ -37,7 +37,7 @@ config.avatar=""
 config.custom_token=""
 config.storage_secret="REPLACE_ME_WITH_A_REAL_SECRET"
 config.embedding_model="paraphrase-multilingual"
-config.top_k=3'''
+config.top_k=10'''
 
 def load_config():
     """Loads the user's configuration from the config file."""

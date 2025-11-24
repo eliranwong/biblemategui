@@ -122,8 +122,7 @@ class BibleAudioPlayer:
 
 def bibles_audio(gui=None, bt=None, b=1, c=1, v=1, area=2, **_):
     if not bt:
-        active_bible_tab = gui.get_active_area1_tab()
-        bt = app.storage.user[active_bible_tab]["bt"] if active_bible_tab in app.storage.user else "NET"
+        bt = gui.get_area_1_bible_text()
 
     # version options
     version_options = list(config.audio.keys())
