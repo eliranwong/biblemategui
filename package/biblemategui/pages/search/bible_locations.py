@@ -1,34 +1,38 @@
-from agentmake.plugins.uba.lib.BibleBooks import BibleBooks
 from biblemategui import BIBLEMATEGUI_DATA, config
-from biblemategui.fx.bible import get_bible_content
 from functools import partial
 from nicegui import ui, app
 from agentmake.utils.rag import get_embeddings, cosine_similarity_matrix
 import numpy as np
-import re, apsw, os, json, traceback
+import re, apsw, os, json, traceback, webbrowser
 
 
-def search_bible_topics(gui=None, q='', **_):
+def search_bible_locations(gui=None, q='', **_):
 
     def bcv(event):
         nonlocal gui
         b, c, v, *_ = event.args
         gui.change_area_1_bible_chapter(None, b, c, v)
+    
+    def website(event):
+        url, *_ = event.args
+        print(url)
+        ui.navigate.to(url, new_tab=True)
 
     ui.on('bcv', bcv)
+    ui.on('website', website)
 
-    # all entries
-    all_entries = []
-    db_file = os.path.join(BIBLEMATEGUI_DATA, "vectors", "exlb.db")
-    with apsw.Connection(db_file) as connn:
+    # all locations
+    all_locations = []
+    db = os.path.join(BIBLEMATEGUI_DATA, "data", "exlb3.data")
+    with apsw.Connection(db) as connn:
         cursor = connn.cursor()
-        sql_query = "SELECT entry FROM exlbt"
+        sql_query = "SELECT location FROM exlbli"
         cursor.execute(sql_query)
-        all_entries = [i[0] for i in cursor.fetchall()]
+        all_locations = [i[0] for i in cursor.fetchall()]
 
     # --- Fuzzy Match Dialog ---
     with ui.dialog() as dialog, ui.card().classes('w-full max-w-md'):
-        ui.label("Bible Topics...").classes('text-xl font-bold text-primary mb-4')
+        ui.label("Bible Locations ...").classes('text-xl font-bold text-primary mb-4')
         ui.label("We couldn't find an exact match. Please select one of these topics:").classes('text-secondary mb-4')
         
         # This container will hold the radio selection dynamically
@@ -48,7 +52,7 @@ def search_bible_topics(gui=None, q='', **_):
         with apsw.Connection(db) as connn:
             cursor = connn.cursor()
             topic = path
-            sql_query = "SELECT content FROM exlbt WHERE path=? limit 1"
+            sql_query = "SELECT content FROM exlbl WHERE path=? limit 1"
             cursor.execute(sql_query, (path,))
             fetch = cursor.fetchone()
             content = fetch[0] if fetch else ""
@@ -86,11 +90,19 @@ def search_bible_topics(gui=None, q='', **_):
             </style>
             """)
             # convert links, e.g. <ref onclick="bcv(3,19,26)">
-            content = re.sub(r'''(onclick|ondblclick)="(bcv)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)
-            content = re.sub(r"""(onclick|ondblclick)='(bcv)\((.*?)\)'""", r"""\1='emitEvent("\2", [\3]); return false;'""", content)
+            content = re.sub(r'''(onclick|ondblclick)="(bcv|website)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)
+            content = re.sub(r"""(onclick|ondblclick)='(bcv|website)\((.*?)\)'""", r"""\1='emitEvent("\2", [\3]); return false;'""", content)
+            # remove map
+            content = content.replace('<div id="map" style="width:100%;height:500px"></div>', "")
+            content = re.sub(r'<script.*?>.*?</script>', '', content, flags=re.DOTALL)
             # convert colors for dark mode, e.g. <font color="brown">
             if app.storage.user['dark_mode']:
                 content = content.replace('<font color="brown">', '<font color="pink">')
+                content = content.replace('<font color="navy">', '<font color="lightskyblue">')
+                content = content.replace('<table bgcolor="#BFBFBF"', '<table bgcolor="#424242"')
+                content = content.replace('<td bgcolor="#FFFFFF">', '<td bgcolor="#212121">')
+                content = content.replace('<tr bgcolor="#FFFFFF">', '<tr bgcolor="#212121">')
+                content = content.replace('<tr bgcolor="#DFDFDF">', '<tr bgcolor="#303030">')
             # display
             ui.html(f'<div class="bible-text">{content}</div>', sanitize=False)
 
@@ -101,7 +113,7 @@ def search_bible_topics(gui=None, q='', **_):
         query = input_field.value.strip()
         
         db_file = os.path.join(BIBLEMATEGUI_DATA, "vectors", "exlb.db")
-        sql_table = "exlbt"
+        sql_table = "exlbl"
         embedding_model="paraphrase-multilingual"
         options = []
         try:
@@ -158,7 +170,7 @@ def search_bible_topics(gui=None, q='', **_):
     with ui.row().classes('w-full max-w-3xl mx-auto m-0 py-0 px-4 items-center'):
         input_field = ui.input(
             value=q,
-            autocomplete=all_entries,
+            autocomplete=all_locations,
             placeholder='Enter a bible topic'
         ).classes('flex-grow text-lg') \
         .props('outlined dense clearable autofocus')

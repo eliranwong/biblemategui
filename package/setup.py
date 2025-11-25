@@ -2,7 +2,7 @@ from setuptools import setup
 from setuptools.command.install import install
 import os, shutil, platform, sys
 
-version = "0.0.84"
+version = "0.0.89"
 with open(os.path.join("biblemategui", "version.txt"), "w", encoding="utf-8") as fileObj:
     fileObj.write(version)
 
@@ -46,6 +46,7 @@ setup(
         f"{package}.fx",
         f"{package}.js",
         f"{package}.css",
+        f"{package}.data",
         f"{package}.pages",
         f"{package}.pages.bibles",
         f"{package}.pages.tools",
@@ -58,6 +59,7 @@ setup(
         f"{package}.fx": ["*.*"],
         f"{package}.js": ["*.*"],
         f"{package}.css": ["*.*"],
+        f"{package}.data": ["*.*"],
         f"{package}.pages": ["*.*"],
         f"{package}.pages.bibles": ["*.*"],
         f"{package}.pages.tools": ["*.*"],

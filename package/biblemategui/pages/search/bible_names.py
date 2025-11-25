@@ -1,0 +1,177 @@
+from biblemategui import BIBLEMATEGUI_DATA, config
+from biblemategui.data.HBN import bible_names
+from agentmake.utils.rag import get_embeddings, cosine_similarity_matrix
+import numpy as np
+from functools import partial
+from nicegui import ui, app
+import re, apsw, os, json, traceback
+
+
+def search_bible_names(gui=None, q='', **_):
+
+    # ----------------------------------------------------------
+    # Helper: Filter Logic
+    # ----------------------------------------------------------
+    def show_all_names(e=None):
+        """
+        Filters visibility based on input.
+        Iterates over default_slot.children to find rows.
+        """
+        # Robustly determine the search text
+        text = input_field.value
+        if len(text) == 1:
+            for row in names_container.default_slot.children:
+                if not hasattr(row, 'name_data'):
+                    continue
+                row.set_visibility(True)
+
+    def filter_names(e=None):
+        """
+        Filters visibility based on input.
+        Iterates over default_slot.children to find rows.
+        """
+        total_matches = 0
+        # Robustly determine the search text
+        text = ""
+        if e is not None and hasattr(e, 'value'):
+            text = e.value 
+        else:
+            text = input_field.value 
+
+        search_term = text
+
+        # similarity search
+        if search_term:
+            db_file = os.path.join(BIBLEMATEGUI_DATA, "vectors", "exlb.db")
+            sql_table = "exlbn"
+            embedding_model="paraphrase-multilingual"
+            options = []
+            try:
+                with apsw.Connection(db_file) as connection:
+                    # search for exact match first
+                    cursor = connection.cursor()
+                    cursor.execute(f"SELECT path FROM {sql_table} WHERE path = ?;", (search_term,))
+                    rows = cursor.fetchall()
+                    if not rows: # perform similarity search if no an exact match
+                        # convert query to vector
+                        query_vector = get_embeddings([search_term], embedding_model)[0]
+                        # fetch all entries
+                        cursor.execute(f"SELECT path, entry_vector FROM {sql_table}")
+                        all_rows = cursor.fetchall()
+                        if not all_rows:
+                            return []
+                        # build a matrix
+                        entries, entry_vectors = zip(*[(row[0], np.array(json.loads(row[1]))) for row in all_rows if row[0] and row[1]])
+                        document_matrix = np.vstack(entry_vectors)
+                        # perform a similarity search
+                        similarities = cosine_similarity_matrix(query_vector, document_matrix)
+                        top_indices = np.argsort(similarities)[::-1][:config.top_k]
+                        # return top matches
+                        options = [entries[i] for i in top_indices]
+                    elif len(rows) == 1: # single exact match
+                        options = [rows[0][0]]
+            except Exception as ex:
+                print("Error during database operation:", ex)
+                traceback.print_exc()
+                ui.notify('Error during database operation!', type='negative')
+                return
+
+        # Iterate over the actual children of the container
+        for row in names_container.default_slot.children:
+            # Skip elements that aren't our names rows (if any)
+            if not hasattr(row, 'name_data'):
+                continue
+
+            # Explicitly show all if search is empty
+            if not search_term:
+                row.set_visibility(True)
+                continue
+
+            data = row.name_data
+
+            is_match = (data in options)
+            row.set_visibility(is_match)
+            if is_match:
+                total_matches += 1
+        if total_matches:
+            ui.notify(f"{total_matches} matches found!")
+
+    # ----------------------------------------------------------
+    # Helper: Remove Verse
+    # ----------------------------------------------------------
+    def remove_name_row(row_element, reference):
+        try:
+            names_container.remove(row_element)
+            ui.notify(f'Removed: {reference}', type='warning', position='top')
+        except Exception as e:
+            print(f"Error removing row: {e}")
+
+    # ----------------------------------------------------------
+    # Helper: Open Chapter
+    # ----------------------------------------------------------
+    def open_chapter_next_area2_tab(bible, b, c, v):
+        gui.select_next_area2_tab()
+        gui.change_area_2_bible_chapter(bible, b, c, v, sync=False)
+
+    def open_chapter_empty_area2_tab(bible, b, c, v):
+        gui.select_empty_area2_tab()
+        gui.change_area_2_bible_chapter(bible, b, c, v, sync=False)
+
+    # ----------------------------------------------------------
+    # Core: Fetch and Display
+    # ----------------------------------------------------------
+    def show_names():
+        with names_container:
+            for name, meaning in bible_names.items():
+                # Row setup
+                with ui.row().classes('w-full shadow-sm rounded-lg items-start no-wrap border border-gray-200 !gap-0') as row:
+                    
+                    row.name_data = name # Store data for filter function
+
+                    # --- Chip (Clickable & Removable) ---
+                    with ui.element('div').classes('flex-none pt-1'): 
+                        with ui.chip(
+                            name, 
+                            removable=True, 
+                            icon='book',
+                            #on_click=partial(ui.notify, f'Clicked {v['ref']}'),
+                        ).classes('cursor-pointer font-bold shadow-sm') as chip:
+                            '''with ui.menu():
+                                ui.menu_item('Open in Bible Area', on_click=partial(gui.change_area_1_bible_chapter, v['bible'], v['b'], v['c'], v['v']))
+                                ui.menu_item('Open Here', on_click=partial(gui.change_area_2_bible_chapter, v['bible'], v['b'], v['c'], v['v'], sync=False))
+                                ui.menu_item('Open in Next Tab', on_click=partial(open_chapter_next_area2_tab, v['bible'], v['b'], v['c'], v['v']))
+                                ui.menu_item('Open in New Tab', on_click=partial(open_chapter_empty_area2_tab, v['bible'], v['b'], v['c'], v['v']))'''
+                        chip.on('remove', lambda _, r=row, name=name: remove_name_row(r, name))
+
+                    # --- Content ---
+                    ui.html(meaning, sanitize=False).classes('grow min-w-0 leading-relaxed pl-2 text-base break-words')
+
+        # Clear input so user can start typing to filter immediately
+        input_field.value = ""
+        #input_field.props(f'placeholder="Type to filter {len(bible_names)} results..."')
+        #ui.notify(f"{len(bible_names)} results found!")
+
+    # ==============================================================================
+    # 3. UI LAYOUT
+    # ==============================================================================
+    with ui.row().classes('w-full max-w-3xl mx-auto m-0 py-0 px-4 items-center'):
+        input_field = ui.input(
+            value=q,
+            autocomplete=list(bible_names.keys()),
+            placeholder='Enter a name or meaning'
+        ).classes('flex-grow text-lg') \
+        .props('outlined dense clearable autofocus')
+
+        input_field.on('keydown.enter', filter_names)
+        input_field.on('update:model-value', show_all_names)
+
+
+    # --- Main Content Area ---
+    with ui.column().classes('w-full items-center'):
+        # Define the container HERE within the layout structure
+        names_container = ui.column().classes('w-full transition-all !gap-1')
+
+    show_names()
+
+    if q:
+        filter_names(None)

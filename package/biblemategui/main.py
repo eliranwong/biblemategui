@@ -18,7 +18,20 @@ def get_tooltip_data(word):
         result = cursor.fetchone()    
     if result:
         wordID, clauseID, book, chapter, verse, word, lexicalEntry, morphologyCode, morphology, lexeme, transliteration, pronunciation, interlinear, translation, gloss = result
-        description = f'''<{'heb' if word.startswith("wh") else 'grk'}>{word}</{'heb' if word.startswith("wh") else 'grk'}> | <{'heb' if word.startswith("wh") else 'grk'}>{lexeme}</{'heb' if word.startswith("wh") else 'grk'}><br>
+        audio_path = '/bhs5_audio' if chapter < 40 else '/ognt_audio'
+        audio_module = 'BHS5' if chapter < 40 else 'OGNT'
+        audio_file = f'{audio_path}/{book}_{chapter}/{audio_module}_{book}_{chapter}_{verse}_{wordID}.mp3'
+        audio_file_lex = f'{audio_path}/{book}_{chapter}/lex_{audio_module}_{book}_{chapter}_{verse}_{wordID}.mp3'
+        description = f'''<{'heb' if chapter < 40 else 'grk'}>{word}</{'heb' if chapter < 40 else 'grk'}> | <wphono>{transliteration}</wphono> | <wphono>{pronunciation}</wphono><br>
+<audio controls>
+  <source src="{audio_file}" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+<{'heb' if chapter < 40 else 'grk'}>{lexeme}</{'heb' if chapter < 40 else 'grk'}><br>
+<audio controls>
+  <source src="{audio_file_lex}" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
 <clid>{morphology[:-1].replace(",", ", ")}</clid><br>
 <wgloss>{interlinear}</wgloss><br>
 <wtrans>{translation}</wtrans>'''

@@ -25,6 +25,9 @@ from biblemategui.pages.search.bible_verses import search_bible_verses
 from biblemategui.pages.search.bible_promises import search_bible_promises
 from biblemategui.pages.search.bible_parallels import search_bible_parallels
 from biblemategui.pages.search.bible_topics import search_bible_topics
+from biblemategui.pages.search.bible_locations import search_bible_locations
+from biblemategui.pages.search.bible_characters import search_bible_characters
+from biblemategui.pages.search.bible_names import search_bible_names
 
 class BibleMateGUI:
     def __init__(self):
@@ -293,6 +296,12 @@ class BibleMateGUI:
             return search_bible_parallels
         elif title.lower() == "topics":
             return search_bible_topics
+        elif title.lower() == "characters":
+            return search_bible_characters
+        elif title.lower() == "locations":
+            return search_bible_locations
+        elif title.lower() == "names":
+            return search_bible_names
         elif title.lower() == "verses":
             return search_bible_verses
         elif title.lower() == "chronology":
@@ -367,7 +376,7 @@ class BibleMateGUI:
             print(traceback.format_exc())
 
     def is_tool(self, title):
-        tools = ("audio", "verses", "chronology", "xrefs", "promises", "parallels", "topics")
+        tools = ("audio", "verses", "chronology", "xrefs", "promises", "parallels", "topics", "characters", "locations", "names")
         return True if title.lower() in tools else False
 
     def load_area_2_content(self, content=None, title="Tool", tab=None, args=None, keep=True, sync=True):
@@ -420,11 +429,11 @@ class BibleMateGUI:
         except:
             print(traceback.format_exc())
 
-    def get_area_1_bible_text():
+    def get_area_1_bible_text(self):
         active_bible_tab = self.get_active_area1_tab()
         return app.storage.user[active_bible_tab]["bt"] if active_bible_tab in app.storage.user else app.storage.user['bible_book_text'] if 'bible_book_text' in app.storage.user else "NET"
 
-    def get_area_2_bible_text():
+    def get_area_2_bible_text(self):
         active_bible_tab = self.get_active_area2_tab()
         return app.storage.user[active_bible_tab]["bt"] if active_bible_tab in app.storage.user else app.storage.user['tool_book_text'] if 'tool_book_text' in app.storage.user else "NET"
 
@@ -684,12 +693,12 @@ class BibleMateGUI:
                             ui.menu_item('Parallels', on_click=lambda: self.load_area_2_content(title='Parallels'))
                             ui.menu_item('Promises', on_click=lambda: self.load_area_2_content(title='Promises'))
                             ui.menu_item('Topics', on_click=lambda: self.load_area_2_content(title='Topics'))
-                            ui.menu_item('Names', on_click=lambda: self.load_area_2_content(self.work_in_progress))
-                            ui.menu_item('Characters', on_click=lambda: self.load_area_2_content(self.work_in_progress))
-                            ui.menu_item('Locations', on_click=lambda: self.load_area_2_content(self.work_in_progress))
-                            ui.menu_item('Dictionary', on_click=lambda: self.load_area_2_content(self.work_in_progress))
-                            ui.menu_item('Encyclopedia', on_click=lambda: self.load_area_2_content(self.work_in_progress))
-                            ui.menu_item('Lexicon', on_click=lambda: self.load_area_2_content(self.work_in_progress))
+                            ui.menu_item('Names', on_click=lambda: self.load_area_2_content(title='Names'))
+                            ui.menu_item('Characters', on_click=lambda: self.load_area_2_content(title='Characters'))
+                            ui.menu_item('Locations', on_click=lambda: self.load_area_2_content(title='Locations'))
+                            ui.menu_item('Dictionaries', on_click=lambda: self.load_area_2_content(title='Dictionaries'))
+                            ui.menu_item('Encyclopedias', on_click=lambda: self.load_area_2_content(title='Encyclopedias'))
+                            ui.menu_item('Lexicons', on_click=lambda: self.load_area_2_content(title='Lexicons'))
 
                     with ui.button(icon='auto_awesome').props('flat color=white round').tooltip('AI'):
                         with ui.menu():
@@ -898,27 +907,27 @@ class BibleMateGUI:
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Names', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
+                    self.load_area_2_content(title='Names'),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Characters', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
+                    self.load_area_2_content(title='Characters'),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Locations', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
+                    self.load_area_2_content(title='Locations'),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
-                ui.item('Dictionary', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
+                ui.item('Dictionaries', on_click=lambda: (
+                    self.load_area_2_content(title='Dictionaries'),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
-                ui.item('Encyclopedia', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
+                ui.item('Encyclopedias', on_click=lambda: (
+                    self.load_area_2_content(title='Encyclopedias'),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
-                ui.item('Lexicon', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
+                ui.item('Lexicons', on_click=lambda: (
+                    self.load_area_2_content(title='Lexicons'),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
             

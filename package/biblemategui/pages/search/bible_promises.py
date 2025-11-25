@@ -10,6 +10,15 @@ import re, apsw, os, json
 
 def search_bible_promises(gui=None, q='', **_):
 
+    # all entries
+    all_entries = []
+    db_file = os.path.join(BIBLEMATEGUI_DATA, "vectors", "collection.db")
+    with apsw.Connection(db_file) as connn:
+        cursor = connn.cursor()
+        sql_query = "SELECT entry FROM PROMISES"
+        cursor.execute(sql_query)
+        all_entries = [i[0] for i in cursor.fetchall()]
+
     SQL_QUERY = "PRAGMA case_sensitive_like = false; SELECT Book, Chapter, Verse, Scripture FROM Verses WHERE (Scripture REGEXP ?) ORDER BY Book, Chapter, Verse"
 
     # --- Data: 66 Bible Books & ID Mapping ---
@@ -17,7 +26,7 @@ def search_bible_promises(gui=None, q='', **_):
 
     # --- Fuzzy Match Dialog ---
     with ui.dialog() as dialog, ui.card().classes('w-full max-w-md'):
-        ui.label("Did you mean...").classes('text-xl font-bold text-primary mb-4')
+        ui.label("Bible Promises ...").classes('text-xl font-bold text-primary mb-4')
         ui.label("We couldn't find an exact match. Please select one of these topics:").classes('text-secondary mb-4')
         
         # This container will hold the radio selection dynamically
@@ -225,8 +234,8 @@ def search_bible_promises(gui=None, q='', **_):
     with ui.row().classes('w-full max-w-3xl mx-auto m-0 py-0 px-4 items-center'):
         input_field = ui.input(
             value=q,
-            autocomplete=BIBLE_BOOKS,
-            placeholder='Enter a bible verse reference (e.g. John 3:16)'
+            autocomplete=all_entries,
+            placeholder='Enter keywords for a search ...'
         ).classes('flex-grow text-lg') \
         .props('outlined dense clearable autofocus')
 

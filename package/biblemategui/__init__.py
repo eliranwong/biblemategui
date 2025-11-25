@@ -1,6 +1,7 @@
 from pathlib import Path
 from agentmake import readTextFile, writeTextFile
 from biblemategui import config
+from nicegui import app
 import os, glob, apsw, re
 
 BIBLEMATEGUI_APP_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -93,6 +94,8 @@ else:
     Path(bibles_dir_custom).mkdir(parents=True, exist_ok=True)
     config.bibles_custom = {}
 # audio resources
+app.add_media_files('/bhs5_audio', os.path.join(BIBLEMATEGUI_DATA, "audio", "bibles", "BHS5", "default"))
+app.add_media_files('/ognt_audio', os.path.join(BIBLEMATEGUI_DATA, "audio", "bibles", "OGNT", "default"))
 audio_dir = os.path.join(BIBLEMATEGUI_DATA, "audio", "bibles")
 if os.path.isdir(audio_dir):
     config.audio = {i: os.path.join(audio_dir, i, "default") for i in os.listdir(audio_dir) if os.path.isdir(os.path.join(audio_dir, i)) and not i in ("BHS5", "OGNT")}
