@@ -29,10 +29,10 @@ def search_bible_locations(gui=None, q='', **_):
 
     # all locations
     all_locations = []
-    db = os.path.join(BIBLEMATEGUI_DATA, "data", "exlb3.data")
-    with apsw.Connection(db) as connn:
+    vdb = os.path.join(BIBLEMATEGUI_DATA, "data", "exlb3.data")
+    with apsw.Connection(vdb) as connn:
         cursor = connn.cursor()
-        sql_query = "SELECT location FROM exlbli"
+        sql_query = "SELECT location FROM exlbli" # SELECT lat, lng FROM exlbli WHERE path=?
         cursor.execute(sql_query)
         all_locations = [i[0] for i in cursor.fetchall()]
 
@@ -52,7 +52,7 @@ def search_bible_locations(gui=None, q='', **_):
     # ----------------------------------------------------------
 
     def show_entry(path):
-        nonlocal content_container, gui, dialog, input_field
+        nonlocal content_container, gui, dialog, input_field, vdb
 
         db = os.path.join(BIBLEMATEGUI_DATA, "data", "exlb3.data")
         with apsw.Connection(db) as connn:
@@ -61,6 +61,15 @@ def search_bible_locations(gui=None, q='', **_):
             cursor.execute(sql_query, (path,))
             fetch = cursor.fetchone()
             content = fetch[0] if fetch else ""
+
+        lat, lng = None, None
+        with apsw.Connection(vdb) as connn:
+            cursor = connn.cursor()
+            sql_query = "SELECT lat, lng FROM exlbli WHERE path=?"
+            cursor.execute(sql_query, (path,))
+            if fetch := cursor.fetchone():
+                lat, lng = fetch
+                lat, lng = float(fetch[0]), float(fetch[1])
 
         # Clear existing rows first
         content_container.clear()
@@ -97,9 +106,15 @@ def search_bible_locations(gui=None, q='', **_):
             # convert links, e.g. <ref onclick="bcv(3,19,26)">
             content = re.sub(r'''(onclick|ondblclick)="(cr|bcv|website)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)
             content = re.sub(r"""(onclick|ondblclick)='(cr|bcv|website)\((.*?)\)'""", r"""\1='emitEvent("\2", [\3]); return false;'""", content)
+            # remove images
+            content = re.sub('<ref onclick="openHtmlImage.*?</ref>', '', content)
             # remove map
             content = content.replace('<div id="map" style="width:100%;height:500px"></div>', "")
             content = re.sub(r'<script.*?>.*?</script>', '', content, flags=re.DOTALL)
+            # add a map
+            if lat and lng:
+                m = ui.leaflet(center=(lat, lng), zoom=9).classes('w-full h-96')
+                m.marker(latlng=(lat, lng))
             # convert colors for dark mode, e.g. <font color="brown">
             if app.storage.user['dark_mode']:
                 content = content.replace('color="brown">', 'color="pink">')
@@ -178,7 +193,7 @@ def search_bible_locations(gui=None, q='', **_):
         input_field = ui.input(
             value=q,
             autocomplete=all_locations,
-            placeholder='Enter a bible topic'
+            placeholder='Enter a bible location name to search...'
         ).classes('flex-grow text-lg') \
         .props('outlined dense clearable autofocus')
 

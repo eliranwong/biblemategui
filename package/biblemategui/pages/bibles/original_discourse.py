@@ -87,7 +87,7 @@ def original_discourse(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, **
             /* Hebrew Word Layer */
             wform, heb, bdbheb, bdbarc, hu {{
                 font-family: 'SBL Hebrew', 'Ezra SIL', serif;
-                font-size: 1.6rem;
+                font-size: 1.8rem;
                 direction: rtl;
                 display: inline-block;
                 line-height: 1.2em;

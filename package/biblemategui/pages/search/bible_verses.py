@@ -145,7 +145,15 @@ def search_bible_verses(gui=None, q='', **_):
                         chip.on('remove', lambda _, r=row, ref=v['ref']: remove_verse_row(r, ref))
 
                     # --- Content ---
-                    ui.html(v['content'], sanitize=False).classes('grow min-w-0 leading-relaxed pl-2 text-base break-words')
+                    content = v['content']
+                    # add tooltip
+                    if "</heb>" in content:
+                        content = re.sub('(<heb id=")(.*?)"', r'\1\2" data-word="\2" class="tooltip-word"', content)
+                        content = content.replace("<heb> </heb>", "<heb>&nbsp;</heb>")
+                        content = f"<div style='display: inline-block; direction: rtl;'>{content}</div>"
+                    elif "</grk>" in content:
+                        content = re.sub('(<grk id=")(.*?)"', r'\1\2" data-word="\2" class="tooltip-word"', content)
+                    ui.html(content, sanitize=False).classes('grow min-w-0 leading-relaxed pl-2 text-base break-words')
 
         # Clear input so user can start typing to filter immediately
         input_field.value = ""
@@ -155,6 +163,33 @@ def search_bible_verses(gui=None, q='', **_):
     # ==============================================================================
     # 3. UI LAYOUT
     # ==============================================================================
+    ui.add_head_html(f"""
+    <style>
+        /* Hebrew Word Layer */
+        wform, heb, bdbheb, bdbarc, hu {{
+            font-family: 'SBL Hebrew', 'Ezra SIL', serif;
+            font-size: 1.8rem;
+            direction: rtl;
+            display: inline-block;
+            line-height: 1.2em;
+            margin-top: 0;
+            margin-bottom: -2px;
+            cursor: pointer;
+        }}
+        /* Greek Word Layer (targets <grk> tag) */
+        wform, grk, kgrk, gu {{
+            font-family: 'SBL Greek', 'Galatia SIL', 'Times New Roman', serif; /* CHANGED */
+            font-size: 1.6rem;
+            direction: ltr;
+            display: inline-block;
+            line-height: 1.2em;
+            margin-top: 0;
+            margin-bottom: -2px;
+            cursor: pointer;
+        }}
+    </style>
+    """)
+    
     with ui.row().classes('w-full max-w-3xl mx-auto m-0 py-0 px-4 items-center'):
         input_field = ui.input(
             value=q,

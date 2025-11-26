@@ -41,9 +41,9 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
 
     # add tooltip
     if "</heb>" in content:
-        content = re.sub('(<heb id=")(.*?)"(.*?)class="', r'\1\2" data-word="\2" \3class="tooltip-word ', content)
+        content = re.sub('(<heb id=")(.*?)"', r'\1\2" data-word="\2" class="tooltip-word"', content)
     elif "</grk>" in content:
-        content = re.sub('(<grk id=")(.*?)"(.*?)class="', r'\1\2" data-word="\2" \3class="tooltip-word ', content)
+        content = re.sub('(<grk id=")(.*?)"', r'\1\2" data-word="\2" class="tooltip-word"', content)
 
     # convert verse link, like '<vid id="v19.117.1" onclick="luV(1)">'
     content = re.sub(r'<vid id="v([0-9]+?)\.([0-9]+?)\.([0-9]+?)" onclick="luV\(([0-9]+?)\)">', r'<vid id="v\1.\2.\3" onclick="luV(\1, \2, \3)">', content)
@@ -75,7 +75,7 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
             /* Hebrew Word Layer */
             wform, heb, bdbheb, bdbarc, hu {{
                 font-family: 'SBL Hebrew', 'Ezra SIL', serif;
-                font-size: 1.6rem;
+                font-size: 1.8rem;
                 direction: rtl;
                 display: inline-block;
                 line-height: 1.2em;

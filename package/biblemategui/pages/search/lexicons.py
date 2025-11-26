@@ -165,7 +165,7 @@ def search_bible_lexicons(gui=None, q='', **_):
                 /* Hebrew Word Layer */
                 wform, heb, bdbheb, bdbarc, hu {{
                     font-family: 'SBL Hebrew', 'Ezra SIL', serif;
-                    font-size: 1.6rem;
+                    font-size: 1.8rem;
                     direction: rtl;
                     display: inline-block;
                     line-height: 1.2em;

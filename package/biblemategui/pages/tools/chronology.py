@@ -1,33 +1,29 @@
-from nicegui import ui
+from nicegui import ui, app
 
-output_label = None
+def bible_chronology(gui=None, **_):
+    #ui.page_title('Bible Chronology')
 
-# Function to be triggered when the link is clicked
-def show_verse_details(reference: str):
-    """Updates the output label with information about the clicked reference."""
-    global output_label
-    # A UI element to display the output
-    output_label = ui.label("Click a Bible link below to see its details.").classes('mt-4 text-lg text-green-700')
-    print(f"Python function triggered for: {reference}")
-    output_label.set_text(f"Details for {reference}: You clicked the link! In a real app, this function could load verse text from a database or API.")
+    # Function to be triggered when the link is clicked
+    def show_verse_details(reference: str):
+        """Updates the output label with information about the clicked reference."""
+        nonlocal gui
+        app.storage.user['tool_query'] = reference
+        gui.select_empty_area2_tab()
+        gui.load_area_2_content(title='Verses')
 
-# Function to create the clickable link component
-def create_internal_link(reference: str):
-    # 1. Create the ui.link component (it looks like a link)
-    link_component = ui.link(
-        text=reference,
-        target='#' # Set target to '#' or omit it since we are not opening a URL
-    ).classes('text-blue-600 hover:text-blue-800 underline')
-    # 2. Attach the Python function to the 'click' event
-    # We use a lambda to pass the specific 'reference' string argument to the function
-    link_component.on('click', lambda: show_verse_details(reference))
-    
-    return link_component
+    # Function to create the clickable link component
+    def create_internal_link(reference: str):
+        # 1. Create the ui.link component (it looks like a link)
+        link_component = ui.link(
+            text=reference,
+            target='#' # Set target to '#' or omit it since we are not opening a URL
+        ).classes('text-secondary hover:text-primary underline')
+        # 2. Attach the Python function to the 'click' event
+        # We use a lambda to pass the specific 'reference' string argument to the function
+        link_component.on('click', lambda: show_verse_details(reference))
+        
+        return link_component
 
-def bible_chronology(**_):
-    global output_label
-    ui.page_title('Bible Chronology')
-    
     bible_events = [
         {'year': '2166  BC', 'event': "Abram born", 'reference': 'Gen 11:26; 21:5'},
         {'year': '2156  BC', 'event': "Sarai born", 'reference': 'Gen 17:1, 17'},
@@ -338,6 +334,3 @@ def bible_chronology(**_):
                 ):
                     with ui.row():
                         ref_link
-                        
-        # The element whose text is updated by the function
-        output_label

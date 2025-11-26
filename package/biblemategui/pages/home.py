@@ -405,18 +405,22 @@ class BibleMateGUI:
             # modify tab label here for particular features TODO
             tab_label = title
             # Get the currently active tab
+            bible_tab = self.get_active_area1_tab()
             active_tab = tab if tab else self.get_active_area2_tab()
             # args holder
+            sync_b = app.storage.user[bible_tab]["b"] if bible_tab in app.storage.user else app.storage.user.get('bible_book_number')
+            sync_c = app.storage.user[bible_tab]["c"] if bible_tab in app.storage.user else app.storage.user.get('bible_chapter_number')
+            sync_v = app.storage.user[bible_tab]["v"] if bible_tab in app.storage.user else app.storage.user.get('bible_verse_number')
             args = args if args else {
                 "title": title,
                 "label": tab_label,
                 "bt": app.storage.user.get('tool_book_text'),
-                "b": app.storage.user.get('bible_book_number') if is_sync else app.storage.user.get('tool_book_number'),
-                "c": app.storage.user.get('bible_chapter_number') if is_sync else app.storage.user.get('tool_chapter_number'),
-                "v": app.storage.user.get('bible_verse_number') if is_sync else app.storage.user.get('tool_verse_number'),
+                "b": sync_b if is_sync else app.storage.user.get('tool_book_number'),
+                "c": sync_c if is_sync else app.storage.user.get('tool_chapter_number'),
+                "v": sync_v if is_sync else app.storage.user.get('tool_verse_number'),
                 "q": app.storage.user.get('tool_query', ''),
                 "area": 2,
-                "tab1": self.get_active_area1_tab(),
+                "tab1": bible_tab,
                 "tab2": active_tab,
             }
             # Get the active tab's scroll area
@@ -697,7 +701,7 @@ class BibleMateGUI:
                     
                     with ui.button(icon='search').props('flat color=white round').tooltip('Search'):
                         with ui.menu():
-                            ui.menu_item('Bibles', on_click=lambda: self.load_area_2_content(title='verses'))
+                            ui.menu_item('Bibles', on_click=lambda: self.load_area_2_content(title='Verses'))
                             ui.menu_item('Parallels', on_click=lambda: self.load_area_2_content(title='Parallels'))
                             ui.menu_item('Promises', on_click=lambda: self.load_area_2_content(title='Promises'))
                             ui.menu_item('Topics', on_click=lambda: self.load_area_2_content(title='Topics'))
@@ -899,7 +903,7 @@ class BibleMateGUI:
             # Search
             with ui.expansion('Search', icon='search').props('header-class="text-secondary"'):
                 ui.item('Bibles', on_click=lambda: (
-                    self.load_area_2_content(title='verses'),
+                    self.load_area_2_content(title='Verses'),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Parallels', on_click=lambda: (

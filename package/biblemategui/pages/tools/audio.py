@@ -18,6 +18,34 @@ class BibleAudioPlayer:
         self.start_verse = start_verse  # Start with verse 2 when page loads
         
     def create_ui(self):
+
+        ui.add_head_html(f"""
+        <style>
+            /* Hebrew Word Layer */
+            wform, heb, bdbheb, bdbarc, hu {{
+                font-family: 'SBL Hebrew', 'Ezra SIL', serif;
+                font-size: 1.8rem;
+                direction: rtl;
+                display: inline-block;
+                line-height: 1.2em;
+                margin-top: 0;
+                margin-bottom: -2px;
+                cursor: pointer;
+            }}
+            /* Greek Word Layer (targets <grk> tag) */
+            wform, grk, kgrk, gu {{
+                font-family: 'SBL Greek', 'Galatia SIL', 'Times New Roman', serif; /* CHANGED */
+                font-size: 1.6rem;
+                direction: ltr;
+                display: inline-block;
+                line-height: 1.2em;
+                margin-top: 0;
+                margin-bottom: -2px;
+                cursor: pointer;
+            }}
+        </style>
+        """)
+
         with ui.card().classes('w-full max-w-4xl mx-auto mt-8 p-6'):
             # Title
             ui.label(self.title).classes('text-3xl font-bold mb-6 text-center')
@@ -35,12 +63,17 @@ class BibleAudioPlayer:
                         self.set_loop)
             
             ui.separator().classes('mb-4')
-            
             # Verse list
             with ui.column().classes('w-full gap-2'):
                 with ui.list().props('bordered separator').classes('w-full'):
                     for *_, verse_num, verse_text in self.text_list:
-                        verse_text = re.sub('<[^<>]*?>', '', verse_text).strip()
+                        #verse_text = re.sub('<[^<>]*?>', '', verse_text).strip()
+                        # add tooltip
+                        if "</heb>" in verse_text:
+                            verse_text = re.sub('(<heb id=")(.*?)"', r'\1\2" data-word="\2" class="tooltip-word"', verse_text)
+                            verse_text = verse_text.replace("<heb> </heb>", "<heb>&nbsp;</heb>")
+                        elif "</grk>" in verse_text:
+                            verse_text = re.sub('(<grk id=")(.*?)"', r'\1\2" data-word="\2" class="tooltip-word"', verse_text)
                         with ui.item().classes(f'w-full hover:bg-gray-{500 if app.storage.user["dark_mode"] else 50}'):
                             with ui.item_section().props('avatar'):
                                 # Audio control button
@@ -48,11 +81,14 @@ class BibleAudioPlayer:
                                             on_click=lambda v=verse_num: self.toggle_verse(v))
                                 btn.classes('flat round color=primary')
                                 self.verse_buttons[verse_num] = btn
-                            
                             with ui.item_section():
-                                ui.item_label(
-                                    f"{verse_num}. {verse_text}"
-                                ).classes('text-base')
+                                verse_text = f"<vid>{verse_num}</vid> {verse_text}"
+                                if "</heb>" in verse_text:
+                                    verse_text = f"<div style='display: inline-block; direction: rtl;'>{verse_text}</div>"
+                                ui.html(verse_text, sanitize=False).classes('text-base')
+                                #ui.item_label(
+                                #    f"{verse_num}. {verse_text}"
+                                #).classes('text-base')
     
     def set_loop(self):
         self.loop_enabled = not self.loop_enabled

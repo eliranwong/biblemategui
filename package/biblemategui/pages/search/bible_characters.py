@@ -172,7 +172,7 @@ def search_bible_characters(gui=None, q='', **_):
         input_field = ui.input(
             value=q,
             autocomplete=all_characters,
-            placeholder='Enter a bible topic'
+            placeholder='Enter a bible character name to search...'
         ).classes('flex-grow text-lg') \
         .props('outlined dense clearable autofocus')
 
