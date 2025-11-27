@@ -110,7 +110,9 @@ def search_bible_characters(gui=None, q='', **_):
 
     def handle_enter(e):
         query = input_field.value.strip()
-        
+        if re.search("BP[0-9]+?$", query):
+            show_entry(query)
+            return
         db_file = os.path.join(BIBLEMATEGUI_DATA, "vectors", "exlb.db")
         sql_table = "exlbp"
         embedding_model="paraphrase-multilingual"

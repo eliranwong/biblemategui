@@ -2,7 +2,7 @@ from biblemategui import BIBLEMATEGUI_DATA, config
 from nicegui import ui, app
 from agentmake.utils.rag import get_embeddings, cosine_similarity_matrix
 import numpy as np
-import re, apsw, os, json, traceback
+import re, apsw, os, json, traceback, asyncio
 from biblemategui.data.cr_books import cr_books
 
 
@@ -62,14 +62,14 @@ def search_bible_locations(gui=None, q='', **_):
             fetch = cursor.fetchone()
             content = fetch[0] if fetch else ""
 
-        lat, lng = None, None
+        location, lat, lng = None, None, None
         with apsw.Connection(vdb) as connn:
             cursor = connn.cursor()
-            sql_query = "SELECT lat, lng FROM exlbli WHERE path=?"
+            sql_query = "SELECT location, lat, lng FROM exlbli WHERE path=?"
             cursor.execute(sql_query, (path,))
             if fetch := cursor.fetchone():
-                lat, lng = fetch
-                lat, lng = float(fetch[0]), float(fetch[1])
+                location, lat, lng = fetch
+                lat, lng = float(lat), float(lng)
 
         # Clear existing rows first
         content_container.clear()
@@ -114,7 +114,21 @@ def search_bible_locations(gui=None, q='', **_):
             # add a map
             if lat and lng:
                 m = ui.leaflet(center=(lat, lng), zoom=9).classes('w-full h-96')
-                m.marker(latlng=(lat, lng))
+                marker = m.marker(latlng=(lat, lng))
+                # wait until marker is ready
+                # Wait 0.1 seconds to let the JS layer catch up
+                async def bind_safely():
+                    # 1. Non-blocking Wait: Checks every 0.1s, but lets other app events happen
+                    # This replaces your 'while True' loop safely.
+                    while marker.id is None:
+                        await asyncio.sleep(0.1)
+                    # 2. Add a tiny buffer for the JavaScript side to render the marker
+                    # (This solves the 0.9s issue you saw earlier by ensuring the DOM is ready)
+                    await asyncio.sleep(0.1)
+                    # 3. Bind
+                    marker.run_method('bindPopup', f"<b>{location}</b>")
+                # Fire the safe async function
+                ui.timer(0.1, bind_safely, once=True)
             # convert colors for dark mode, e.g. <font color="brown">
             if app.storage.user['dark_mode']:
                 content = content.replace('color="brown">', 'color="pink">')
@@ -131,7 +145,9 @@ def search_bible_locations(gui=None, q='', **_):
 
     def handle_enter(e):
         query = input_field.value.strip()
-        
+        if re.search("BL[0-9]+?$", query):
+            show_entry(query)
+            return
         db_file = os.path.join(BIBLEMATEGUI_DATA, "vectors", "exlb.db")
         sql_table = "exlbl"
         embedding_model="paraphrase-multilingual"

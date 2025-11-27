@@ -1,4 +1,4 @@
-allLocations = {
+BIBLE_LOCATIONS = {
     # exlbl_entry, name, latitude, longitude
     "BL1": ("Abana", 33.545097, 36.224661),
     "BL2": ("Abarim", 31.761357, 35.746148),

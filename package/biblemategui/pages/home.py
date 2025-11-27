@@ -31,6 +31,7 @@ from biblemategui.pages.search.bible_names import search_bible_names
 from biblemategui.pages.search.dictionaries import search_bible_dictionaries
 from biblemategui.pages.search.encyclopedias import search_bible_encyclopedias
 from biblemategui.pages.search.lexicons import search_bible_lexicons
+from biblemategui.pages.search.bible_maps import search_bible_maps
 
 class BibleMateGUI:
     def __init__(self):
@@ -290,7 +291,7 @@ class BibleMateGUI:
         self.add_tab_area2()
 
     def is_tool(self, title):
-        tools = ("audio", "verses", "chronology", "xrefs", "promises", "parallels", "topics", "characters", "locations", "names", "dictionaries", "encyclopedias", "lexicons")
+        tools = ("audio", "verses", "chronology", "xrefs", "promises", "parallels", "topics", "characters", "locations", "names", "dictionaries", "encyclopedias", "lexicons", "maps")
         return True if title.lower() in tools else False
 
     def get_content(self, title):
@@ -298,6 +299,8 @@ class BibleMateGUI:
             return bibles_audio
         elif title.lower() == "xrefs":
             return xrefs
+        elif title.lower() == "maps":
+            return search_bible_maps
         elif title.lower() == "promises":
             return search_bible_promises
         elif title.lower() == "parallels":
@@ -708,6 +711,7 @@ class BibleMateGUI:
                             ui.menu_item('Names', on_click=lambda: self.load_area_2_content(title='Names'))
                             ui.menu_item('Characters', on_click=lambda: self.load_area_2_content(title='Characters'))
                             ui.menu_item('Locations', on_click=lambda: self.load_area_2_content(title='Locations'))
+                            ui.menu_item('Maps', on_click=lambda: self.load_area_2_content(title='Maps'))
                             ui.menu_item('Dictionaries', on_click=lambda: self.load_area_2_content(title='Dictionaries'))
                             ui.menu_item('Encyclopedias', on_click=lambda: self.load_area_2_content(title='Encyclopedias'))
                             ui.menu_item('Lexicons', on_click=lambda: self.load_area_2_content(title='Lexicons'))
@@ -928,6 +932,10 @@ class BibleMateGUI:
                 )).props('clickable')
                 ui.item('Locations', on_click=lambda: (
                     self.load_area_2_content(title='Locations'),
+                    app.storage.user.update(left_drawer_open=False)
+                )).props('clickable')
+                ui.item('Maps', on_click=lambda: (
+                    self.load_area_2_content(title='Maps'),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Dictionaries', on_click=lambda: (
