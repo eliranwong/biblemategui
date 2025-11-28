@@ -103,6 +103,10 @@ def search_bible_locations(gui=None, q='', **_):
                 }}
             </style>
             """)
+            # Google Map links
+            if "Click HERE for a Live Google Map" in content:
+                googleEarthLink = f"""https://earth.google.com/web/@{lat},{lng},654.97002989a,1336.11415664d,35y,0h,76.22542174t,-0r"""
+                content = content.replace("Click HERE for a Live Google Map</ref>]", f'''Google Map</ref>] [<ref onclick="website('{googleEarthLink}')">Google Earth</ref>]''')
             # convert links, e.g. <ref onclick="bcv(3,19,26)">
             content = re.sub(r'''(onclick|ondblclick)="(cr|bcv|website)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)
             content = re.sub(r"""(onclick|ondblclick)='(cr|bcv|website)\((.*?)\)'""", r"""\1='emitEvent("\2", [\3]); return false;'""", content)
@@ -115,20 +119,17 @@ def search_bible_locations(gui=None, q='', **_):
             if lat and lng:
                 m = ui.leaflet(center=(lat, lng), zoom=9).classes('w-full h-96')
                 marker = m.marker(latlng=(lat, lng))
-                # wait until marker is ready
-                # Wait 0.1 seconds to let the JS layer catch up
-                async def bind_safely():
+                # Wait until marker is ready; wait 0.1 seconds to let the JS layer catch up
+                async def bind_marker():
                     # 1. Non-blocking Wait: Checks every 0.1s, but lets other app events happen
-                    # This replaces your 'while True' loop safely.
                     while marker.id is None:
                         await asyncio.sleep(0.1)
                     # 2. Add a tiny buffer for the JavaScript side to render the marker
-                    # (This solves the 0.9s issue you saw earlier by ensuring the DOM is ready)
                     await asyncio.sleep(0.1)
                     # 3. Bind
                     marker.run_method('bindPopup', f"<b>{location}</b>")
                 # Fire the safe async function
-                ui.timer(0.1, bind_safely, once=True)
+                ui.timer(0.1, bind_marker, once=True)
             # convert colors for dark mode, e.g. <font color="brown">
             if app.storage.user['dark_mode']:
                 content = content.replace('color="brown">', 'color="pink">')

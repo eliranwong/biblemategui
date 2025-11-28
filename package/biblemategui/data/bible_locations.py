@@ -1148,3 +1148,16 @@ BIBLE_LOCATIONS = {
     "BL1275": ("Zoreah/Zorah", 31.762141, 34.969319),
     "BL1276": ("Zup", 31.846847, 35.184912),
 }
+
+def check_duplicate_locations(locations):
+    coord_map = {}
+    duplicates = []
+
+    for code, (name, lat, lon) in locations.items():
+        coord_key = (lat, lon)
+        if coord_key in coord_map:
+            duplicates.append((coord_map[coord_key], code, name, lat, lon))
+        else:
+            coord_map[coord_key] = code
+
+    return duplicates

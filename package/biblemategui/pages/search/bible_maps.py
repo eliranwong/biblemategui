@@ -1,12 +1,18 @@
 from biblemategui.data.bible_locations import BIBLE_LOCATIONS
+from biblemategui.fx.location_finder import LocationFinder
+from agentmake.plugins.uba.lib.BibleBooks import BibleBooks
+from agentmake.plugins.uba.lib.BibleParser import BibleVerseParser
 from nicegui import ui, app
-import math
+import math, re
 
+
+# --- Data: 66 Bible Books & ID Mapping ---
+BIBLE_BOOKS = [BibleBooks.abbrev["eng"][str(i)][0] for i in range(1,67)]
 
 # Create a dictionary for Dropdown options: {ID: "Name (ID)"}
 # This handles duplicate names by ensuring the value passed is the unique ID
 LOCATION_OPTIONS = {
-    uid: f"{data[0]}" for uid, data in BIBLE_LOCATIONS.items()
+    uid: data[0] for uid, data in BIBLE_LOCATIONS.items()
 }
 
 # --- 2. HELPER FUNCTIONS ---
@@ -46,6 +52,9 @@ def search_bible_maps(gui=None, q='', **_):
         gui.load_area_2_content(title='Locations')
     ui.on('exlbl', exlbl)
 
+    parser = BibleVerseParser(False)
+    finder = LocationFinder()
+
     location_multiselect = None
     # Apply a full height column with no wrap so the map can stretch
     with ui.column().classes('w-full h-screen no-wrap p-4 gap-4'):
@@ -73,7 +82,7 @@ def search_bible_maps(gui=None, q='', **_):
                 name, lat, lon = BIBLE_LOCATIONS[uid]
                 # Add marker with popup
                 marker = bible_map.marker(latlng=(lat, lon))
-                marker.run_method('bindPopup', f'''<b>{name}</b><br>[<ref onclick="emitEvent('exlbl', ['{uid}']); return false;">more...</ref>]''')
+                marker.run_method('bindPopup', f'''<b>{name}</b><br>[<ref onclick="emitEvent('exlbl', ['{uid}']); return false;">{uid}</ref>]''')
                 
                 active_markers[uid] = marker
                 
@@ -103,33 +112,65 @@ def search_bible_maps(gui=None, q='', **_):
                 # Multi-select dropdown
                 location_multiselect = ui.select(
                     multi_options, 
-                    label='Select Locations to Show', 
+                    label='Select', 
                     multiple=True,
                     with_input=True
-                ).classes('w-40') # min-w-[40px]
+                ).classes('w-30') # min-w-[40px]
 
                 # Text Input for quick search
-                search_input = ui.input(label='Search Name & Enter').classes('w-1/3 min-w-[200px]')
+                search_input = ui.input(
+                    label='Search',
+                    value=q,
+                    autocomplete=list(LOCATION_OPTIONS.values())+BIBLE_BOOKS,
+                    placeholder='Enter name(s) or verse reference(s)...',
+                ).classes('flex-grow')
                 
                 def on_search_enter():
                     """Finds a location by name and adds it to the multiselect (which triggers map update)"""
-                    query = search_input.value.lower()
+                    query = search_input.value.strip()
                     if not query: return
+
+                    current_vals = location_multiselect.value or []
+
+                    # when users enter verse reference(s)
+                    if verseList := parser.extractAllReferences(query, tagged=False):
+                        combinedLocations = []
+                        for reference in verseList:
+                            combinedLocations += finder.getLocationsFromReference(reference)
+                        if found_id := sorted(list(set(combinedLocations))):
+                            location_multiselect.value = list(set(current_vals + found_id))
+                            ui.notify(f"{len(found_id)} locations found!")
+                            search_input.value = ""
+                            return
                     
-                    found_id = None
-                    for uid, data in BIBLE_LOCATIONS.items():
-                        if query in data[0].lower():
-                            found_id = uid
-                            break
+                    # when users enter location id(s)
+                    if re.search("^BL[0-9BL, ]+?$", query):
+                        found_id = [i.strip() for i in query.split(",") if i.strip() in BIBLE_LOCATIONS]
+                        if found_id:
+                            location_multiselect.value = list(set(current_vals + found_id))
+                            ui.notify(f"{len(found_id)} locations found!")
+                            search_input.value = ""
+                            if len(found_id) == 2:
+                                loc1_select.value, loc2_select.value = found_id
+                                calculate()
+                            return
+
+                    # when users enter location name(s)
+                    query = search_input.value.lower()
+
+                    found_id = []
+                    for i in query.split(","):
+                        i = i.strip()
+                        if not i: continue
+                        for uid, data in BIBLE_LOCATIONS.items():
+                            if i in data[0].lower():
+                                found_id.append(uid)
+                                break
                     
                     if found_id:
-                        current_vals = location_multiselect.value or []
-                        if found_id not in current_vals:
-                            # This update will trigger the on_value_change event
-                            location_multiselect.value = current_vals + [found_id]
-                            ui.notify(f"Found: {BIBLE_LOCATIONS[found_id][0]}")
-                        else:
-                            ui.notify("Location already on map")
+                        # This update will trigger the on_value_change event
+                        location_multiselect.value = list(set(current_vals + found_id))
+                        ui.notify(f"{len(found_id)} locations found!")
                         search_input.value = "" # clear input
                     else:
                         ui.notify("Location not found", type='warning')
@@ -167,14 +208,14 @@ def search_bible_maps(gui=None, q='', **_):
             
             with ui.row().classes('w-full items-center gap-4'):
                 # Location Selectors
-                loc1_select = ui.select(LOCATION_OPTIONS, label='From Location', with_input=True).classes('w-35')
-                loc2_select = ui.select(LOCATION_OPTIONS, label='To Location', with_input=True).classes('w-35')
+                loc1_select = ui.select(LOCATION_OPTIONS, label='From', with_input=True).classes('w-35')
+                loc2_select = ui.select(LOCATION_OPTIONS, label='To', with_input=True).classes('w-35')
                 
                 # Unit Toggle
                 unit_radio = ui.radio(['km', 'miles'], value='km').props('inline')
                 
                 # Result Label
-                result_label = ui.label('Distance Calculator').classes('text-lg font-medium text-secondary ml-auto mr-4')
+                result_label = ui.label('Distance').classes('text-lg font-medium text-secondary ml-auto mr-4')
 
                 # Calculation Logic
                 def calculate():
@@ -184,7 +225,7 @@ def search_bible_maps(gui=None, q='', **_):
                     if loc2_select.value and not loc2_select.value in location_multiselect.value:
                         location_multiselect.value = location_multiselect.value + [loc2_select.value]
                     if not loc1_select.value or not loc2_select.value:
-                        result_label.text = "Select one more..."
+                        result_label.text = "Select one more"
                         return
                     
                     # Get coordinates from ID
@@ -197,7 +238,7 @@ def search_bible_maps(gui=None, q='', **_):
                     dist = haversine_distance(coord1, coord2, unit_radio.value)
                     unit_label = "km" if unit_radio.value == 'km' else "miles"
                     
-                    result_label.text = f"Distance: {dist:.2f} {unit_label}"
+                    result_label.text = f"{dist:.2f} {unit_label}"
 
                 # Trigger calculation on button click or change
                 #ui.button('Calculate', on_click=calculate).classes('bg-blue-600 text-white')
@@ -212,3 +253,6 @@ def search_bible_maps(gui=None, q='', **_):
         # ==========================================
         # center on Jerusalem approx
         bible_map = ui.leaflet(center=(31.777, 35.235), zoom=9).classes('w-full flex-grow rounded-lg shadow-md')
+
+        if q:
+            on_search_enter()
