@@ -20,7 +20,7 @@ e.g. To search for verses that contain either `love`, `hope`, or `faith`
 
 > love|hope|faith
 
-e.g. To search for verses that contain either `love`, `hope`, and `faith`
+e.g. To search for verses that contain all words: `love`, `hope`, and `faith`
 
 > ^(?=.*\blove\b)(?=.*\bhope\b)(?=.*\bfaith\b).*
 
