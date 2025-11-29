@@ -36,16 +36,24 @@ e.g. To search for an idea or similar words
 
 Adjust the `Similar Verses` number in preferences, to set the maximum number of similar verses to be displayed.
 
+## Filter Verses
+
+After a search, you filter verses as you type words in the input field.
+
 ## Case-sentivitiy
 
 There is a checkbox to toggle support of case-sensitive searches.  This option applies to `literal` and `regex` modes only.
 
 ## Search Scope
 
-Select from the book dropdown list, to limit the search scope for a search.
+Select particular books from the book dropdown list, to limit the search scope for a search.
 
 ## Search Multiple Bibles
 
 Select multiple bibles from the bible dropdown list to perform searches in multiples bibles.
 
 If no bible is slected, the app searches the opened bible in the active bible area tab.
+
+## Open a Full Chapter
+
+Click a verse reference button from the search result list, to open a full chapter either on Bible are or Tool area.

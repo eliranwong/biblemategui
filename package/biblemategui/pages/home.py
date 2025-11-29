@@ -790,10 +790,10 @@ class BibleMateGUI:
                     
                     with ui.button(icon='search').props('flat color=white round').tooltip('Search'):
                         with ui.menu():
-                            ui.menu_item('Add Search Tab', on_click=self.add_tab_area2)
-                            ui.menu_item('Remove Search Tab', on_click=self.remove_tab_area2)
-                            ui.menu_item('Close Others', on_click=self.close_other_area2_tabs)
-                            ui.separator()
+                            #ui.menu_item('Add Search Tab', on_click=self.add_tab_area2)
+                            #ui.menu_item('Remove Search Tab', on_click=self.remove_tab_area2)
+                            #ui.menu_item('Close Others', on_click=self.close_other_area2_tabs)
+                            #ui.separator()
                             ui.menu_item('Verses', on_click=lambda: self.load_area_2_content(title='Verses'))
                             ui.menu_item('Parallels', on_click=lambda: self.load_area_2_content(title='Parallels'))
                             ui.menu_item('Promises', on_click=lambda: self.load_area_2_content(title='Promises'))
