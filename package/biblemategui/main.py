@@ -346,18 +346,39 @@ def page_Settings(
                 ui.select(label='Primary Bible',
                           options=getBibleVersionList()) \
                     .bind_value(app.storage.user, 'primary_bible')
-            with ui.grid(columns=2).classes('w-full p-4 gap-4'):
                 ui.select(label='Secondary Bible',
                           options=getBibleVersionList()) \
                     .bind_value(app.storage.user, 'secondary_bible')
-            with ui.grid(columns=2).classes('w-full p-4 gap-4'):
                 ui.select(label='Hebrew Lexicon',
                           options=getLexiconList()) \
                     .bind_value(app.storage.user, 'hebrew_lexicon')
-            with ui.grid(columns=2).classes('w-full p-4 gap-4'):
                 ui.select(label='Greek Lexicon',
                           options=getLexiconList()) \
                     .bind_value(app.storage.user, 'greek_lexicon')
+
+        # --- Appearance Section ---
+        with ui.expansion('Semantic Searches', icon='search').classes('w-full rounded-lg'):
+            with ui.column().classes('w-full p-4'):
+                # Similar Entries
+                with ui.row().classes('w-full items-center'):
+                    ui.label("Similar Entries").classes('flex items-center font-bold mr-4')
+                    # We display the current % value next to the label for clarity
+                    ui.label().bind_text_from(app.storage.user, 'top_similar_entries', backward=lambda v: str(v)).classes('text-sm text-gray-500')
+                ui.slider(min=3, max=30, step=1, value=app.storage.user['top_similar_entries']) \
+                    .bind_value(app.storage.user, 'top_similar_entries') \
+                    .props('label-always color=primary') \
+                    .classes('w-full mb-4') \
+                    .tooltip('Adjust the global top similar entries in a semantic search (3 to 30)')
+                # Similar Verses
+                with ui.row().classes('w-full items-center'):
+                    ui.label("Similar Verses").classes('flex items-center font-bold mr-4')
+                    # We display the current % value next to the label for clarity
+                    ui.label().bind_text_from(app.storage.user, 'top_similar_verses', backward=lambda v: str(v)).classes('text-sm text-gray-500')
+                ui.slider(min=5, max=100, step=1, value=app.storage.user['top_similar_verses']) \
+                    .bind_value(app.storage.user, 'top_similar_verses') \
+                    .props('label-always color=primary') \
+                    .classes('w-full mb-4') \
+                    .tooltip('Adjust the global top similar verses in a semantic search (5 to 100)')
 
         # --- AI Backend Section ---
         with ui.expansion('AI Backend', icon='memory').classes('w-full rounded-lg'):

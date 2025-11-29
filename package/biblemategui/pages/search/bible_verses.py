@@ -1,12 +1,19 @@
 from agentmake.plugins.uba.lib.BibleBooks import BibleBooks
 from biblemategui.fx.bible import get_bible_content
-from biblemategui import BIBLEMATEGUI_DATA, config
+from biblemategui import BIBLEMATEGUI_DATA, config, getBibleVersionList
 from functools import partial
-from nicegui import ui
+from nicegui import ui, app
 import re, apsw, os
 
 
 def search_bible_verses(gui=None, q='', **_):
+
+    default_placeholder = 'Enter search items or refs (e.g. Deut 6:4; John 3:16-18)'
+    multiple_bibles = None
+
+    def get_bibles():
+        nonlocal multiple_bibles, gui
+        return multiple_bibles.value if multiple_bibles and multiple_bibles.value else gui.get_area_1_bible_text()
 
     SQL_QUERY = "PRAGMA case_sensitive_like = false; SELECT Book, Chapter, Verse, Scripture FROM Verses WHERE (Scripture REGEXP ?) ORDER BY Book, Chapter, Verse"
 
@@ -59,7 +66,9 @@ def search_bible_verses(gui=None, q='', **_):
         else:
             text = input_field.value 
             
-        search_term = text.lower() if text else ""
+        search_term = text if text else ""
+        if not app.storage.user['search_case_sensitivity']:
+            search_term = search_term.lower()
         
         # Iterate over the actual children of the container
         for row in verses_container.default_slot.children:
@@ -73,10 +82,17 @@ def search_bible_verses(gui=None, q='', **_):
                 continue
 
             data = row.verse_data
-            ref_text = data['ref'].lower()
-            clean_content = re.sub('<[^<]+?>', '', data['content']).lower()
+            ref_text = data['ref']
+            if not app.storage.user['search_case_sensitivity']:
+                ref_text = ref_text.lower()
+            clean_content = re.sub('<[^<]+?>', '', data['content'])
+            if not app.storage.user['search_case_sensitivity']:
+                clean_content = clean_content.lower()
 
-            is_match = (search_term in ref_text) or (search_term in clean_content)
+            if not app.storage.user['search_mode'] == 2:
+                is_match = (re.search(search_term, ref_text)) or (re.search(search_term, clean_content))
+            else:
+                is_match = (search_term in ref_text) or (search_term in clean_content)
             row.set_visibility(is_match)
             if is_match:
                 total_matches += 1
@@ -116,9 +132,10 @@ def search_bible_verses(gui=None, q='', **_):
         
         # Clear existing rows first
         verses_container.clear()
-        
+
         if not query:
             ui.notify('Display cleared', type='positive', position='top')
+            input_field.props(f'placeholder="{default_placeholder}"')
             return
 
         if re.search("^BP[0-9]+?$", query): # bible characters entries
@@ -130,7 +147,7 @@ def search_bible_verses(gui=None, q='', **_):
             if not fetch:
                 ui.notify('No verses found.', type='negative')
                 return
-            verses = get_bible_content(bible=gui.get_area_1_bible_text(), sql_query=SQL_QUERY, refs=fetch)
+            verses = get_bible_content(bible=get_bibles(), sql_query=SQL_QUERY, refs=fetch)
         elif re.search("^BL[0-9]+?$", query): # bible locatios entries
             db_file = os.path.join(BIBLEMATEGUI_DATA, "indexes2.sqlite")
             with apsw.Connection(db_file) as connn:
@@ -140,7 +157,7 @@ def search_bible_verses(gui=None, q='', **_):
             if not fetch:
                 ui.notify('No verses found.', type='negative')
                 return
-            verses = get_bible_content(bible=gui.get_area_1_bible_text(), sql_query=SQL_QUERY, refs=fetch)
+            verses = get_bible_content(bible=get_bibles(), sql_query=SQL_QUERY, refs=fetch)
         elif re.search(f"^({"|".join(list(config.topics.keys()))})[0-9]+?$", query): # bible topics entries
             db_file = os.path.join(BIBLEMATEGUI_DATA, "indexes2.sqlite")
             with apsw.Connection(db_file) as connn:
@@ -150,7 +167,7 @@ def search_bible_verses(gui=None, q='', **_):
             if not fetch:
                 ui.notify('No verses found.', type='negative')
                 return
-            verses = get_bible_content(bible=gui.get_area_1_bible_text(), sql_query=SQL_QUERY, refs=fetch)
+            verses = get_bible_content(bible=get_bibles(), sql_query=SQL_QUERY, refs=fetch)
         elif re.search(f"^({"|".join(list(config.dictionaries.keys()))})[0-9]+?$", query): # bible dictionaries entries
             db_file = os.path.join(BIBLEMATEGUI_DATA, "indexes2.sqlite")
             with apsw.Connection(db_file) as connn:
@@ -160,7 +177,7 @@ def search_bible_verses(gui=None, q='', **_):
             if not fetch:
                 ui.notify('No verses found.', type='negative')
                 return
-            verses = get_bible_content(bible=gui.get_area_1_bible_text(), sql_query=SQL_QUERY, refs=fetch)
+            verses = get_bible_content(bible=get_bibles(), sql_query=SQL_QUERY, refs=fetch)
         elif re.search(f"^(ISBE|{"|".join(list(config.encyclopedias.keys()))})[0-9]+?$", query): # bible encyclopedia entries
             db_file = os.path.join(BIBLEMATEGUI_DATA, "indexes2.sqlite")
             with apsw.Connection(db_file) as connn:
@@ -170,9 +187,9 @@ def search_bible_verses(gui=None, q='', **_):
             if not fetch:
                 ui.notify('No verses found.', type='negative')
                 return
-            verses = get_bible_content(bible=gui.get_area_1_bible_text(), sql_query=SQL_QUERY, refs=fetch)
+            verses = get_bible_content(bible=get_bibles(), sql_query=SQL_QUERY, refs=fetch)
         else:
-            verses = get_bible_content(query, bible=gui.get_area_1_bible_text(), sql_query=SQL_QUERY)
+            verses = get_bible_content(query, bible=get_bibles(), sql_query=SQL_QUERY)
 
         if not verses:
             ui.notify('No verses found.', type='negative')
@@ -249,7 +266,7 @@ def search_bible_verses(gui=None, q='', **_):
     with ui.row().classes('w-full max-w-3xl mx-auto m-0 py-0 px-4 items-center'):
         input_field = ui.input(
             autocomplete=BIBLE_BOOKS,
-            placeholder='Enter search items or refs (e.g. Deut 6:4; John 3:16-18)'
+            placeholder=default_placeholder
         ).classes('flex-grow text-lg') \
         .props('outlined dense clearable autofocus')
 
@@ -262,7 +279,7 @@ def search_bible_verses(gui=None, q='', **_):
         
         scope_select = ui.select(
             options=options,
-            label='Search',
+            #label='Search',
             multiple=True,
             with_input=True
         ).classes('w-22')
@@ -382,6 +399,32 @@ def search_bible_verses(gui=None, q='', **_):
 
             state['previous'] = current
             update_sql_query(current)
+
+        # Checkbox
+        ui.checkbox(
+            'Case-sensitive'
+        ).bind_value(
+            app.storage.user, 'search_case_sensitivity'
+        )
+            
+        # Radio Buttons
+        # options: dictionary maps the stored value (keys) to the display label (values)
+        # props('inline'): makes the radio buttons layout horizontally
+        modes = ui.radio(
+            options={1: 'Literal', 2: 'Regex', 3: 'Semantic'},
+        ).bind_value(
+            app.storage.user, 'search_mode'
+        ).props('inline color=primary')
+        modes.tooltip = ui.tooltip('Search Modes:\n1. Literal search for plain text\n2. Search for regular expression\n3. Semantic search for meaning')
+
+        # Multi-select dropdown
+        multiple_bibles = ui.select(
+            getBibleVersionList(),
+            value=gui.get_area_1_bible_text(),
+            #label='Select Bibles to search', 
+            multiple=True,
+            with_input=True,
+        ).classes('grow').props('use-chips outlined dense clearable')
 
         # --- Bindings ---
         scope_select.on_value_change(handle_scope_change)

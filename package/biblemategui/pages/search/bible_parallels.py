@@ -202,7 +202,7 @@ def search_bible_parallels(gui=None, q='', **_):
                     document_matrix = np.vstack(entry_vectors)
                     # perform a similarity search
                     similarities = cosine_similarity_matrix(query_vector, document_matrix)
-                    top_indices = np.argsort(similarities)[::-1][:config.top_k]
+                    top_indices = np.argsort(similarities)[::-1][:app.storage.user["top_similar_entries"]]
                     # return top matches
                     options = [entries[i] for i in top_indices]
                 elif len(rows) == 1: # single exact match

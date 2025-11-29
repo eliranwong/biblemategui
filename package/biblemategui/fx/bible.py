@@ -1,22 +1,41 @@
-from nicegui import ui
-from biblemategui import config, getBibleVersionList
+from nicegui import ui, app
+from biblemategui import config, getBibleVersionList, BIBLEMATEGUI_DATA
 from typing import List, Optional
 from agentmake.plugins.uba.lib.BibleBooks import BibleBooks
 from agentmake.plugins.uba.lib.BibleParser import BibleVerseParser
-import re, apsw
+import re, apsw, os
+from biblemate.uba.bible import BibleVectorDatabase
 
 
-def regexp(expr, item, case_sensitive=False):
-    reg = re.compile(expr, flags=0 if case_sensitive else re.IGNORECASE)
+def regexp(expr, item):
+    reg = re.compile(expr, flags=0 if app.storage.user['search_case_sensitivity'] else re.IGNORECASE)
     return reg.search(item) is not None
 
-
-def get_bible_content(user_input="", bible="NET", sql_query="", refs=[]):
-    db = getBiblePath(bible)
+def get_bible_content(user_input="", bible="NET", sql_query="", refs=[]) -> list:
+    dbs = []
+    if isinstance(bible, str):
+        if bible_path := getBiblePath(bible):
+            dbs = [bible_path]
+    else: # multiple bibles
+        dbs = []
+        for i in bible:
+            if i_path := getBiblePath(i):
+                if not i_path in dbs:
+                    dbs.append(i_path)
+    if not dbs:
+        return []
     parser = BibleVerseParser(False)
     results = []
     if not refs and re.search(" [0-9]+?:[0-9]", user_input):
         refs = parser.extractAllReferences(user_input, tagged=(True if '<ref onclick="bcv(' in user_input else False))
+    if not refs and app.storage.user['search_mode'] == 3: # semantic search
+        vector_db = BibleVectorDatabase(os.path.join(BIBLEMATEGUI_DATA, "vectors", "bible.db"))
+        query = sql_query if sql_query else "PRAGMA case_sensitive_like = false; SELECT Book, Chapter, Verse, Scripture FROM Verses WHERE (Scripture REGEXP ?) ORDER BY Book, Chapter, Verse"
+        if books := re.search("Book IN (.*?) AND ", query):
+            book=books.group(1)
+        else:
+            book=0
+        refs = [(b, c, v) for b, c, v, _ in vector_db.search_meaning(user_input, top_k=app.storage.user["top_similar_verses"], book=book)]
     if refs:
         distinct_refs = []
         for ref in refs:
@@ -24,38 +43,53 @@ def get_bible_content(user_input="", bible="NET", sql_query="", refs=[]):
                 distinct_refs.append(ref)
         refs = distinct_refs
         query = "SELECT Scripture FROM Verses WHERE Book=? AND Chapter=? AND Verse =?"
-        with apsw.Connection(db) as connn:
-            cursor = connn.cursor()
-            for ref in refs:
-                if len(ref) == 5:
-                    content = ""
-                    b1, c1, v1 = 1, 1, 1
-                    for r in parser.extractExhaustiveReferences([ref]):
-                        b, c, v = r
-                        if not content:
-                            b1, c1, v1 = r
+        for db in dbs:
+            this_bible = os.path.basename(db)[:-6]
+            with apsw.Connection(db) as connn:
+                cursor = connn.cursor()
+                for ref in refs:
+                    if len(ref) == 5:
+                        content = ""
+                        b1, c1, v1 = 1, 1, 1
+                        for r in parser.extractExhaustiveReferences([ref]):
+                            b, c, v = r
+                            if not content:
+                                b1, c1, v1 = r
+                            cursor.execute(query, (b, c, v))
+                            verse = cursor.fetchone()
+                            content += f"<vid>{v}</vid> {verse[0].strip()} "
+                        ref = parser.bcvToVerseReference(*ref)
+                        if len(dbs) > 1:
+                            ref += f" [{this_bible}]"
+                        results.append({'ref': ref, 'content': content.rstrip(), 'bible': this_bible, 'b': b1, 'c': c1, 'v': v1})
+                    else:
+                        b, c, v = ref
                         cursor.execute(query, (b, c, v))
                         verse = cursor.fetchone()
-                        content += f"<vid>{v}</vid> {verse[0].strip()} "
-                    ref = parser.bcvToVerseReference(*ref)
-                    results.append({'ref': ref, 'content': content.rstrip(), 'bible': bible, 'b': b1, 'c': c1, 'v': v1})
-                else:
-                    b, c, v = ref
-                    ref = parser.bcvToVerseReference(b, c, v)
-                    cursor.execute(query, (b, c, v))
-                    verse = cursor.fetchone()
-                    results.append({'ref': ref, 'content': verse[0].strip(), 'bible': bible, 'b': b, 'c': c, 'v': v})
+                        ref = parser.bcvToVerseReference(b, c, v)
+                        if len(dbs) > 1:
+                            ref += f" [{this_bible}]"
+                        results.append({'ref': ref, 'content': verse[0].strip(), 'bible': this_bible, 'b': b, 'c': c, 'v': v})
     else:
         # search the bible with regular expression
         query = sql_query if sql_query else "PRAGMA case_sensitive_like = false; SELECT Book, Chapter, Verse, Scripture FROM Verses WHERE (Scripture REGEXP ?) ORDER BY Book, Chapter, Verse"
-        with apsw.Connection(db) as connn:
-            connn.createscalarfunction("REGEXP", regexp)
-            cursor = connn.cursor()
-            cursor.execute(query, (user_input,))
-            fetches = cursor.fetchall()
-            for verse in fetches:
-                ref = parser.bcvToVerseReference(verse[0], verse[1], verse[2])
-                results.append({'ref': ref, 'content': verse[3].strip(), 'bible': bible, 'b': verse[0], 'c': verse[1], 'v': verse[2]})
+        if app.storage.user['search_case_sensitivity']:
+            query = query.replace("case_sensitive_like = false;", "case_sensitive_like = true;")
+        if app.storage.user['search_mode'] == 1:
+            query = query.replace("Scripture REGEXP", "Scripture LIKE")
+            user_input = "%"+user_input+"%"
+        for db in dbs:
+            this_bible = os.path.basename(db)[:-6]
+            with apsw.Connection(db) as connn:
+                connn.createscalarfunction("REGEXP", regexp)
+                cursor = connn.cursor()
+                cursor.execute(query, (user_input,))
+                fetches = cursor.fetchall()
+                for verse in fetches:
+                    ref = parser.bcvToVerseReference(verse[0], verse[1], verse[2])
+                    if len(dbs) > 1:
+                        ref += f" [{this_bible}]"
+                    results.append({'ref': ref, 'content': verse[3].strip(), 'bible': this_bible, 'b': verse[0], 'c': verse[1], 'v': verse[2]})
     return results
 
 # Bible Selection
@@ -63,7 +97,7 @@ def get_bible_content(user_input="", bible="NET", sql_query="", refs=[]):
 def getBiblePath(bible) -> str:
     if bible in ["ORB", "OIB", "OPB", "ODB", "OLB", "BHS5", "OGNT"]:
         bible = "OHGB"
-    return config.bibles_custom[bible][-1] if bible in config.bibles_custom else config.bibles[bible][-1]
+    return config.bibles_custom[bible][-1] if bible in config.bibles_custom else config.bibles[bible][-1] if bible in config.bibles else ""
 
 def getBibleChapter(db, b, c) -> str: # html output
     query = "SELECT Scripture FROM Bible WHERE Book=? AND Chapter=?"
@@ -179,33 +213,33 @@ class BibleSelector:
             default_book = self.book_options[0]
             self.chapter_options = getBibleChapterList(getBiblePath(self.selected_version), self.selected_book)
             self.verse_options = getBibleVerseList(getBiblePath(self.selected_version), self.selected_book, self.selected_chapter)
-        with ui.row().classes('w-full justify-center'):
+        with ui.row().classes('w-full justify-center items-center'):
             # Versions
             if show_versions:
                 self.version_select = ui.select(
                     options=self.version_options,
-                    label='Bible',
+                    #label='Bible',
                     value=bible,
                     on_change=self.on_version_change
                 )
             # Book
             self.book_select = ui.select(
                 options=self.book_options,
-                label='Book',
+                #label='Book',
                 value=default_book, # b
                 on_change=self.on_book_change
             )
             # Chapter
             self.chapter_select = ui.select(
                 options=self.chapter_options,
-                label='Chapter',
+                #label='Chapter',
                 value=c,
                 on_change=self.on_chapter_change
             )
             # Verse
             self.verse_select = ui.select(
                 options=self.verse_options,
-                label='Verse',
+                #label='Verse',
                 value=v,
                 on_change=self.on_verse_change
             )

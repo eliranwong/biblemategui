@@ -25,21 +25,20 @@ def write_user_config():
     configurations = f"""config.hot_reload={config.hot_reload}
 config.reload_after_sync={config.reload_after_sync}
 config.avatar="{config.avatar}"
+config.embedding_model="{config.embedding_model}"
 config.custom_token="{config.custom_token}"
 config.storage_secret="{config.storage_secret}"
-config.port={config.port}
-config.embedding_model="{config.embedding_model}"
-config.top_k={config.top_k}"""
+config.port={config.port}"""
     writeTextFile(CONFIG_FILE_BACKUP, configurations)
 
 # restore config backup after upgrade
 default_config = '''config.hot_reload=False
 config.reload_after_sync=False
 config.avatar=""
+config.embedding_model="paraphrase-multilingual"
 config.custom_token=""
 config.storage_secret="REPLACE_ME_WITH_A_REAL_SECRET"
-config.embedding_model="paraphrase-multilingual"
-config.top_k=10'''
+config.port=33355'''
 
 def load_config():
     """Loads the user's configuration from the config file."""
@@ -186,12 +185,16 @@ USER_DEFAULT_SETTINGS = {
     'favorite_commentary': 'CBSC',
     'favorite_encyclopedia': 'ISB',
     'favorite_lexicon': 'Morphology',
-    'hebrew_lexicon': 'Morphology',
-    'greek_lexicon': 'Morphology',
+    'hebrew_lexicon': 'TBESH',
+    'greek_lexicon': 'TBESG',
     'ai_backend': 'googleai',
     'api_endpoint': '',
     'api_key': '',
     'language': 'English',
     'dark_mode': True,
     'left_drawer_open': False,
+    'search_case_sensitivity': False,
+    'search_mode': 1,
+    'top_similar_entries': 5,
+    'top_similar_verses': 20,
 }
