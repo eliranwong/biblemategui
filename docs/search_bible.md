@@ -1,8 +1,8 @@
 # Bible Search Modes
 
-## Search References
+## Search Verse References
 
-Enter verse references or words for searches.
+Enter verse references to open specific verses.
 
 ## Search Words
 
