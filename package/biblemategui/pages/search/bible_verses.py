@@ -415,7 +415,7 @@ def search_bible_verses(gui=None, q='', **_):
         ).bind_value(
             app.storage.user, 'search_mode'
         ).props('inline color=primary')
-        modes.tooltip = ui.tooltip('Search Modes:\n1. Literal search for plain text\n2. Search for regular expression\n3. Semantic search for meaning')
+        #modes.tooltip = ui.tooltip('Search Modes:\n1. Literal search for plain text\n2. Search for regular expression\n3. Semantic search for meaning')
 
         # Multi-select dropdown
         multiple_bibles = ui.select(
