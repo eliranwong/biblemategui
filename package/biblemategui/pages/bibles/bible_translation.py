@@ -4,12 +4,27 @@ from biblemategui.fx.bible import *
 from biblemategui.fx.original import *
 from biblemategui.js.sync_scrolling import *
 from biblemategui.data.cr_books import cr_books
+from biblemategui.data.lexical_data import lexical_data
 import re, os
 
 
 def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, title="", **_):
 
     bible_selector = BibleSelector(on_version_changed=gui.change_area_1_bible_chapter if area == 1 else gui.change_area_2_bible_chapter, on_book_changed=gui.change_area_1_bible_chapter if area == 1 else gui.change_area_2_bible_chapter, on_chapter_changed=gui.change_area_1_bible_chapter if area == 1 else gui.change_area_2_bible_chapter, on_verse_changed=change_bible_chapter_verse)
+
+    def strong_to_lex(match):
+        lexical_entry = match.group(1)
+        if lexical_entry in lexical_data:
+            return rf'<ref data-word="{lexical_entry}" class="tooltip-word">{lexical_data[lexical_entry][0]}'
+        elif lexical_entry+"a" in lexical_data:
+            return rf'<ref data-word="{lexical_entry}" class="tooltip-word">{lexical_data[lexical_entry+"a"][0]}'
+        return match.group(0)
+
+    def lex(event):
+        nonlocal gui
+        lexical_entry, *_ = event.args
+        app.storage.user['tool_query'] = lexical_entry
+        gui.load_area_2_content(title='Lexicons')
 
     def wd(event):
         nonlocal gui
@@ -45,6 +60,7 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
         else:
             gui.change_area_2_bible_chapter(None, b, c, v) if area == 1 else gui.change_area_1_bible_chapter(None, b, c, v)
 
+    ui.on('lex', lex)
     ui.on('luV', luV)
     ui.on('wd', wd)
     ui.on('bcv', bcv)
@@ -60,14 +76,21 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
     content = content.replace("<heb> </heb>", "<heb>&nbsp;</heb>")
 
     # add tooltip
+    # OHGB, OHGBi
     if "</heb>" in content:
         content = re.sub('(<heb id=")(.*?)"', r'\1\2" data-word="\2" class="tooltip-word"', content)
     elif "</grk>" in content:
         content = re.sub('(<grk id=")(.*?)"', r'\1\2" data-word="\2" class="tooltip-word"', content)
-    elif "<ref onclick='bn(" in content:
+    # study notes
+    if "<ref onclick='bn(" in content:
         content = re.sub(f'''<ref onclick='bn\(([0-9]+?),[ ]*?([0-9]+?),[ ]*?([0-9]+?),[ ]*?"(.*?)"\)'>''', rf'<ref data-word="bn,{title},\1,\2,\3,\4" class="tooltip-word">', content)
     elif '<ref onclick="bn(' in content:
         content = re.sub(f'''<ref onclick="bn\(([0-9]+?),[ ]*?([0-9]+?),[ ]*?([0-9]+?),[ ]*?'(.*?)'\)">''', rf'<ref data-word="bn,{title},\1,\2,\3,\4" class="tooltip-word">', content)
+    # Strong's numbers
+    if "<ref onclick='lex(" in content:
+        content = re.sub(r'''<ref onclick='lex\("(.*?)"\)'>\1''', strong_to_lex, content)
+    elif '<ref onclick="lex(' in content:
+        content = re.sub(r'''<ref onclick="lex\('(.*?)'\)">\1''', strong_to_lex, content)
 
     # convert verse link, like '<vid id="v19.117.1" onclick="luV(1)">'
     content = re.sub(r'<vid id="v([0-9]+?)\.([0-9]+?)\.([0-9]+?)" onclick="luV\(([0-9]+?)\)">', r'<vid id="v\1.\2.\3" onclick="luV(\1, \2, \3)">', content)

@@ -6,12 +6,6 @@ def luW(event):
     #print(type(payload))
     #print('Server received payload:', payload)
     #ui.notify(f"Server got: {payload}")
-def lex(event):
-    # whatever we sent from the browser is available as event.args
-    payload = event.args
-    #print(type(payload))
-    #print('Server received payload:', payload)
-    #ui.notify(f"Server got: {payload}")
 def bdbid(event):
     # whatever we sent from the browser is available as event.args
     payload = event.args

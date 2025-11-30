@@ -16,6 +16,8 @@ def get_tooltip_css(dark_mode):
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         min-width: 250px;
         max-width: 350px;
+        max-height: 90%;          /* Limit height */
+        overflow-y: auto;           /* Enable vertical scrolling */
         z-index: 10000;
         display: none;
         pointer-events: none; /* Prevent interference initially */

@@ -1,6 +1,7 @@
 import os, apsw, re
 from biblemategui import BIBLEMATEGUI_DATA, config
 from agentmake.plugins.uba.lib.BibleParser import BibleVerseParser
+from nicegui import app
 
 def convert_uba_bible_cmd(match):
     refs = BibleVerseParser(False).extractAllReferences(match.group(1))
@@ -16,6 +17,29 @@ def get_tooltip_data(word):
     elif re.search("^(wh|w)[0-9]+?$", word):
         # Hebrew or Greek ID
         return get_morphology_data(word)
+    elif re.search("^(H|G)[0-9]", word):
+        # Hebrew or Greek Strong's numbers
+        return get_lexical_data(word)
+
+def get_lexical_data(word):
+    """Fetch lexical data from database"""
+    lexicon = app.storage.user["hebrew_lexicon"] if word.startswith("H") else app.storage.user["greek_lexicon"]
+    db = config.lexicons_custom[lexicon] if lexicon in config.lexicons_custom else config.lexicons[lexicon] if lexicon in config.lexicons else ""
+    if not db:
+        return None
+    app.storage.user['favorite_lexicon'] = lexicon
+    with apsw.Connection(db) as connn:
+        cursor = connn.cursor()
+        sql_query = f"SELECT Definition FROM Lexicon WHERE Topic=? limit 1"
+        cursor.execute(sql_query, (word,))
+        fetch = cursor.fetchone()
+    if fetch:
+        content = fetch[0]
+        content = f'''<ref onclick='lex("{word}")'>[{lexicon}] {word}</ref><hr>{content}'''
+        content = re.sub(r'''(onclick|ondblclick)="(lex|cr|bcv)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)
+        content = re.sub(r"""(onclick|ondblclick)='(lex|cr|bcv)\((.*?)\)'""", r"""\1='emitEvent("\2", [\3]); return false;'""", content)
+        return {'description': content, 'links': ""}
+    return None
 
 def get_morphology_data(word):
     result = None
@@ -53,6 +77,8 @@ def get_morphology_data(word):
 def get_bn_data(word):
     _, bible, b, c, v, id = word.split(",", 5)
     db = config.bibles_custom[bible][-1] if bible in config.bibles_custom else config.bibles[bible][-1] if bible in config.bibles else ""
+    if not db:
+        return None
     with apsw.Connection(db) as connn:
         query = "SELECT Note FROM Notes WHERE Book=? AND Chapter=? AND Verse=? AND ID=?"
         args = (int(b), int(c), int(v), id)
