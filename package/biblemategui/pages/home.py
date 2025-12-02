@@ -926,12 +926,13 @@ class BibleMateGUI:
                             ui.menu_item('Bible Podcast', on_click=lambda: self.load_area_2_content(title='Podcast', sync=True))
                             ui.menu_item('Bible Audio', on_click=lambda: self.load_area_2_content(title='Audio', sync=True))
                             ui.separator()
-                            ui.menu_item('Bible Commentaries', on_click=lambda: self.load_area_2_content(self.work_in_progress))
+                            ui.menu_item('Bible Commentaries', on_click=lambda: self.load_area_2_content(title='Commentary', sync=True))
                             ui.menu_item('Cross-references', on_click=lambda: self.load_area_2_content(title='Xrefs', sync=True))
                             ui.menu_item('Treasury of Scripture Knowledge', on_click=lambda: self.load_area_2_content(title='Treasury', sync=True))
                             #ui.menu_item('Discourse Analysis', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             #ui.menu_item('Morphological Data', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             #ui.menu_item('Translation Spectrum', on_click=lambda: self.load_area_2_content(self.work_in_progress))
+                            ui.separator()
                             ui.menu_item('Bible Timelines', on_click=lambda: self.load_area_2_content(title='Timelines', sync=True))
                             ui.menu_item('Bible Chronology', on_click=lambda: self.load_area_2_content(title='Chronology'))
                     
@@ -1119,7 +1120,7 @@ class BibleMateGUI:
                 )).props('clickable')
 
                 ui.item('Bible Commentaries', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
+                    self.load_area_2_content(title='Commentary', sync=True),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Cross-references', on_click=lambda: (

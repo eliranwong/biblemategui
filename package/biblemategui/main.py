@@ -174,19 +174,23 @@ def page_home(
 
     if k:
         # update storage based on latest loaded content
-        args = app.storage.user[gui.get_active_area1_tab()]
-        app.storage.user['bible_book_text'] = args.get('bt', "NET")
-        app.storage.user['bible_book_number'] = args.get('b', 1)
-        app.storage.user['bible_chapter_number'] = args.get('c', 1)
-        app.storage.user['bible_verse_number'] = args.get('v', 1)
-        app.storage.user['bible_query'] = args.get('q', '')
+        active_area1_tab = gui.get_active_area1_tab()
+        if active_area1_tab in app.storage.user:
+            args = app.storage.user[active_area1_tab]
+            app.storage.user['bible_book_text'] = args.get('bt', "NET")
+            app.storage.user['bible_book_number'] = args.get('b', 1)
+            app.storage.user['bible_chapter_number'] = args.get('c', 1)
+            app.storage.user['bible_verse_number'] = args.get('v', 1)
+            app.storage.user['bible_query'] = args.get('q', '')
 
-        args = app.storage.user[gui.get_active_area2_tab()]
-        app.storage.user['tool_book_text'] = args.get('bt', "NET")
-        app.storage.user['tool_book_number'] = args.get('b', 1)
-        app.storage.user['tool_chapter_number'] = args.get('c', 1)
-        app.storage.user['tool_verse_number'] = args.get('v', 1)
-        app.storage.user['tool_query'] = args.get('q', '')
+        active_area2_tab = gui.get_active_area2_tab()
+        if active_area2_tab in app.storage.user:
+            args = app.storage.user[active_area2_tab]
+            app.storage.user['tool_book_text'] = args.get('bt', "NET")
+            app.storage.user['tool_book_number'] = args.get('b', 1)
+            app.storage.user['tool_chapter_number'] = args.get('c', 1)
+            app.storage.user['tool_verse_number'] = args.get('v', 1)
+            app.storage.user['tool_query'] = args.get('q', '')
     
     gui.swap_layout(app.storage.user['layout'])
 
