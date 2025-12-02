@@ -270,4 +270,5 @@ USER_DEFAULT_SETTINGS = {
     'default_number_of_tabs1': 3,
     'default_number_of_tabs2': 3,
     'layout_swap_button': True,
+    'bible_select_button': True,
 }

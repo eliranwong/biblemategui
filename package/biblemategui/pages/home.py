@@ -6,6 +6,9 @@ from biblemategui import config, BIBLEMATEGUI_APP_DIR
 
 from biblemategui.pages.ai.chat import ai_chat
 
+from agentmake.plugins.uba.lib.BibleBooks import BibleBooks
+from biblemategui.fx.bible_selection_dialog import BibleSelectionDialog
+
 from biblemategui.js.bible import BIBLE_JS
 from biblemategui.js.original import get_original_js
 
@@ -261,34 +264,47 @@ class BibleMateGUI:
                                     #ui.label('[Content will be displayed here.]').classes('text-gray-600')
 
         # A Draggable Container
-        # - 'draggable="true"': Enables the native browser drag behavior.
-        # - 'cursor: grab': Shows the user it is movable.
-        # - 'dragend': Triggered when you release the mouse. We explicitly ask for X/Y coordinates.
-        # Logic to Handle Drag Drop (Snap to position)
-        def drag_layout_button(e):
-            # Get the drop coordinates from the event arguments
-            x = e.args['clientX']
-            y = e.args['clientY']
-            
-            # Update the container style to fix it at the new coordinates.
-            # We subtract 20px to center the button on the mouse pointer (approx half size).
-            # We must set bottom/right to 'auto' to let top/left take precedence.
-            self.fab_container.style(f'top: {y - 20}px; left: {x - 20}px; bottom: auto; right: auto')
+        def make_draggable(element):
+            """
+            Applies drag-and-drop logic to any UI element.
+            Snap-to-position on drag end.
+            """
+            def handle_drag_end(e):
+                x = e.args['clientX']
+                y = e.args['clientY']
+                # Position element based on drop location, centered
+                element.style(f'top: {y - 20}px; left: {x - 20}px; bottom: auto; right: auto')
+
+            element.props('draggable="true"') \
+                .style('cursor: grab') \
+                .on('dragend', handle_drag_end, ['clientX', 'clientY'])
+            return element
 
         with ui.column().classes('fixed bottom-6 right-6 z-50 touch-none') \
                 .props('draggable="true"') \
-                .style('cursor: grab') as self.fab_container:
-            
-            self.fab_container.bind_visibility_from(app.storage.user, 'layout_swap_button')
-            
-            # We request 'clientX' and 'clientY' to know where the mouse was released
-            self.fab_container.on('dragend', drag_layout_button, ['clientX', 'clientY'])
+                .style('cursor: grab') as self.fab_container1:
+            make_draggable(self.fab_container1)
+            self.fab_container1.bind_visibility_from(app.storage.user, 'layout_swap_button')
 
-            # 5. The Button (Smaller Size)
             # - 'fab-mini': Quasar's specific prop for a smaller floating action button.
             ui.button(icon='swap_horiz', on_click=self.swap_layout) \
                 .props('fab-mini color=primary') \
                 .tooltip('Swap Layout')
+
+        BOOK_NAMES = {i: BibleBooks.abbrev[app.storage.user['ui_language']][str(i)][0] for i in range(1,67)}
+        VERSES = BibleBooks.verses
+        bible_selection_dialog = BibleSelectionDialog(self, BOOK_NAMES, VERSES)
+
+        with ui.column().classes('fixed bottom-6 right-20 z-50 touch-none') \
+                .props('draggable="true"') \
+                .style('cursor: grab') as self.fab_container2:
+            make_draggable(self.fab_container2)
+            self.fab_container2.bind_visibility_from(app.storage.user, 'bible_select_button')
+
+            # - 'fab-mini': Quasar's specific prop for a smaller floating action button.
+            ui.button(icon='menu_book', on_click=bible_selection_dialog.open) \
+                .props('fab-mini color=primary') \
+                .tooltip('Select Bible Verse')
 
         # Set initial visibility
         self.update_visibility()
@@ -948,12 +964,20 @@ class BibleMateGUI:
                             ui.menu_item('Bible Only', on_click=lambda: self.swap_layout(1))
                             ui.menu_item('Tool Only', on_click=lambda: self.swap_layout(3))
                             ui.menu_item('Bible & Tool', on_click=lambda: self.swap_layout(2))
+                            # swap
                             def toggleSwapButton():
                                 app.storage.user["layout_swap_button"] = not app.storage.user["layout_swap_button"]
                             with ui.row().tooltip('Toggle Display of Swap Layout Button'):
                                 ui.menu_item('Swap', on_click=toggleSwapButton)
                                 ui.space()
                                 ui.switch().bind_value(app.storage.user, 'layout_swap_button')
+                            # navigate
+                            def toggleBibleSelectionButton():
+                                app.storage.user["bible_select_button"] = not app.storage.user["bible_select_button"]
+                            with ui.row().tooltip('Toggle Display of Bible Selection Button'):
+                                ui.menu_item('Navigate', on_click=toggleBibleSelectionButton)
+                                ui.space()
+                                ui.switch().bind_value(app.storage.user, 'bible_select_button')
                             # sync
                             def toggleSync():
                                 app.storage.user["sync"] = not app.storage.user["sync"]
@@ -999,6 +1023,7 @@ class BibleMateGUI:
                     # This is just a label now; the parent button handles the click
                     ui.label('BibleMate AI').classes('text-lg ml-2')
 
+            ui.switch('Navigate').bind_value(app.storage.user, 'bible_select_button')
             ui.switch('Swap').bind_value(app.storage.user, 'layout_swap_button')
             ui.switch('Sync').bind_value(app.storage.user, 'sync')
             ui.switch('Fullscreen').bind_value(app.storage.user, 'fullscreen')

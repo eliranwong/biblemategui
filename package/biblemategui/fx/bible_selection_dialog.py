@@ -1,0 +1,100 @@
+from nicegui import ui
+
+
+# --- LOGIC: Bible Selection Dialog ---
+class BibleSelectionDialog:
+    def __init__(self, parent, book_names, verses):
+        with ui.dialog() as self.dialog, ui.card().classes('w-[90vw] max-w-screen-lg h-[90vh] flex flex-col p-4') as self.content_area:
+            pass
+        self.selection = {'book_id': None, 'chapter': None, 'verse': None}
+        self.parent = parent
+        self.book_names = book_names
+        self.verses = verses
+
+    def open(self):
+        self.selection = {'book_id': None, 'chapter': None, 'verse': None}
+        self.render_books()
+        self.dialog.open()
+
+    def close(self):
+        self.dialog.close()
+
+    def render_header(self, title):
+        # shrink-0 ensures the header doesn't get compressed by the scroll area
+        with ui.row().classes('w-full justify-between items-center mb-2 shrink-0'):
+            ui.label(title).classes('text-xl font-bold')
+            ui.button(icon='close', on_click=self.close).props('flat round dense')
+        ui.separator().classes('mb-2 shrink-0')
+
+    def render_books(self):
+        # Clear existing content in the reused card
+        self.content_area.clear()
+        
+        with self.content_area:
+            self.render_header("Select Book")
+            
+            # Use a generic container with native scrolling for better mobile compatibility
+            # Use flex-1 and min-h-0 to ensure proper scrolling behavior inside flex container
+            with ui.element('div').classes('w-full flex-1 overflow-y-auto min-h-0'):
+                # 3-column grid for better space utilization
+                with ui.row().classes('w-full gap-2'):
+                    for book_id in range(1, 67):
+                        name = self.book_names.get(book_id, f"Book {book_id}")
+                        ui.button(name, on_click=lambda id=book_id: self.select_book(id)) \
+                            .props('flat align=left').classes('w-20')
+
+    def select_book(self, book_id):
+        self.selection['book_id'] = book_id
+        self.render_chapters()
+
+    def render_chapters(self):
+        self.content_area.clear()
+        book_name = self.book_names.get(self.selection['book_id'])
+        
+        with self.content_area:
+            self.render_header(f"{book_name}: Select Chapter")
+            
+            # Use flex-1 and min-h-0 to ensure proper scrolling behavior inside flex container
+            with ui.element('div').classes('w-full flex-1 overflow-y-auto min-h-0'):
+                # Reduced columns from 10 to 6 for better mobile layout
+                with ui.row().classes('w-full gap-2 p-2'):
+                    chapters = self.verses.get(self.selection['book_id'], {})
+                    for chap_num in chapters.keys():
+                        ui.button(str(chap_num), on_click=lambda c=chap_num: self.select_chapter(c)) \
+                            .classes('w-15')
+
+            ui.button('Back', on_click=self.render_books).props('outline color=grey').classes('w-full mt-2 shrink-0')
+
+    def select_chapter(self, chapter):
+        self.selection['chapter'] = chapter
+        self.render_verses()
+
+    def render_verses(self):
+        self.content_area.clear()
+        book_name = self.book_names.get(self.selection['book_id'])
+        
+        with self.content_area:
+            self.render_header(f"{book_name} {self.selection['chapter']}: Select Verse")
+            
+            # Get max verses for this chapter
+            max_verses = self.verses[self.selection['book_id']][self.selection['chapter']]
+            
+            # Use flex-1 and min-h-0 to ensure proper scrolling behavior inside flex container
+            with ui.element('div').classes('w-full flex-1 overflow-y-auto min-h-0'):
+                # Reduced columns from 10 to 6 for better mobile layout
+                with ui.row().classes('w-full gap-2 p-2'): 
+                    for v in range(1, max_verses + 1):
+                        ui.button(str(v), on_click=lambda verse=v: self.finish_selection(verse)) \
+                            .classes('w-15')
+
+            ui.button('Back', on_click=self.render_chapters).props('outline color=grey').classes('w-full mt-2 shrink-0')
+
+    def finish_selection(self, verse):
+        self.selection['verse'] = verse
+        self.close()
+        
+        # Trigger the final python function
+        #book_name = self.book_names.get(self.selection['book_id'])
+        #msg = f"Selected: {book_name} {self.selection['chapter']}:{self.selection['verse']}"
+        #ui.notify(msg, type='positive', icon='check_circle', close_button=True, position='center')
+        self.parent.change_area_1_bible_chapter(book=self.selection['book_id'], chapter=self.selection['chapter'], verse=self.selection['verse'])
