@@ -126,6 +126,7 @@ def search_bible_lexicons(gui=None, q='', **_):
                 .content-text {{
                     direction: ltr;
                     font-family: sans-serif;
+                    font-size: 1.1rem;
                     padding: 0px;
                     margin: 0px;
                 }}
@@ -201,7 +202,7 @@ def search_bible_lexicons(gui=None, q='', **_):
             """)
 
             # display
-            ui.html(f'<div class="bible-text">{content}</div>', sanitize=False)
+            ui.html(f'<div class="content-text">{content}</div>', sanitize=False)
 
         # Clear input so user can start typing to filter immediately
         if not content:

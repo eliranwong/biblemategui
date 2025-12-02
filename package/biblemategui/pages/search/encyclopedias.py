@@ -84,6 +84,7 @@ def search_bible_encyclopedias(gui=None, q='', **_):
                 .content-text {{
                     direction: ltr;
                     font-family: sans-serif;
+                    font-size: 1.1rem;
                     padding: 0px;
                     margin: 0px;
                 }}
@@ -131,7 +132,7 @@ def search_bible_encyclopedias(gui=None, q='', **_):
                     return match.group(0)  # return original if not found
             content = re.sub(r'<img src="getImage.php\?resource=([A-Z]+?)&id=(.+?)"/>', replace_img, content)
             # display
-            ui.html(f'<div class="bible-text">{content}</div>', sanitize=False)
+            ui.html(f'<div class="content-text">{content}</div>', sanitize=False)
 
             with ui.row().classes('w-full justify-center q-my-md'):
                 ui.button('Show All Verses', icon='auto_stories', on_click=lambda: gui.show_all_verses(path)) \

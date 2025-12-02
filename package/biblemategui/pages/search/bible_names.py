@@ -1,5 +1,5 @@
 from biblemategui import BIBLEMATEGUI_DATA, config
-from biblemategui.data.HBN import bible_names
+from biblemategui.data.bible_names import bible_names
 from agentmake.utils.rag import get_embeddings, cosine_similarity_matrix
 import numpy as np
 from functools import partial

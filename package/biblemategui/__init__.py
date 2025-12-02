@@ -101,6 +101,76 @@ def getBibleVersionList() -> List[str]:
         bibleVersionList = list(set(bibleVersionList))
     return sorted(bibleVersionList)
 
+# commentaries resources
+
+config.commentaries_names = {
+    "Barnes": "Notes on the Old and New Testaments (Barnes) [26 vol.]",
+    "Benson": "Commentary on the Old and New Testaments (Benson) [5 vol.]",
+    "BI": "Biblical Illustrator (Exell) [58 vol.]",
+    "Brooks": "Complete Summary of the Bible (Brooks) [2 vol.]",
+    "Calvin": "John Calvin's Commentaries (Calvin) [22 vol.]",
+    "Clarke": "Commentary on the Bible (Clarke) [6 vol.]",
+    "CBSC": "Cambridge Bible for Schools and Colleges (Cambridge) [57 vol.]",
+    "CECNT": "Critical And Exegetical Commentary on the NT (Meyer) [20 vol.]",
+    "CGrk": "Cambridge Greek Testament for Schools and Colleges (Cambridge) [21 vol.]",
+    "CHP": "Church Pulpit Commentary (Nisbet) [12 vol.]",
+    "CPBST": "College Press Bible Study Textbook Series (College) [59 vol.]",
+    "EBC": "Expositor's Bible Commentary (Nicoll) [49 vol.]",
+    "ECER": "Commentary for English Readers (Ellicott) [8 vol.]",
+    "EGNT": "Expositor's Greek New Testament (Nicoll) [5 vol.]",
+    "GCT": "Greek Testament Commentary (Alford) [4 vol.]",
+    "Gill": "Exposition of the Entire Bible (Gill) [9 vol.]",
+    "Henry": "Exposition of the Old and New Testaments (Henry) [6 vol.]",
+    "HH": "Horæ Homileticæ (Simeon) [21 vol.]",
+    "ICCNT": "International Critical Commentary, NT (1896-1929) [16 vol.]",
+    "JFB": "Jamieson, Fausset, and Brown Commentary (JFB) [6 vol.]",
+    "KD": "Commentary on the Old Testament (Keil & Delitzsch) [10 vol.]",
+    "Lange": "Commentary on the Holy Scriptures: Critical, Doctrinal, and Homiletical (Lange) [25 vol.]",
+    "MacL": "Expositions of Holy Scripture (MacLaren) [32 vol.]",
+    "PHC": "Preacher's Complete Homiletical Commentary (Exell) [37 vol.]",
+    "Pulpit": "Pulpit Commentary (Spence) [23 vol.]",
+    "Rob": "Word Pictures in the New Testament (Robertson) [6 vol.]",
+    "Spur": "Spurgeon's Expositions on the Bible (Spurgeon) [3 vol.]",
+    "Vincent": "Word Studies in the New Testament (Vincent) [4 vol.]",
+    "Wesley": "John Wesley's Notes on the Whole Bible (Wesley) [3 vol.]",
+    "Whedon": "Commentary on the Old and New Testaments (Whedon) [14 vol.]",
+}
+
+def getCommentaryInfo(db):
+    abb = os.path.basename(db)[1:-11]
+    if abb in config.commentaries_names:
+        return config.commentaries_names[abb]
+    try:
+        with apsw.Connection(db) as connn:
+            query = "SELECT Title FROM Details limit 1"
+            cursor = connn.cursor()
+            cursor.execute(query)
+            info = cursor.fetchone()
+    except:
+        return abb
+    return info[0] if info else abb
+
+commentaries_dir = os.path.join(BIBLEMATEGUI_DATA, "commentaries")
+if os.path.isdir(commentaries_dir):
+    config.commentaries = dict(sorted({os.path.basename(i)[1:-11]: (getCommentaryInfo(i), i) for i in glob.glob(os.path.join(commentaries_dir, "*.commentary"))}.items()))
+else:
+    Path(commentaries_dir).mkdir(parents=True, exist_ok=True)
+    config.commentaries = {}
+commentaries_dir_custom = os.path.join(BIBLEMATEGUI_DATA_CUSTOM, "commentaries")
+if os.path.isdir(commentaries_dir_custom):
+    config.commentaries_custom = dict(sorted({os.path.basename(i)[1:-11]: (getCommentaryInfo(i), i) for i in glob.glob(os.path.join(commentaries_dir_custom, "*.commentary"))}.items()))
+else:
+    Path(commentaries_dir_custom).mkdir(parents=True, exist_ok=True)
+    config.commentaries_custom = {}
+
+def getCommentaryVersionList() -> List[str]:
+    """Returns a list of available Commentary versions"""
+    commentaryVersionList = list(config.commentaries.keys())
+    if app.storage.client["custom"]:
+        commentaryVersionList += list(config.commentaries_custom.keys())
+        commentaryVersionList = list(set(commentaryVersionList))
+    return sorted(commentaryVersionList)
+
 # lexicons resources
 lexicons_dir = os.path.join(BIBLEMATEGUI_DATA, "lexicons")
 if os.path.isdir(lexicons_dir):

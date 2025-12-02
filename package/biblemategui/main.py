@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from nicegui import ui
-from biblemategui import config, BIBLEMATEGUI_DATA, BIBLEMATEGUI_APP_DIR, USER_DEFAULT_SETTINGS, getBibleVersionList, getLexiconList
+from biblemategui import config, BIBLEMATEGUI_APP_DIR, USER_DEFAULT_SETTINGS, getBibleVersionList, getLexiconList
 from biblemategui.pages.home import *
 from biblemategui.js.tooltip import TOOLTIP_JS
 from biblemategui.css.tooltip import get_tooltip_css

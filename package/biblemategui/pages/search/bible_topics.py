@@ -77,6 +77,7 @@ def search_bible_topics(gui=None, q='', **_):
                 .content-text {{
                     direction: ltr;
                     font-family: sans-serif;
+                    font-size: 1.1rem;
                     padding: 0px;
                     margin: 0px;
                 }}
@@ -105,7 +106,7 @@ def search_bible_topics(gui=None, q='', **_):
             if app.storage.user['dark_mode']:
                 content = content.replace('<font color="brown">', '<font color="pink">')
             # display
-            ui.html(f'<div class="bible-text">{content}</div>', sanitize=False)
+            ui.html(f'<div class="content-text">{content}</div>', sanitize=False)
 
             with ui.row().classes('w-full justify-center q-my-md'):
                 ui.button('Show All Verses', icon='auto_stories', on_click=lambda: gui.show_all_verses(path)) \

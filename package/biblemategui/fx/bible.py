@@ -183,6 +183,7 @@ class BibleSelector:
         self.selected_book: Optional[str] = None
         self.selected_chapter: Optional[int] = None
         self.selected_verse: Optional[int] = None
+        self.show_verses: Optional[bool] = None
         
         # Initialize dropdown UI elements
         self.version_select: Optional[ui.select] = None
@@ -196,11 +197,12 @@ class BibleSelector:
         self.chapter_options: List[int] = []
         self.verse_options: List[int] = []
         
-    def create_ui(self, bible, b, c, v, additional_items=None, show_versions=True):
+    def create_ui(self, bible, b, c, v, additional_items=None, show_versions=True, show_verses=True):
         self.selected_version = bible
         self.selected_book = b
         self.selected_chapter = c
         self.selected_verse = v
+        self.show_verses = show_verses
 
         if not self.version_options:
             self.version_options = getBibleVersionList()
@@ -239,12 +241,13 @@ class BibleSelector:
                 on_change=self.on_chapter_change
             )
             # Verse
-            self.verse_select = ui.select(
-                options=self.verse_options,
-                #label='Verse',
-                value=v,
-                on_change=self.on_verse_change
-            )
+            if show_verses:
+                self.verse_select = ui.select(
+                    options=self.verse_options,
+                    #label='Verse',
+                    value=v,
+                    on_change=self.on_verse_change
+                )
             if additional_items:
                 additional_items()
     
@@ -311,6 +314,8 @@ class BibleSelector:
     
     def reset_verse_dropdown(self):
         """Reset verse dropdown to initial state"""
+        if not self.show_verses:
+            return
         self.verse_options = getBibleVerseList(getBiblePath(self.selected_version), self.selected_book, self.selected_chapter)
         self.verse_select.options = self.verse_options
         self.verse_select.value = self.verse_options[0]

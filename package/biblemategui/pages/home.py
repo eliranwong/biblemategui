@@ -18,7 +18,10 @@ from biblemategui.pages.bibles.original_linguistic import original_linguistic
 from biblemategui.pages.bibles.bible_translation import bible_translation
 
 from biblemategui.pages.tools.xrefs import xrefs
+from biblemategui.pages.tools.treasury import treasury
 from biblemategui.pages.tools.audio import bibles_audio
+from biblemategui.pages.tools.podcast import bibles_podcast
+from biblemategui.pages.tools.commentary import bible_commentary
 from biblemategui.pages.tools.chronology import bible_chronology
 
 from biblemategui.pages.search.bible_verses import search_bible_verses
@@ -387,12 +390,37 @@ class BibleMateGUI:
                 self.remove_tab_area2()
 
     def is_tool(self, title):
-        tools = ("audio", "verses", "chronology", "xrefs", "promises", "parallels", "topics", "characters", "locations", "names", "dictionaries", "encyclopedias", "lexicons", "maps", "relationships")
+        tools = (
+            "podcast",
+            "audio",
+            "verses",
+            "treasury",
+            "commentary",
+            "chronology",
+            "xrefs",
+            "promises",
+            "parallels",
+            "topics",
+            "characters",
+            "locations",
+            "names",
+            "dictionaries",
+            "encyclopedias",
+            "lexicons",
+            "maps",
+            "relationships",
+        )
         return True if title.lower() in tools else False
 
     def get_content(self, title):
         if title.lower() == "audio":
             return bibles_audio
+        elif title.lower() == "commentary":
+            return bible_commentary
+        elif title.lower() == "treasury":
+            return treasury
+        elif title.lower() == "podcast":
+            return bibles_podcast
         elif title.lower() == "relationships":
             return search_bible_relationships
         elif title.lower() == "xrefs":
@@ -822,7 +850,7 @@ class BibleMateGUI:
                     with ui.button(icon='local_library').props('flat color=white round').tooltip('Bibles'):
                         with ui.menu():
                             ui.menu_item('Add Bible Tab', on_click=self.add_tab_area1)
-                            ui.menu_item('Remove Bible Tab', on_click=self.remove_tab_area1)
+                            ui.menu_item('Close Bible Tab', on_click=self.remove_tab_area1)
                             ui.menu_item('Close Others', on_click=self.close_other_area1_tabs)
                             ui.separator()
                             ui.menu_item(primary_bible, on_click=lambda: self.load_area_1_content(title=primary_bible)).tooltip(primary_bible)
@@ -846,7 +874,7 @@ class BibleMateGUI:
                     with ui.button(icon='devices_fold').props('flat color=white round').tooltip('Parallel Bibles'):
                         with ui.menu():
                             ui.menu_item('Add Parallel Tab', on_click=self.add_tab_area2)
-                            ui.menu_item('Remove Parallel Tab', on_click=self.remove_tab_area2)
+                            ui.menu_item('Close Parallel Tab', on_click=self.remove_tab_area2)
                             ui.menu_item('Close Others', on_click=self.close_other_area2_tabs)
                             ui.separator()
                             ui.menu_item(primary_bible, on_click=lambda: self.load_area_2_content(title=primary_bible)).tooltip(primary_bible)
@@ -872,20 +900,18 @@ class BibleMateGUI:
                     with ui.button(icon='build').props('flat color=white round').tooltip('Tools'):
                         with ui.menu():
                             ui.menu_item('Add Tool Tab', on_click=self.add_tab_area2)
-                            ui.menu_item('Remove Tool Tab', on_click=self.remove_tab_area2)
+                            ui.menu_item('Close Tool Tab', on_click=self.remove_tab_area2)
                             ui.menu_item('Close Others', on_click=self.close_other_area2_tabs)
                             ui.separator()
-                            ui.menu_item('Bible Verse', on_click=lambda: self.load_area_2_content(self.work_in_progress))
+                            ui.menu_item('Bible Podcast', on_click=lambda: self.load_area_2_content(title='Podcast', sync=True))
                             ui.menu_item('Bible Audio', on_click=lambda: self.load_area_2_content(title='Audio', sync=True))
-                            ui.menu_item('Compare Chapter', on_click=lambda: self.load_area_2_content(self.work_in_progress))
-                            ui.menu_item('Compare Verse', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             ui.separator()
                             ui.menu_item('Bible Commentaries', on_click=lambda: self.load_area_2_content(self.work_in_progress))
-                            ui.menu_item('Cross-references', on_click=lambda: self.load_area_2_content(title='Xrefs'))
-                            ui.menu_item('Treasury of Scripture Knowledge', on_click=lambda: self.load_area_2_content(self.work_in_progress))
-                            ui.menu_item('Discourse Analysis', on_click=lambda: self.load_area_2_content(self.work_in_progress))
-                            ui.menu_item('Morphological Data', on_click=lambda: self.load_area_2_content(self.work_in_progress))
-                            ui.menu_item('Translation Spectrum', on_click=lambda: self.load_area_2_content(self.work_in_progress))
+                            ui.menu_item('Cross-references', on_click=lambda: self.load_area_2_content(title='Xrefs', sync=True))
+                            ui.menu_item('Treasury of Scripture Knowledge', on_click=lambda: self.load_area_2_content(title='Treasury', sync=True))
+                            #ui.menu_item('Discourse Analysis', on_click=lambda: self.load_area_2_content(self.work_in_progress))
+                            #ui.menu_item('Morphological Data', on_click=lambda: self.load_area_2_content(self.work_in_progress))
+                            #ui.menu_item('Translation Spectrum', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             ui.menu_item('Bible Timelines', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             ui.menu_item('Bible Chronology', on_click=lambda: self.load_area_2_content(title='Chronology'))
                     
@@ -1054,20 +1080,12 @@ class BibleMateGUI:
 
             # Bible Tools
             with ui.expansion('Tools', icon='build').props('header-class="text-secondary"'):
-                ui.item('Bible Verse', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
+                ui.item('Bible Podcast', on_click=lambda: (
+                    self.load_area_2_content(title='Podcast', sync=True),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Bible Audio', on_click=lambda: (
                     self.load_area_2_content(title='Audio', sync=True),
-                    app.storage.user.update(left_drawer_open=False)
-                )).props('clickable')
-                ui.item('Compare Chapter', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
-                    app.storage.user.update(left_drawer_open=False)
-                )).props('clickable')
-                ui.item('Compare Verse', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
 
@@ -1076,25 +1094,25 @@ class BibleMateGUI:
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Cross-references', on_click=lambda: (
-                    self.load_area_2_content(title='Xrefs'),
+                    self.load_area_2_content(title='Xrefs', sync=True),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Treasury of Scripture Knowledge', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
+                    self.load_area_2_content(title='Treasury', sync=True),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
-                ui.item('Discourse Analysis', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
-                    app.storage.user.update(left_drawer_open=False)
-                )).props('clickable')
-                ui.item('Morphological Data', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
-                    app.storage.user.update(left_drawer_open=False)
-                )).props('clickable')
-                ui.item('Translation Spectrum', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
-                    app.storage.user.update(left_drawer_open=False)
-                )).props('clickable')
+                #ui.item('Discourse Analysis', on_click=lambda: (
+                #    self.load_area_2_content(self.work_in_progress),
+                #    app.storage.user.update(left_drawer_open=False)
+                #)).props('clickable')
+                #ui.item('Morphological Data', on_click=lambda: (
+                #    self.load_area_2_content(self.work_in_progress),
+                #    app.storage.user.update(left_drawer_open=False)
+                #)).props('clickable')
+                #ui.item('Translation Spectrum', on_click=lambda: (
+                #    self.load_area_2_content(self.work_in_progress),
+                #    app.storage.user.update(left_drawer_open=False)
+                #)).props('clickable')
                 ui.item('Bible Timelines', on_click=lambda: (
                     self.load_area_2_content(self.work_in_progress),
                     app.storage.user.update(left_drawer_open=False)

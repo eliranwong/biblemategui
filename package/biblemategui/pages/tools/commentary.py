@@ -1,0 +1,222 @@
+from nicegui import ui, app
+from biblemategui import BIBLEMATEGUI_DATA, getCommentaryVersionList
+from biblemategui.data.cr_books import cr_books
+from agentmake.plugins.uba.lib.BibleBooks import BibleBooks
+from agentmake.plugins.uba.lib.BibleParser import BibleVerseParser
+from agentmake.plugins.uba.lib.RegexSearch import RegexSearch
+import apsw, os, re
+
+def get_commentary_content(references: str):
+    def fetch_commentary_chapter(b,c):
+        fetch = None
+        db = os.path.join(BIBLEMATEGUI_DATA, "commentaries", f"c{app.storage.user["favorite_commentary"]}.commentary")
+        with apsw.Connection(db) as connn:
+            cursor = connn.cursor()
+            sql_query = "SELECT Scripture FROM Commentary WHERE Book=? AND Chapter=? limit 1"
+            cursor.execute(sql_query, (b,c))
+            fetch = cursor.fetchone()
+        return fetch
+    parser = BibleVerseParser(False, language=app.storage.user['ui_language'])
+    references = parser.extractAllReferences(references)
+    if not references:
+        return ""
+    results = []
+    for ref in references:
+        b,c,*_ = ref
+        results.append(f"<h2>{parser.bcvToVerseReference(*ref)}</h2>")
+        fetch = fetch_commentary_chapter(b,c)
+        content = fetch[0] if fetch else ""
+        if content:
+            fullVerseList = [f'<vid id="v{b}.{c}.{v}"' for b, c, v in parser.extractExhaustiveReferences([ref])]
+            pattern = '(<vid id="v[0-9]+?.[0-9]+?.[0-9]+?"></vid>)<hr>'
+            searchReplaceItems = ((pattern, r"<hr>\1"),)
+            chapterCommentary = RegexSearch.deepReplace(content, pattern, searchReplaceItems)
+            verseCommentaries = chapterCommentary.split("<hr>")
+
+            loaded = []
+            for i in verseCommentaries:
+                for ii in fullVerseList:
+                    if i.strip() and not i in loaded and ii in i:
+                        loaded.append(i)
+            content = "<hr>".join(loaded)
+            results.append(content)
+    return "<hr>".join(results) if results else ""
+
+def bible_commentary(gui=None, b=1, c=1, v=1, q='', **_):
+
+    # --- Data: 66 Bible Books & ID Mapping ---
+    BIBLE_BOOKS = [BibleBooks.abbrev["eng"][str(i)][0] for i in range(1,67)]
+    client_commentaries = getCommentaryVersionList()
+    scope_select = None
+
+    def cr(event):
+        nonlocal gui
+        b, c, v, *_ = event.args
+        b = cr_books.get(b, b)
+        gui.change_area_1_bible_chapter(None, b, c, v)
+
+    def bcv(event):
+        nonlocal gui
+        b, c, v, *_ = event.args
+        gui.change_area_1_bible_chapter(None, b, c, v)
+    
+    def website(event):
+        url, *_ = event.args
+        ui.navigate.to(url, new_tab=True)
+
+    def bdbid(event):
+        nonlocal input_field
+        id, *_ = event.args
+        input_field.value = bdbid
+        handle_enter(None)
+
+    def lex(event):
+        nonlocal input_field
+        id, *_ = event.args
+        input_field.value = id
+        handle_enter(None)
+
+    ui.on('bcv', bcv)
+    ui.on('cr', cr)
+    ui.on('website', website)
+    ui.on('bdbid', bdbid)
+    ui.on('lex', lex)
+
+    def change_module(new_module):
+        nonlocal input_field
+        app.storage.user['favorite_commentary'] = new_module
+        if scope_select and scope_select.value != new_module:
+            scope_select.value = new_module
+
+    def handle_enter(_, keep=True):
+        nonlocal content_container, gui, input_field
+
+        references = input_field.value.strip()
+        content = get_commentary_content(references)
+
+        # update tab records
+        if content and keep:
+            gui.update_active_area2_tab_records(q=references)
+
+        # Clear existing rows first
+        content_container.clear()
+
+        with content_container:
+            # html style
+            ui.add_head_html(f"""
+            <style>
+                /* Main container for the content - LTR flow */
+                .content-text {{
+                    direction: ltr;
+                    font-family: sans-serif;
+                    font-size: 1.1rem;
+                    padding: 0px;
+                    margin: 0px;
+                }}
+                /* Verse ref */
+                ref {{
+                    color: {'#f2c522' if app.storage.user['dark_mode'] else 'navy'};
+                    font-weight: bold;
+                    cursor: pointer;
+                }}
+                /* CSS to target all h1 elements */
+                h1 {{
+                    font-size: 2.2rem;
+                    color: {app.storage.user['primary_color']};
+                }}
+                /* CSS to target all h2 elements */
+                h2 {{
+                    font-size: 1.8rem;
+                    color: {app.storage.user['secondary_color']};
+                }}
+            </style>
+            """)
+            ui.add_head_html(f"""
+            <style>
+                /* Hebrew Word Layer */
+                wform, heb, bdbheb, bdbarc, hu {{
+                    font-family: 'SBL Hebrew', 'Ezra SIL', serif;
+                    font-size: 1.8rem;
+                    direction: rtl;
+                    display: inline-block;
+                    line-height: 1.2em;
+                    margin-top: 0;
+                    margin-bottom: -2px;
+                    cursor: pointer;
+                }}
+                /* Greek Word Layer (targets <grk> tag) */
+                wform, grk, kgrk, gu {{
+                    font-family: 'SBL Greek', 'Galatia SIL', 'Times New Roman', serif; /* CHANGED */
+                    font-size: 1.6rem;
+                    direction: ltr;
+                    display: inline-block;
+                    line-height: 1.2em;
+                    margin-top: 0;
+                    margin-bottom: -2px;
+                    cursor: pointer;
+                }}
+            </style>
+            """)
+            # convert links, e.g. <ref onclick="bcv(3,19,26)">
+            content = re.sub(r'''(onclick|ondblclick)="(bdbid|lex|cr|bcv|website)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)
+            content = re.sub(r"""(onclick|ondblclick)='(bdbid|lex|cr|bcv|website)\((.*?)\)'""", r"""\1='emitEvent("\2", [\3]); return false;'""", content)
+            # convert colors for dark mode, e.g. <font color="brown">
+            if app.storage.user['dark_mode']:
+                content = content.replace('color="brown">', 'color="pink">')
+                content = content.replace('color="navy">', 'color="lightskyblue">')
+                content = content.replace('<table bgcolor="#BFBFBF"', '<table bgcolor="#424242"')
+                content = content.replace('<td bgcolor="#FFFFFF">', '<td bgcolor="#212121">')
+                content = content.replace('<tr bgcolor="#FFFFFF">', '<tr bgcolor="#212121">')
+                content = content.replace('<tr bgcolor="#DFDFDF">', '<tr bgcolor="#303030">')
+
+            # display
+            ui.html(f'<div class="content-text">{content}</div>', sanitize=False)
+
+        # Clear input so user can start typing to filter immediately
+        if not content:
+            ui.notify("No entry found.", color='warning')
+
+    # ==============================================================================
+    # UI LAYOUT
+    # ==============================================================================
+    initial_module = ""
+    if q and ":::" in q:
+        initial_module, q = q.split(":::")
+        if not initial_module in client_commentaries:
+            q = ""
+
+    with ui.row().classes('w-full max-w-3xl mx-auto m-0 py-0 px-4 items-center'):
+        input_field = ui.input(
+            autocomplete=BIBLE_BOOKS,
+            placeholder=f'Enter verse reference(s) here ...'
+        ).classes('flex-grow text-lg') \
+        .props('outlined dense clearable autofocus enterkeyhint="search"')
+
+        input_field.on('keydown.enter.prevent', handle_enter)
+
+        scope_select = ui.select(
+            options=client_commentaries,
+            value=app.storage.user.get('favorite_commentary', 'CBSC'),
+            with_input=True
+        ).classes('w-22').props('dense')
+
+        if initial_module:
+            change_module(initial_module)
+
+        def handle_scope_change(e):
+            new_module = e.value
+            change_module(new_module)
+            handle_enter(None)
+        scope_select.on_value_change(handle_scope_change)
+
+    # --- Main Content Area ---
+    with ui.column().classes('w-full items-center'):
+        # Define the container HERE within the layout structure
+        content_container = ui.column().classes('w-full transition-all !gap-1')
+
+    if q:
+        input_field.value = q
+    else:
+        parser = BibleVerseParser(False, language=app.storage.user['ui_language'])
+        input_field.value = parser.bcvToVerseReference(b,c,v)
+    handle_enter(None, keep=False)
