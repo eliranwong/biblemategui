@@ -84,9 +84,9 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
         content = re.sub('(<grk id=")(.*?)"', r'\1\2" data-word="\2" class="tooltip-word"', content)
     # study notes
     if "<ref onclick='bn(" in content:
-        content = re.sub(f'''<ref onclick='bn\(([0-9]+?),[ ]*?([0-9]+?),[ ]*?([0-9]+?),[ ]*?"(.*?)"\)'>''', rf'<ref data-word="bn,{title},\1,\2,\3,\4" class="tooltip-word">', content)
+        content = re.sub(rf'''<ref onclick='bn\(([0-9]+?),[ ]*?([0-9]+?),[ ]*?([0-9]+?),[ ]*?"(.*?)"\)'>''', rf'<ref data-word="bn,{title},\1,\2,\3,\4" class="tooltip-word">', content)
     elif '<ref onclick="bn(' in content:
-        content = re.sub(f'''<ref onclick="bn\(([0-9]+?),[ ]*?([0-9]+?),[ ]*?([0-9]+?),[ ]*?'(.*?)'\)">''', rf'<ref data-word="bn,{title},\1,\2,\3,\4" class="tooltip-word">', content)
+        content = re.sub(rf'''<ref onclick="bn\(([0-9]+?),[ ]*?([0-9]+?),[ ]*?([0-9]+?),[ ]*?'(.*?)'\)">''', rf'<ref data-word="bn,{title},\1,\2,\3,\4" class="tooltip-word">', content)
     # Strong's numbers
     if "<ref onclick='lex(" in content:
         content = re.sub(r'''<ref onclick='lex\("(.*?)"\)'>\1''', strong_to_lex, content)
@@ -267,10 +267,10 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
                 gui.change_area_1_bible_chapter(selected_text, new_b, new_c, 1)
             else:
                 gui.change_area_2_bible_chapter(selected_text, new_b, new_c, 1)
-        def change_audio_chapter(selection):
+        def open_tool(selection, title=""):
             app.storage.user['tool_book_text'], app.storage.user['tool_book_number'], app.storage.user['tool_chapter_number'], app.storage.user['tool_verse_number'] = selection
             gui.select_empty_area2_tab()
-            gui.load_area_2_content(title="Audio", sync=False)
+            gui.load_area_2_content(title=title, sync=False)
         def search_bible(q=""):
             app.storage.user['tool_query'] = q
             gui.select_empty_area2_tab()
@@ -286,7 +286,14 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
                     ui.menu_item('Search NT', on_click=lambda: search_bible(q="NT:::"))
                     ui.menu_item(f'Search {bible_selector.book_select.value}', on_click=lambda: search_bible(q=f"{bible_selector.book_select.value}:::"))
                 ui.separator()
-                ui.menu_item('Bible Audio', on_click=lambda: change_audio_chapter(bible_selector.get_selection()))
+                ui.menu_item('Bible Podcast', on_click=lambda: open_tool(bible_selector.get_selection(), title="Podcast"))
+                ui.menu_item('Bible Audio', on_click=lambda: open_tool(bible_selector.get_selection(), title="Audio"))
+                ui.separator()
+                ui.menu_item('Cross-references', on_click=lambda: open_tool(bible_selector.get_selection(), title="Xrefs"))
+                ui.menu_item('Commentary', on_click=lambda: open_tool(bible_selector.get_selection(), title="Commentary"))
+                ui.separator()
+                ui.menu_item('Timelines', on_click=lambda: open_tool(bible_selector.get_selection(), title="Timelines"))
+                ui.menu_item('Indexes', on_click=lambda: open_tool(bible_selector.get_selection(), title="Indexes"))
     bible_selector.create_ui(title, b, c, v, additional_items=additional_items)
 
     # Render the HTML inside a styled container

@@ -156,18 +156,14 @@ def page_home(
 
     # load bible content at start
     if load_bible_at_start:
-        next_tab_num = gui.area1_tab_loaded + 1
-        if next_tab_num > gui.area1_tab_counter:
-            gui.add_tab_area1()
+        gui.select_empty_area1_tab()
         gui.load_area_1_content(title=bbt, keep=k)
     elif not gui.area1_tab_loaded: # when nothing is loaded
         gui.load_area_1_content(title="NET")
     
     # load tool content at start
     if tool:
-        next_tab_num = gui.area2_tab_loaded + 1
-        if next_tab_num > gui.area2_tab_counter:
-            gui.add_tab_area2()
+        gui.select_empty_area2_tab()
         gui.load_area_2_content(title=tbt if tool == "bible" else tool, keep=k, sync=s)
     elif not gui.area2_tab_loaded: # when nothing is loaded
         gui.load_area_2_content(title="Audio", sync=True)
@@ -192,7 +188,7 @@ def page_home(
             app.storage.user['tool_verse_number'] = args.get('v', 1)
             app.storage.user['tool_query'] = args.get('q', '')
     
-    gui.swap_layout(app.storage.user['layout'])
+    gui.swap_layout(l)
 
     # update the URL to reflect current settings without reloading
     '''def update_url():

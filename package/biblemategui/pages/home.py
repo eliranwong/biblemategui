@@ -27,6 +27,7 @@ from biblemategui.pages.tools.podcast import bibles_podcast
 from biblemategui.pages.tools.commentary import bible_commentary
 from biblemategui.pages.tools.chronology import bible_chronology
 from biblemategui.pages.tools.timelines import bible_timelines
+from biblemategui.pages.tools.indexes import resource_indexes
 
 from biblemategui.pages.search.bible_verses import search_bible_verses
 from biblemategui.pages.search.bible_promises import search_bible_promises
@@ -377,7 +378,7 @@ class BibleMateGUI:
                         next_tab = True
 
     def select_empty_area1_tab(self):
-        for child in self.area2_tabs:
+        for child in self.area1_tabs:
             if hasattr(child, '_props') and re.search("^Bible [0-9]", child._props.get('label', '')):
                 if tab_name := child._props.get('name', ''):
                    self.area1_tab_panels_container.value = tab_name
@@ -408,6 +409,7 @@ class BibleMateGUI:
 
     def is_tool(self, title):
         tools = (
+            "indexes",
             "podcast",
             "audio",
             "verses",
@@ -437,6 +439,8 @@ class BibleMateGUI:
             return bible_commentary
         elif title.lower() == "treasury":
             return treasury
+        elif title.lower() == "indexes":
+            return resource_indexes
         elif title.lower() == "podcast":
             return bibles_podcast
         elif title.lower() == "relationships":
@@ -715,7 +719,7 @@ class BibleMateGUI:
         new_tab_name = f'tab1_{self.area1_tab_counter}'
         # Add new tab
         with self.area1_tabs:
-            with ui.tab(new_tab_name, label=f'Bible {self.area1_tab_counter}').classes('text-secondary') as tab:
+            with ui.tab(new_tab_name, label=f'Bible {self.area1_tab_counter}').classes('text-secondary closable-tab') as tab:
                 close_btn = ui.button(
                     icon='close',
                     on_click=partial(self.remove_tab_area1_any, new_tab_name),
@@ -773,7 +777,7 @@ class BibleMateGUI:
         new_tab_name = f'tab2_{self.area2_tab_counter}'
         # Add new tab
         with self.area2_tabs:
-            with ui.tab(new_tab_name, label=f'Tool {self.area2_tab_counter}').classes('text-secondary') as tab:
+            with ui.tab(new_tab_name, label=f'Tool {self.area2_tab_counter}').classes('text-secondary closable-tab') as tab:
                 close_btn = ui.button(
                     icon='close',
                     on_click=partial(self.remove_tab_area2_any, new_tab_name),
@@ -935,6 +939,8 @@ class BibleMateGUI:
                             ui.separator()
                             ui.menu_item('Bible Timelines', on_click=lambda: self.load_area_2_content(title='Timelines', sync=True))
                             ui.menu_item('Bible Chronology', on_click=lambda: self.load_area_2_content(title='Chronology'))
+                            ui.separator()
+                            ui.menu_item('Indexes', on_click=lambda: self.load_area_2_content(title='Indexes', sync=True))
                     
                     with ui.button(icon='search').props('flat color=white round').tooltip('Search'):
                         with ui.menu():
@@ -980,7 +986,7 @@ class BibleMateGUI:
                             def toggleBibleSelectionButton():
                                 app.storage.user["bible_select_button"] = not app.storage.user["bible_select_button"]
                             with ui.row().tooltip('Toggle Display of Bible Selection Button'):
-                                ui.menu_item('Navigate', on_click=toggleBibleSelectionButton)
+                                ui.menu_item('Go', on_click=toggleBibleSelectionButton)
                                 ui.space()
                                 ui.switch().bind_value(app.storage.user, 'bible_select_button')
                             # sync
@@ -1028,7 +1034,7 @@ class BibleMateGUI:
                     # This is just a label now; the parent button handles the click
                     ui.label('BibleMate AI').classes('text-lg ml-2')
 
-            ui.switch('Navigate').bind_value(app.storage.user, 'bible_select_button')
+            ui.switch('Go').bind_value(app.storage.user, 'bible_select_button')
             ui.switch('Swap').bind_value(app.storage.user, 'layout_swap_button')
             ui.switch('Sync').bind_value(app.storage.user, 'sync')
             ui.switch('Fullscreen').bind_value(app.storage.user, 'fullscreen')
@@ -1149,6 +1155,10 @@ class BibleMateGUI:
                 )).props('clickable')
                 ui.item('Bible Chronology', on_click=lambda: (
                     self.load_area_2_content(title='Chronology'),
+                    app.storage.user.update(left_drawer_open=False)
+                )).props('clickable')
+                ui.item('Indexes', on_click=lambda: (
+                    self.load_area_2_content(title='Indexes', sync=True),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
 

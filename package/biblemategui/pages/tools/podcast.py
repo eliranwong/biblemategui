@@ -1,7 +1,7 @@
 from nicegui import ui, app
 import asyncio, os, re, glob
 from biblemategui import config, BIBLEMATEGUI_DATA
-from biblemategui.fx.bible import *
+from biblemategui.fx.bible import BibleSelector
 from agentmake.plugins.uba.lib.BibleBooks import BibleBooks
 from agentmake import readTextFile
 
@@ -129,15 +129,10 @@ def bibles_podcast(gui=None, bt=None, b=1, c=1, v=1, area=2, **_):
     if not bt:
         bt = gui.get_area_1_bible_text()
 
-    # version options
-    version_options = list(config.audio.keys())
-    if app.storage.client["custom"]:
-        version_options += list(config.audio_custom.keys())
-        version_options = list(set(version_options))
     # version
-    version = "NET"
+    version = "KJV"
     # Bible Selection menu
-    bible_selector = BibleSelector(version_options=sorted(version_options))
+    bible_selector = BibleSelector(version_options=["KJV"])
     def additional_items():
         nonlocal gui, bible_selector, area
         def change_audio_chapter(selection):
