@@ -28,6 +28,8 @@ from biblemategui.pages.tools.commentary import bible_commentary
 from biblemategui.pages.tools.chronology import bible_chronology
 from biblemategui.pages.tools.timelines import bible_timelines
 from biblemategui.pages.tools.indexes import resource_indexes
+from biblemategui.pages.tools.promises import bible_promises_menu
+from biblemategui.pages.tools.parallels import bible_parallels_menu
 
 from biblemategui.pages.search.bible_verses import search_bible_verses
 from biblemategui.pages.search.bible_promises import search_bible_promises
@@ -451,8 +453,12 @@ class BibleMateGUI:
             return search_bible_maps
         elif title.lower() == "promises":
             return search_bible_promises
+        elif title.lower() == "promises_":
+            return bible_promises_menu
         elif title.lower() == "parallels":
             return search_bible_parallels
+        elif title.lower() == "parallels_":
+            return bible_parallels_menu
         elif title.lower() == "topics":
             return search_bible_topics
         elif title.lower() == "characters":
@@ -937,6 +943,9 @@ class BibleMateGUI:
                             #ui.menu_item('Morphological Data', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             #ui.menu_item('Translation Spectrum', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             ui.separator()
+                            ui.menu_item('Bible Promises', on_click=lambda: self.load_area_2_content(title='Promises_'))
+                            ui.menu_item('Bible Parallels', on_click=lambda: self.load_area_2_content(title='Parallels_'))
+                            ui.separator()
                             ui.menu_item('Bible Timelines', on_click=lambda: self.load_area_2_content(title='Timelines', sync=True))
                             ui.menu_item('Bible Chronology', on_click=lambda: self.load_area_2_content(title='Chronology'))
                             ui.separator()
@@ -1149,6 +1158,14 @@ class BibleMateGUI:
                 #    self.load_area_2_content(self.work_in_progress),
                 #    app.storage.user.update(left_drawer_open=False)
                 #)).props('clickable')
+                ui.item('Bible Promises', on_click=lambda: (
+                    self.load_area_2_content(title='Promises_'),
+                    app.storage.user.update(left_drawer_open=False)
+                )).props('clickable')
+                ui.item('Bible Parallels', on_click=lambda: (
+                    self.load_area_2_content(title='Parallels_'),
+                    app.storage.user.update(left_drawer_open=False)
+                )).props('clickable')
                 ui.item('Bible Timelines', on_click=lambda: (
                     self.load_area_2_content(title='Timelines', sync=True),
                     app.storage.user.update(left_drawer_open=False)

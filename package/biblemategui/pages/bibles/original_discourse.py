@@ -235,6 +235,7 @@ def original_discourse(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, **
                 ui.menu_item('Bible Audio', on_click=lambda: open_tool(bible_selector.get_selection(), title="Audio"))
                 ui.separator()
                 ui.menu_item('Cross-references', on_click=lambda: open_tool(bible_selector.get_selection(), title="Xrefs"))
+                ui.menu_item('Treasury', on_click=lambda: open_tool(bible_selector.get_selection(), title="Treasury"))
                 ui.menu_item('Commentary', on_click=lambda: open_tool(bible_selector.get_selection(), title="Commentary"))
                 ui.separator()
                 ui.menu_item('Timelines', on_click=lambda: open_tool(bible_selector.get_selection(), title="Timelines"))
