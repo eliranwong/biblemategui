@@ -245,8 +245,8 @@ config.encyclopedias = {
 
 USER_DEFAULT_SETTINGS = {
     'font_size': 100,
-    'primary_color': '#12a189',
-    'secondary_color': '#12a189',
+    'primary_color': '#12a189', # #0d857d
+    'secondary_color': '#12a189', # #4b9691
     'negative_color': '#ff384f',
     'avatar': '',
     'custom_token': '',

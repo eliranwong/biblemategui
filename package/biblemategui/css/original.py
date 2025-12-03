@@ -1,6 +1,13 @@
 def get_original_css(dark_mode):
     return f"""
 <style>
+    /* links */
+    ref {{
+        color: {'#f2c522' if dark_mode else 'navy'};
+        font-weight: bold;
+        cursor: pointer;
+    }}
+
     /* Each verse acts as a container for word blocks */
     verse {{
         display: block;
@@ -194,7 +201,7 @@ def get_original_css(dark_mode):
         margin-top: 3px;
         margin-bottom: 3px;
     }}
-    clid {{
+    clid, morphCode {{
         color: {'#cfada9' if dark_mode else '#641E16'};
         font-weight: bold;
     }}
@@ -205,7 +212,7 @@ def get_original_css(dark_mode):
     connector {{
         color: #9B59B6;
     }}
-    ckind, ctyp, crela {{
+    ckind, ctyp, crela, morphContent {{
         color: {'#f5e798' if dark_mode else '#00008B'};
         display: inline-block;
         direction: ltr;

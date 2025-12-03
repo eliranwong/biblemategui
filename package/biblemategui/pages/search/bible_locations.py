@@ -86,12 +86,6 @@ def search_bible_locations(gui=None, q='', **_):
                     padding: 0px;
                     margin: 0px;
                 }}
-                /* Verse ref */
-                ref {{
-                    color: {'#f2c522' if app.storage.user['dark_mode'] else 'navy'};
-                    font-weight: bold;
-                    cursor: pointer;
-                }}
                 /* CSS to target all h1 elements */
                 h1 {{
                     font-size: 2.2rem;

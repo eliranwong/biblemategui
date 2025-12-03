@@ -26,7 +26,7 @@ def get_bible_content(user_input="", bible="NET", sql_query="", refs=[]) -> list
         return []
     parser = BibleVerseParser(False)
     results = []
-    if not refs and re.search(" [0-9]+?:[0-9]", user_input):
+    if not refs and re.search(" [0-9]+?[:：][0-9]", user_input):
         refs = parser.extractAllReferences(user_input, tagged=(True if '<ref onclick="bcv(' in user_input else False))
     if not refs and app.storage.user['search_mode'] == 3: # semantic search
         vector_db = BibleVectorDatabase(os.path.join(BIBLEMATEGUI_DATA, "vectors", "bible.db"))

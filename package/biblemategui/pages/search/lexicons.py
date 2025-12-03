@@ -130,12 +130,6 @@ def search_bible_lexicons(gui=None, q='', **_):
                     padding: 0px;
                     margin: 0px;
                 }}
-                /* Verse ref */
-                ref {{
-                    color: {'#f2c522' if app.storage.user['dark_mode'] else 'navy'};
-                    font-weight: bold;
-                    cursor: pointer;
-                }}
                 /* CSS to target all h1 elements */
                 h1 {{
                     font-size: 2.2rem;
@@ -149,7 +143,7 @@ def search_bible_lexicons(gui=None, q='', **_):
             </style>
             """)
             # remove search link [<ref onclick="searchCode('E70001','prep')">search</ref>]
-            content = re.sub(r'''\[<ref onclick="searchCode\(.*?\)">search</ref>\]''', "", content)
+            content = re.sub(r'''\[<ref onclick="(searchBook|searchCode)\(.*?\)">search</ref>\]''', "", content)
 
             # convert links, e.g. <ref onclick="bcv(3,19,26)">
             content = re.sub(r'''(onclick|ondblclick)="(bdbid|lex|cr|bcv|website)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)
