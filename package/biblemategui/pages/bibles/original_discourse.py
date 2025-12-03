@@ -240,6 +240,8 @@ def original_discourse(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, **
                 ui.separator()
                 ui.menu_item('Timelines', on_click=lambda: open_tool(bible_selector.get_selection(), title="Timelines"))
                 ui.menu_item('Indexes', on_click=lambda: open_tool(bible_selector.get_selection(), title="Indexes"))
+                ui.separator()
+                ui.menu_item('Morphology', on_click=lambda: open_tool(bible_selector.get_selection(), title="Morphology"))
     bible_selector.create_ui("ODB", b, c, v, additional_items=additional_items)
 
     # Render the HTML inside a styled container

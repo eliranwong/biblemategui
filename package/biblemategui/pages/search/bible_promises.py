@@ -180,7 +180,7 @@ def search_bible_promises(gui=None, q='', **_):
         query = input_field.value.strip()
 
         if re.search(r"^[0-9]+?\.[0-9]+?$", query):
-            show_verses(path, keep=keep)
+            show_verses(query, keep=keep)
             return
 
         db_file = os.path.join(BIBLEMATEGUI_DATA, "vectors", "collection.db")

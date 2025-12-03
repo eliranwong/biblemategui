@@ -2,7 +2,7 @@ import apsw
 import re, os
 from nicegui import ui, app
 from biblemategui import BIBLEMATEGUI_DATA
-#from agentmake.plugins.uba.lib.BibleParser import BibleVerseParser
+from functools import partial
 from biblemategui.fx.bible import BibleSelector
 
 
@@ -85,13 +85,13 @@ def resource_indexes(gui=None, bt=None, b=1, c=1, v=1, area=2, **_):
             "table": "exlbt", 
             "icon": "category"      # Icon for topics/categories
         },
-        "Dictionaries": {
+        "Bible Dictionaries": {
             "table": "dictionaries", 
-            "icon": "menu_book"     # Icon for definitions/books
+            "icon": "loyalty"     # Icon for definitions/books
         },
-        "Encyclopedia": {
+        "Bible Encyclopedia": {
             "table": "encyclopedia", 
-            "icon": "local_library" # Icon for deep knowledge/library
+            "icon": "diamond" # Icon for deep knowledge/library
         }
     }
 
@@ -173,6 +173,38 @@ def resource_indexes(gui=None, bt=None, b=1, c=1, v=1, area=2, **_):
                         content = re.sub(r"""(onclick|ondblclick)='(cr|bcv|website|exlbl|exlbp|exlbt|bibleDict|encyclopedia)\((.*?)\)'""", r"""\1='emitEvent("\2", [\3]); return false;'""", content)
                         ui.html(f'<div class="content-text">{content}</div>', sanitize=False).classes('p-4')
                         found_any = True
+                    else:
+                        ui.label('No entries found for this category.') \
+                            .classes('p-4 italic')
+
+            def open_collection(collection, tool, number):
+                nonlocal gui
+                app.storage.user['tool_query'] = f"{tool}.{number}"
+                gui.select_empty_area2_tab()
+                gui.load_area_2_content(title=collection)
+
+            for i in ("PROMISES_INDEXES", "PARALLEL_INDEXES"):
+
+                # Create the Expansion with specific icon
+                with ui.expansion("Bible Promises" if i == "PROMISES_INDEXES" else "Bible Parallels", icon="redeem" if i == "PROMISES_INDEXES" else "link", value=is_open) \
+                        .classes('w-full border rounded-lg shadow-sm') \
+                        .props('header-class="font-bold text-lg text-primary"'):
+
+                    DB_FILE2 = os.path.join(BIBLEMATEGUI_DATA, "collections3.sqlite")
+                    sql_query = "SELECT Tool, Number, Topic FROM " + i + " WHERE Passages LIKE ?"
+                    with apsw.Connection(DB_FILE2) as connn:
+                        cursor = connn.cursor()
+                        cursor.execute(sql_query, (f"%({book_id}, {chapter}, {verse})%",))
+                        fetches = cursor.fetchall()
+                    
+                    if fetches:
+                        for tool, number, topic in fetches:
+                            ui.chip(
+                                topic,
+                                icon='book',
+                                color='secondary',
+                                on_click=partial(open_collection, "Promises" if i == "PROMISES_INDEXES" else "Parallels", tool, number),
+                            ).classes('cursor-pointer font-bold shadow-sm')
                     else:
                         ui.label('No entries found for this category.') \
                             .classes('p-4 italic')

@@ -212,7 +212,7 @@ config.topics = {
     "HIT": "Hitchcock's New and Complete Analysis of the Bible",
     "NAV": "Nave's Topical Bible",
     "TCR": "Thompson Chain References",
-    "TNT": "Torrey's New Topical Textbook",
+    "TOR": "Torrey's New Topical Textbook",
     "TOP": "Topical Bible",
 }
 config.dictionaries = {

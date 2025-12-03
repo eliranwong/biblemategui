@@ -30,6 +30,7 @@ from biblemategui.pages.tools.timelines import bible_timelines
 from biblemategui.pages.tools.indexes import resource_indexes
 from biblemategui.pages.tools.promises import bible_promises_menu
 from biblemategui.pages.tools.parallels import bible_parallels_menu
+from biblemategui.pages.tools.morphology import word_morphology
 
 from biblemategui.pages.search.bible_verses import search_bible_verses
 from biblemategui.pages.search.bible_promises import search_bible_promises
@@ -411,6 +412,7 @@ class BibleMateGUI:
 
     def is_tool(self, title):
         tools = (
+            "morphology",
             "indexes",
             "podcast",
             "audio",
@@ -439,6 +441,8 @@ class BibleMateGUI:
             return bibles_audio
         elif title.lower() == "commentary":
             return bible_commentary
+        elif title.lower() == "morphology":
+            return word_morphology
         elif title.lower() == "treasury":
             return treasury
         elif title.lower() == "indexes":
@@ -949,6 +953,8 @@ class BibleMateGUI:
                             ui.menu_item('Bible Timelines', on_click=lambda: self.load_area_2_content(title='Timelines', sync=True))
                             ui.menu_item('Bible Chronology', on_click=lambda: self.load_area_2_content(title='Chronology'))
                             ui.separator()
+                            ui.menu_item('Morphology', on_click=lambda: self.load_area_2_content(title='Morphology', sync=True))
+                            ui.separator()
                             ui.menu_item('Indexes', on_click=lambda: self.load_area_2_content(title='Indexes', sync=True))
                     
                     with ui.button(icon='search').props('flat color=white round').tooltip('Search'):
@@ -1172,6 +1178,10 @@ class BibleMateGUI:
                 )).props('clickable')
                 ui.item('Bible Chronology', on_click=lambda: (
                     self.load_area_2_content(title='Chronology'),
+                    app.storage.user.update(left_drawer_open=False)
+                )).props('clickable')
+                ui.item('Morphology', on_click=lambda: (
+                    self.load_area_2_content(title='Morphology', sync=True),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Indexes', on_click=lambda: (
