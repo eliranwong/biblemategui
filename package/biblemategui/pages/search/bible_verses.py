@@ -1,6 +1,6 @@
 from agentmake.plugins.uba.lib.BibleBooks import BibleBooks
 from biblemategui.fx.bible import get_bible_content
-from biblemategui import BIBLEMATEGUI_DATA, config, getBibleVersionList
+from biblemategui import BIBLEMATEGUI_DATA, config, getBibleVersionList, loading
 from functools import partial
 from nicegui import ui, app
 import re, apsw, os
@@ -96,7 +96,8 @@ def search_bible_verses(gui=None, q='', **_):
             row.set_visibility(is_match)
             if is_match:
                 total_matches += 1
-        ui.notify(f"{total_matches} {'match' if not total_matches or total_matches == 1 else 'matches'} found!")
+        if total_matches:
+            ui.notify(f"{total_matches} {'match' if total_matches == 1 else 'matches'} found!")
 
     # ----------------------------------------------------------
     # Helper: Remove Verse
@@ -122,7 +123,7 @@ def search_bible_verses(gui=None, q='', **_):
     # ----------------------------------------------------------
     # Core: Fetch and Display
     # ----------------------------------------------------------
-    def handle_enter(e, keep=True):
+    async def handle_enter(e, keep=True):
         nonlocal SQL_QUERY
         query = input_field.value.strip()
 
@@ -133,105 +134,119 @@ def search_bible_verses(gui=None, q='', **_):
         # Clear existing rows first
         verses_container.clear()
 
-        if not query:
-            ui.notify('Display cleared', type='positive', position='top')
-            input_field.props(f'placeholder="{default_placeholder}"')
-            return
+        input_field.disable()
 
-        if re.search("^BP[0-9]+?$", query): # bible characters entries
-            db_file = os.path.join(BIBLEMATEGUI_DATA, "data", "biblePeople.data")
-            with apsw.Connection(db_file) as connn:
-                cursor = connn.cursor()
-                cursor.execute("SELECT Book, Chapter, Verse FROM PEOPLE WHERE PersonID=? ORDER BY Book, Chapter, Verse", (int(query[2:]),))
-                fetch = cursor.fetchall()
-            if not fetch:
+        try:
+
+            if not query:
+                ui.notify('Display cleared', type='positive', position='top')
+                input_field.props(f'placeholder="{default_placeholder}"')
+                return
+
+            if re.search("^BP[0-9]+?$", query): # bible characters entries
+                db_file = os.path.join(BIBLEMATEGUI_DATA, "data", "biblePeople.data")
+                with apsw.Connection(db_file) as connn:
+                    cursor = connn.cursor()
+                    cursor.execute("SELECT Book, Chapter, Verse FROM PEOPLE WHERE PersonID=? ORDER BY Book, Chapter, Verse", (int(query[2:]),))
+                    fetch = cursor.fetchall()
+                if not fetch:
+                    ui.notify('No verses found.', type='negative')
+                    return
+                verses = await loading(get_bible_content, bible=get_bibles(), sql_query=SQL_QUERY, refs=fetch)
+            elif re.search("^BL[0-9]+?$", query): # bible locatios entries
+                db_file = os.path.join(BIBLEMATEGUI_DATA, "indexes2.sqlite")
+                with apsw.Connection(db_file) as connn:
+                    cursor = connn.cursor()
+                    cursor.execute('''SELECT Book, Chapter, Verse FROM exlbl WHERE Information LIKE ? ORDER BY Book, Chapter, Verse''', (f"%'{query}'%",))
+                    fetch = cursor.fetchall()
+                if not fetch:
+                    ui.notify('No verses found.', type='negative')
+                    return
+                verses = await loading(get_bible_content, bible=get_bibles(), sql_query=SQL_QUERY, refs=fetch)
+            elif re.search(f"^({"|".join(list(config.topics.keys()))})[0-9]+?$", query): # bible topics entries
+                db_file = os.path.join(BIBLEMATEGUI_DATA, "indexes2.sqlite")
+                with apsw.Connection(db_file) as connn:
+                    cursor = connn.cursor()
+                    cursor.execute('''SELECT Book, Chapter, Verse FROM exlbt WHERE Information LIKE ? ORDER BY Book, Chapter, Verse''', (f"%'{query}'%",))
+                    fetch = cursor.fetchall()
+                if not fetch:
+                    ui.notify('No verses found.', type='negative')
+                    return
+                verses = await loading(get_bible_content, bible=get_bibles(), sql_query=SQL_QUERY, refs=fetch)
+            elif re.search(f"^({"|".join(list(config.dictionaries.keys()))})[0-9]+?$", query): # bible dictionaries entries
+                db_file = os.path.join(BIBLEMATEGUI_DATA, "indexes2.sqlite")
+                with apsw.Connection(db_file) as connn:
+                    cursor = connn.cursor()
+                    cursor.execute('''SELECT Book, Chapter, Verse FROM dictionaries WHERE Information LIKE ? ORDER BY Book, Chapter, Verse''', (f"%'{query}'%",))
+                    fetch = cursor.fetchall()
+                if not fetch:
+                    ui.notify('No verses found.', type='negative')
+                    return
+                verses = await loading(get_bible_content, bible=get_bibles(), sql_query=SQL_QUERY, refs=fetch)
+            elif re.search(f"^(ISBE|{"|".join(list(config.encyclopedias.keys()))})[0-9]+?$", query): # bible encyclopedia entries
+                db_file = os.path.join(BIBLEMATEGUI_DATA, "indexes2.sqlite")
+                with apsw.Connection(db_file) as connn:
+                    cursor = connn.cursor()
+                    cursor.execute('''SELECT Book, Chapter, Verse FROM encyclopedia WHERE Information LIKE ? ORDER BY Book, Chapter, Verse''', (f"%'{query}'%",))
+                    fetch = cursor.fetchall()
+                if not fetch:
+                    ui.notify('No verses found.', type='negative')
+                    return
+                verses = await loading(get_bible_content, bible=get_bibles(), sql_query=SQL_QUERY, refs=fetch)
+            else:
+                verses = await loading(get_bible_content, user_input=query, bible=get_bibles(), sql_query=SQL_QUERY)
+
+            if not verses:
                 ui.notify('No verses found.', type='negative')
                 return
-            verses = get_bible_content(bible=get_bibles(), sql_query=SQL_QUERY, refs=fetch)
-        elif re.search("^BL[0-9]+?$", query): # bible locatios entries
-            db_file = os.path.join(BIBLEMATEGUI_DATA, "indexes2.sqlite")
-            with apsw.Connection(db_file) as connn:
-                cursor = connn.cursor()
-                cursor.execute('''SELECT Book, Chapter, Verse FROM exlbl WHERE Information LIKE ? ORDER BY Book, Chapter, Verse''', (f"%'{query}'%",))
-                fetch = cursor.fetchall()
-            if not fetch:
-                ui.notify('No verses found.', type='negative')
-                return
-            verses = get_bible_content(bible=get_bibles(), sql_query=SQL_QUERY, refs=fetch)
-        elif re.search(f"^({"|".join(list(config.topics.keys()))})[0-9]+?$", query): # bible topics entries
-            db_file = os.path.join(BIBLEMATEGUI_DATA, "indexes2.sqlite")
-            with apsw.Connection(db_file) as connn:
-                cursor = connn.cursor()
-                cursor.execute('''SELECT Book, Chapter, Verse FROM exlbt WHERE Information LIKE ? ORDER BY Book, Chapter, Verse''', (f"%'{query}'%",))
-                fetch = cursor.fetchall()
-            if not fetch:
-                ui.notify('No verses found.', type='negative')
-                return
-            verses = get_bible_content(bible=get_bibles(), sql_query=SQL_QUERY, refs=fetch)
-        elif re.search(f"^({"|".join(list(config.dictionaries.keys()))})[0-9]+?$", query): # bible dictionaries entries
-            db_file = os.path.join(BIBLEMATEGUI_DATA, "indexes2.sqlite")
-            with apsw.Connection(db_file) as connn:
-                cursor = connn.cursor()
-                cursor.execute('''SELECT Book, Chapter, Verse FROM dictionaries WHERE Information LIKE ? ORDER BY Book, Chapter, Verse''', (f"%'{query}'%",))
-                fetch = cursor.fetchall()
-            if not fetch:
-                ui.notify('No verses found.', type='negative')
-                return
-            verses = get_bible_content(bible=get_bibles(), sql_query=SQL_QUERY, refs=fetch)
-        elif re.search(f"^(ISBE|{"|".join(list(config.encyclopedias.keys()))})[0-9]+?$", query): # bible encyclopedia entries
-            db_file = os.path.join(BIBLEMATEGUI_DATA, "indexes2.sqlite")
-            with apsw.Connection(db_file) as connn:
-                cursor = connn.cursor()
-                cursor.execute('''SELECT Book, Chapter, Verse FROM encyclopedia WHERE Information LIKE ? ORDER BY Book, Chapter, Verse''', (f"%'{query}'%",))
-                fetch = cursor.fetchall()
-            if not fetch:
-                ui.notify('No verses found.', type='negative')
-                return
-            verses = get_bible_content(bible=get_bibles(), sql_query=SQL_QUERY, refs=fetch)
-        else:
-            verses = get_bible_content(query, bible=get_bibles(), sql_query=SQL_QUERY)
 
-        if not verses:
-            ui.notify('No verses found.', type='negative')
-            return
+            with verses_container:
+                for v in verses:
+                    # Row setup
+                    with ui.column().classes('w-full shadow-sm rounded-lg items-start no-wrap border border-gray-200 !gap-0') as row:
+                        
+                        row.verse_data = v # Store data for filter function
 
-        with verses_container:
-            for v in verses:
-                # Row setup
-                with ui.column().classes('w-full shadow-sm rounded-lg items-start no-wrap border border-gray-200 !gap-0') as row:
-                    
-                    row.verse_data = v # Store data for filter function
+                        # --- Chip (Clickable & Removable) ---
+                        with ui.element('div').classes('flex-none pt-1'): 
+                            with ui.chip(
+                                v['ref'], 
+                                removable=True, 
+                                icon='book',
+                                #on_click=partial(ui.notify, f'Clicked {v['ref']}'),
+                            ).classes('cursor-pointer font-bold shadow-sm') as chip:
+                                with ui.menu():
+                                    ui.menu_item('Open in Bible Area', on_click=partial(gui.change_area_1_bible_chapter, v['bible'], v['b'], v['c'], v['v']))
+                                    ui.menu_item('Open Here', on_click=partial(gui.change_area_2_bible_chapter, v['bible'], v['b'], v['c'], v['v'], sync=False))
+                                    ui.menu_item('Open in Next Tab', on_click=partial(open_chapter_next_area2_tab, v['bible'], v['b'], v['c'], v['v']))
+                                    ui.menu_item('Open in New Tab', on_click=partial(open_chapter_empty_area2_tab, v['bible'], v['b'], v['c'], v['v']))
+                            chip.on('remove', lambda _, r=row, ref=v['ref']: remove_verse_row(r, ref))
 
-                    # --- Chip (Clickable & Removable) ---
-                    with ui.element('div').classes('flex-none pt-1'): 
-                        with ui.chip(
-                            v['ref'], 
-                            removable=True, 
-                            icon='book',
-                            #on_click=partial(ui.notify, f'Clicked {v['ref']}'),
-                        ).classes('cursor-pointer font-bold shadow-sm') as chip:
-                            with ui.menu():
-                                ui.menu_item('Open in Bible Area', on_click=partial(gui.change_area_1_bible_chapter, v['bible'], v['b'], v['c'], v['v']))
-                                ui.menu_item('Open Here', on_click=partial(gui.change_area_2_bible_chapter, v['bible'], v['b'], v['c'], v['v'], sync=False))
-                                ui.menu_item('Open in Next Tab', on_click=partial(open_chapter_next_area2_tab, v['bible'], v['b'], v['c'], v['v']))
-                                ui.menu_item('Open in New Tab', on_click=partial(open_chapter_empty_area2_tab, v['bible'], v['b'], v['c'], v['v']))
-                        chip.on('remove', lambda _, r=row, ref=v['ref']: remove_verse_row(r, ref))
+                        # --- Content ---
+                        content = v['content']
+                        # add tooltip
+                        if "</heb>" in content:
+                            content = re.sub('(<heb id=")(.*?)"', r'\1\2" data-word="\2" class="tooltip-word"', content)
+                            content = content.replace("<heb> </heb>", "<heb>&nbsp;</heb>")
+                            content = f"<div style='display: inline-block; direction: rtl;'>{content}</div>"
+                        elif "</grk>" in content:
+                            content = re.sub('(<grk id=")(.*?)"', r'\1\2" data-word="\2" class="tooltip-word"', content)
+                        ui.html(content, sanitize=False).classes('grow min-w-0 leading-relaxed pl-2 text-base break-words')
 
-                    # --- Content ---
-                    content = v['content']
-                    # add tooltip
-                    if "</heb>" in content:
-                        content = re.sub('(<heb id=")(.*?)"', r'\1\2" data-word="\2" class="tooltip-word"', content)
-                        content = content.replace("<heb> </heb>", "<heb>&nbsp;</heb>")
-                        content = f"<div style='display: inline-block; direction: rtl;'>{content}</div>"
-                    elif "</grk>" in content:
-                        content = re.sub('(<grk id=")(.*?)"', r'\1\2" data-word="\2" class="tooltip-word"', content)
-                    ui.html(content, sanitize=False).classes('grow min-w-0 leading-relaxed pl-2 text-base break-words')
+            # Clear input so user can start typing to filter immediately
+            input_field.value = ""
+            input_field.props(f'placeholder="Type to filter {len(verses)} results..."')
+            ui.notify(f"{len(verses)} {'result' if not verses or len(verses) == 1 else 'results'} found!")
 
-        # Clear input so user can start typing to filter immediately
-        input_field.value = ""
-        input_field.props(f'placeholder="Type to filter {len(verses)} results..."')
-        ui.notify(f"{len(verses)} {'result' if not verses or len(verses) == 1 else 'results'} found!")
+        except Exception as e:
+            # Handle errors (e.g., network failure)
+            ui.notify(f'Error: {e}', type='negative')
+
+        finally:
+            # ALWAYS re-enable the input, even if an error occurred above
+            input_field.enable()
+            # Optional: Refocus the cursor so the user can type the next query immediately
+            input_field.run_method('focus')
 
     # ==============================================================================
     # 3. UI LAYOUT
@@ -439,4 +454,5 @@ def search_bible_verses(gui=None, q='', **_):
 
     if q:
         input_field.value = q
-        handle_enter(None, keep=False)
+        #handle_enter(None, keep=False) # RuntimeWarning: coroutine 'search_bible_verses.<locals>.handle_enter' was never awaited
+        ui.timer(0, lambda: handle_enter(None, keep=False), once=True)

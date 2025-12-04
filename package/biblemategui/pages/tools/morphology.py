@@ -31,12 +31,6 @@ def word_morphology(gui=None, b=1, c=1, v=1, area=2, **_):
             margin-bottom: -2px;
             cursor: pointer;
         }}
-        inter {{
-            direction: ltr;
-            display: inline-block;
-            font-size: 1.1rem;
-            color: {'#f2ac7e' if app.storage.user['dark_mode'] else '#D35400'};
-        }}
     </style>
     """)
 
@@ -97,19 +91,19 @@ def word_morphology(gui=None, b=1, c=1, v=1, area=2, **_):
                                 )
                         with ui.row().classes('w-full gap-0'):
                             ui.chip(
-                                "Morphology",
+                                "Forms",
                                 icon='book',
                                 color='secondary',
                                 on_click=lambda: open_lexicon("Morphology", lexicalEntries[0]),
                             ).classes('cursor-pointer font-bold shadow-sm')
                             ui.chip(
-                                "Morphology Concordance",
+                                "Concordance [Forms]",
                                 icon='book',
                                 color='secondary',
                                 on_click=lambda: open_lexicon("ConcordanceMorphology", lexicalEntries[0]),
                             ).classes('cursor-pointer font-bold shadow-sm')
                             ui.chip(
-                                "Book Concordance",
+                                "Concordance [Books]",
                                 icon='book',
                                 color='secondary',
                                 on_click=lambda: open_lexicon("ConcordanceBook", lexicalEntries[0]),

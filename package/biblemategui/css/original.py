@@ -1,6 +1,12 @@
 def get_original_css(dark_mode):
     return f"""
 <style>
+    ntgloss, otgloss, inter {{
+        direction: ltr;
+        display: inline-block;
+        font-size: 1.1rem;
+        color: {'#f2ac7e' if dark_mode else '#D35400'};
+    }}
     /* links */
     ref {{
         color: {'#f2c522' if dark_mode else 'navy'};

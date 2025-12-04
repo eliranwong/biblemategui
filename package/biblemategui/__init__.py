@@ -1,9 +1,9 @@
 from pathlib import Path
 from agentmake import readTextFile, writeTextFile
 from biblemategui import config
-from nicegui import app
+from nicegui import app, ui
 from typing import List
-import os, glob, apsw, re
+import os, glob, apsw, re, asyncio
 
 BIBLEMATEGUI_APP_DIR = os.path.dirname(os.path.realpath(__file__))
 BIBLEMATEGUI_USER_DIR = os.path.join(os.path.expanduser("~"), "biblemate")
@@ -59,6 +59,29 @@ def load_config():
 
 # load user config at startup
 load_config()
+
+# frequently used functions
+
+async def loading(func, **kwargs):
+    n = ui.notification(timeout=None)
+    try:
+        awaitable = asyncio.to_thread(func, **kwargs)
+        task = asyncio.create_task(awaitable)
+        while not task.done():
+            n.message = f'Loading ...'
+            n.spinner = True
+            await asyncio.sleep(0.2)
+        n.message = 'Done!'
+        n.spinner = False
+        await asyncio.sleep(1)
+        #n.dismiss()
+        return task.result()
+    except Exception as e:
+        n.message = f'Error: {str(e)}'
+        n.type = 'negative'    
+    finally:
+        # 3. Always dismiss the notification, even if errors occur
+        n.dismiss()
 
 # bibles resources
 def getBibleInfo(db):
@@ -245,8 +268,8 @@ config.encyclopedias = {
 
 USER_DEFAULT_SETTINGS = {
     'font_size': 100,
-    'primary_color': '#12a189', # #0d857d
-    'secondary_color': '#12a189', # #4b9691
+    'primary_color': '#12a189', # #3e5400
+    'secondary_color': '#12a189', # #4e8700
     'negative_color': '#ff384f',
     'avatar': '',
     'custom_token': '',

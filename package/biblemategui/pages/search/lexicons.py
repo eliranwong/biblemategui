@@ -142,8 +142,10 @@ def search_bible_lexicons(gui=None, q='', **_):
                 }}
             </style>
             """)
-            # remove search link [<ref onclick="searchCode('E70001','prep')">search</ref>]
-            content = re.sub(r'''\[<ref onclick="(searchBook|searchCode)\(.*?\)">search</ref>\]''', "", content)
+            # Morhology Lexicon
+            if lexicon_module == "Morphology":
+                content = re.sub(r'''\[<ref onclick="(searchBook|searchCode)\(.*?\)">search</ref>\]''', "", content)
+                content = re.sub("(</[on]tgloss>)", r"\1<br>", content)
 
             # convert links, e.g. <ref onclick="bcv(3,19,26)">
             content = re.sub(r'''(onclick|ondblclick)="(bdbid|lex|cr|bcv|website)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)
