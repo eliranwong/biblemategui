@@ -11,8 +11,8 @@ def word_morphology(gui=None, b=1, c=1, v=1, area=2, **_):
     <style>
         /* Hebrew Word Layer */
         wform, heb, bdbheb, bdbarc, hu {{
-            font-family: 'SBL Hebrew', 'Ezra SIL', serif;
-            font-size: 1.8rem;
+            font-family: 'Ezra SIL', serif;
+            font-size: 1.6rem;
             direction: rtl;
             display: inline-block;
             line-height: 1.3em;

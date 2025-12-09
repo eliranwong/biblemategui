@@ -26,12 +26,12 @@ def bible_parallels_menu(gui=None, **_):
         }}
         /* CSS to target all h1 elements */
         h1 {{
-            font-size: 2.2rem;
+            font-size: 2.0rem;
             color: {app.storage.user['primary_color']};
         }}
         /* CSS to target all h2 elements */
         h2 {{
-            font-size: 1.8rem;
+            font-size: 1.7rem;
             color: {app.storage.user['secondary_color']};
         }}
     </style>

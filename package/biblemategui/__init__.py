@@ -217,6 +217,12 @@ def getLexiconList() -> List[str]:
         client_lexicons += list(config.lexicons_custom.keys())
     return sorted(list(set(client_lexicons)))
 
+# fonts
+app.add_static_files('/fonts', os.path.join(BIBLEMATEGUI_APP_DIR, "fonts"))
+
+# images
+app.add_static_files('/timelines', os.path.join(BIBLEMATEGUI_DATA, "books", "Timelines"))
+
 # audio resources
 app.add_media_files('/bhs5_audio', os.path.join(BIBLEMATEGUI_DATA, "audio", "bibles", "BHS5", "default"))
 app.add_media_files('/ognt_audio', os.path.join(BIBLEMATEGUI_DATA, "audio", "bibles", "OGNT", "default"))

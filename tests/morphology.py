@@ -229,7 +229,7 @@ def create_morphology_page():
         
         .verse-ref {
             font-family: 'Frank Ruhl Libre', serif;
-            font-size: 1.8rem;
+            font-size: 1.7rem;
             font-weight: 700;
             background: linear-gradient(135deg, #f7fafc 0%, #e2e8f0 100%);
             -webkit-background-clip: text;

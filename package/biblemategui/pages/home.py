@@ -496,10 +496,14 @@ class BibleMateGUI:
         with ui.context_menu() as menu:
             ui.menu_item('📋 Copy', on_click=lambda: self.copy_text(get_verse_content()))
             ui.separator()
-            ui.menu_item('🎧 Bible Audio', on_click=lambda: open_tool("Audio"))
+            ui.menu_item('🔊 Bible Audio', on_click=lambda: open_tool("Audio"))
             ui.separator()
             ui.menu_item('🔗 Cross-references', on_click=lambda: open_tool("Xrefs"))
             ui.menu_item('🏦 Treasury', on_click=lambda: open_tool("Treasury"))
+            ui.menu_item('🧠 AI Commentary', on_click=lambda: (
+                app.storage.user.update(favorite_commentary="AIC"),
+                open_tool("Commentary")
+            ))
             ui.menu_item('📚 Commentaries', on_click=lambda: open_tool("Commentary"))
             ui.separator()
             ui.menu_item('🧬 Morphology', on_click=lambda: open_tool("Morphology"))
@@ -1007,8 +1011,11 @@ class BibleMateGUI:
 
                     with ui.button(icon='auto_awesome').props('flat color=white round').tooltip('AI'):
                         with ui.menu():
-                            ui.menu_item('AI Commentary', on_click=lambda: self.load_area_2_content(self.work_in_progress))
-                            ui.menu_item('AI Q&A', on_click=lambda: self.load_area_2_content(self.work_in_progress))
+                            ui.menu_item('AI Commentary', on_click=lambda: (
+                                app.storage.user.update(favorite_commentary="AIC"),
+                                self.load_area_2_content(title='Commentary', sync=True)
+                            ))
+                            #ui.menu_item('AI Q&A', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             ui.menu_item('AI Chat', on_click=lambda: self.load_area_2_content(title='Chat'))
                             ui.menu_item('Partner Mode', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             ui.menu_item('Agent Mode', on_click=lambda: self.load_area_2_content(self.work_in_progress))
@@ -1281,13 +1288,14 @@ class BibleMateGUI:
             # AI
             with ui.expansion('AI', icon='auto_awesome').props('header-class="text-secondary"'):
                 ui.item('AI Commentary', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
+                    app.storage.user.update(favorite_commentary="AIC"),
+                    self.load_area_2_content(title='Commentary', sync=True),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
-                ui.item('AI Q&A', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
-                    app.storage.user.update(left_drawer_open=False)
-                )).props('clickable')
+                #ui.item('AI Q&A', on_click=lambda: (
+                #    self.load_area_2_content(self.work_in_progress),
+                #    app.storage.user.update(left_drawer_open=False)
+                #)).props('clickable')
                 ui.item('AI Chat', on_click=lambda: (
                     self.load_area_2_content(title='Chat'),
                     app.storage.user.update(left_drawer_open=False)

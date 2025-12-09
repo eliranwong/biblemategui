@@ -65,6 +65,7 @@ def get_bible_content(user_input="", bible=None, sql_query="", refs=[]) -> list:
                                 b1, c1, v1 = r
                             cursor.execute(query, (b, c, v))
                             verse = cursor.fetchone()
+                            if not verse: continue
                             content += f"<vid>{v}</vid> {verse[0].strip()} "
                         ref = parser.bcvToVerseReference(*ref)
                         if len(dbs) > 1:
@@ -74,6 +75,7 @@ def get_bible_content(user_input="", bible=None, sql_query="", refs=[]) -> list:
                         b, c, v = ref
                         cursor.execute(query, (b, c, v))
                         verse = cursor.fetchone()
+                        if not verse: continue
                         ref = parser.bcvToVerseReference(b, c, v)
                         if len(dbs) > 1:
                             ref += f" [{this_bible}]"

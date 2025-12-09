@@ -4,9 +4,39 @@ from biblemategui.data.cr_books import cr_books
 from agentmake.plugins.uba.lib.BibleBooks import BibleBooks
 from agentmake.plugins.uba.lib.BibleParser import BibleVerseParser
 from agentmake.plugins.uba.lib.RegexSearch import RegexSearch
-import apsw, os, re
+import apsw, os, re, markdown2
+
+def get_ai_commentary_content(references: str):
+    def fetch_ai_commentary_verse(b,c,v):
+        fetch = None
+        db = os.path.join(BIBLEMATEGUI_DATA, "commentaries", f"cAIC.commentary")
+        with apsw.Connection(db) as connn:
+            cursor = connn.cursor()
+            sql_query = "SELECT Content FROM Commentary WHERE Book=? AND Chapter=? AND Verse=? limit 1"
+            cursor.execute(sql_query, (b,c,v))
+            fetch = cursor.fetchone()
+        return fetch
+    parser = BibleVerseParser(False, language=app.storage.user['ui_language'])
+    references = parser.extractAllReferences(references)
+    if not references:
+        return ""
+    results = []
+    for ref in references:
+        for b, c, v in parser.extractExhaustiveReferences([ref]):
+            fetch = fetch_ai_commentary_verse(b,c,v)
+            content = fetch[0] if fetch else ""
+            if content:
+                # remove AI follow-up comment
+                pattern = r'\n---\s*\nIf you\’d like\,\s*.*$'
+                content = re.sub(pattern, '', content, flags=re.DOTALL)
+                # convert md to html
+                content = markdown2.markdown(content, extras=["tables","fenced-code-blocks","toc","codelite"])
+                results.append(content)
+    return "<hr>".join(results) if results else ""
 
 def get_commentary_content(references: str):
+    if app.storage.user["favorite_commentary"] == "AIC":
+        return get_ai_commentary_content(references)
     def fetch_commentary_chapter(b,c):
         fetch = None
         db = os.path.join(BIBLEMATEGUI_DATA, "commentaries", f"c{app.storage.user["favorite_commentary"]}.commentary")
@@ -137,12 +167,12 @@ def bible_commentary(gui=None, b=1, c=1, v=1, q='', **_):
                 }}
                 /* CSS to target all h1 elements */
                 h1 {{
-                    font-size: 2.2rem;
+                    font-size: 2.0rem;
                     color: {app.storage.user['primary_color']};
                 }}
                 /* CSS to target all h2 elements */
                 h2 {{
-                    font-size: 1.8rem;
+                    font-size: 1.7rem;
                     color: {app.storage.user['secondary_color']};
                 }}
             </style>
@@ -151,8 +181,8 @@ def bible_commentary(gui=None, b=1, c=1, v=1, q='', **_):
             <style>
                 /* Hebrew Word Layer */
                 wform, heb, bdbheb, bdbarc, hu {{
-                    font-family: 'SBL Hebrew', 'Ezra SIL', serif;
-                    font-size: 1.8rem;
+                    font-family: 'Ezra SIL', serif;
+                    font-size: 1.6rem;
                     direction: rtl;
                     display: inline-block;
                     line-height: 1.2em;

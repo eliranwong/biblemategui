@@ -122,6 +122,8 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
     content = re.sub(r"""(onclick|ondblclick)='(cr|bcv|luV1|luV2|luW|lex|bdbid|etcbcmorph|rmac|searchLexicalEntry|searchWord)\((.*?)\)'""", r"""\1='emitEvent("\2", [\3]); return false;'""", content)
 
     # adjust spacing
+    content = content.replace("<br>&emsp;&emsp;", "<br><br>&emsp;&emsp;")
+    content = content.replace("<br><br><br>&emsp;&emsp;", "<br><br>&emsp;&emsp;")
     content = content.replace("<br><br>", "<hr>")
     content = content.replace("<br>", "")
     content = content.replace("<hr>", "<br>")
@@ -148,8 +150,8 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
             }}
             /* Hebrew Word Layer */
             wform, heb, bdbheb, bdbarc, hu {{
-                font-family: 'SBL Hebrew', 'Ezra SIL', serif;
-                font-size: 1.8rem;
+                font-family: 'Ezra SIL', serif;
+                font-size: 1.6rem;
                 direction: rtl;
                 display: inline-block;
                 line-height: 1.2em;
@@ -297,10 +299,14 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
                 ui.separator()
                 ui.menu_item('⏳ Timelines', on_click=lambda: open_tool(bible_selector.get_selection(), title="Timelines"))
                 ui.separator()
-                ui.menu_item('🔊 Bible Podcast', on_click=lambda: open_tool(bible_selector.get_selection(), title="Podcast"))
-                ui.menu_item('🎧 Bible Audio', on_click=lambda: open_tool(bible_selector.get_selection(), title="Audio"))
+                ui.menu_item('📡 Bible Podcast', on_click=lambda: open_tool(bible_selector.get_selection(), title="Podcast"))
+                ui.menu_item('🔊 Bible Audio', on_click=lambda: open_tool(bible_selector.get_selection(), title="Audio"))
                 ui.separator()
                 ui.menu_item('🔗 Cross-references', on_click=lambda: open_tool(bible_selector.get_selection(), title="Xrefs"))
+                #ui.menu_item('🧠 AI Commentary', on_click=lambda: (
+                #    app.storage.user.update(favorite_commentary="AIC"),
+                #    open_tool(bible_selector.get_selection(), title="Commentary")
+                #))
                 ui.menu_item('📑 Indexes', on_click=lambda: open_tool(bible_selector.get_selection(), title="Indexes"))
 
     bible_selector.create_ui(title, b, c, v, additional_items=additional_items)

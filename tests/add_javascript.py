@@ -112,7 +112,7 @@ def original_oib(q: str | None = None):
         }
         /* Hebrew Word */
         wform, heb {
-            font-family: 'SBL Hebrew', 'Ezra SIL', serif;
+            font-family: 'Ezra SIL', serif;
             font-size: 1.6rem;
             color: #2c3e50;
             direction: rtl;

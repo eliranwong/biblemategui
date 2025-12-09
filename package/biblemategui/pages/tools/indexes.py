@@ -51,12 +51,12 @@ def resource_indexes(gui=None, bt=None, b=1, c=1, v=1, area=2, **_):
         }}
         /* CSS to target all h1 elements */
         h1 {{
-            font-size: 2.2rem;
+            font-size: 2.0rem;
             color: {app.storage.user['primary_color']};
         }}
         /* CSS to target all h2 elements */
         h2 {{
-            font-size: 1.8rem;
+            font-size: 1.7rem;
             color: {app.storage.user['secondary_color']};
         }}
     </style>

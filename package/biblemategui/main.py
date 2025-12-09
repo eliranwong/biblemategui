@@ -143,6 +143,19 @@ def page_home(
     else:
         tv = app.storage.user.setdefault('tool_verse_number', 1)
 
+    ui.add_head_html('''
+        <style>
+            /* Define the font family */
+            @font-face {
+                font-family: 'Ezra SIL';
+                src: url('/fonts/sileot.ttf') format('truetype');
+            }
+            @font-face {
+                font-family: 'KoineGreek';
+                src: url('/fonts/KoineGreek.ttf') format('truetype');
+            }
+        </style>
+    ''')
     ui.add_head_html(get_tooltip_css(app.storage.user["dark_mode"]))
     ui.add_body_html(TOOLTIP_JS)
 

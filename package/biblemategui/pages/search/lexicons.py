@@ -156,12 +156,12 @@ def search_bible_lexicons(gui=None, q='', **_):
                 }}
                 /* CSS to target all h1 elements */
                 h1 {{
-                    font-size: 2.2rem;
+                    font-size: 2.0rem;
                     color: {app.storage.user['primary_color']};
                 }}
                 /* CSS to target all h2 elements */
                 h2 {{
-                    font-size: 1.8rem;
+                    font-size: 1.7rem;
                     color: {app.storage.user['secondary_color']};
                 }}
             </style>
@@ -201,8 +201,8 @@ def search_bible_lexicons(gui=None, q='', **_):
             <style>
                 /* Hebrew Word Layer */
                 wform, heb, bdbheb, bdbarc, hu {{
-                    font-family: 'SBL Hebrew', 'Ezra SIL', serif;
-                    font-size: 1.8rem;
+                    font-family: 'Ezra SIL', serif;
+                    font-size: 1.6rem;
                     direction: rtl;
                     display: inline-block;
                     line-height: 1.2em;

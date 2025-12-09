@@ -289,8 +289,8 @@ def search_bible_verses(gui=None, q='', **_):
     <style>
         /* Hebrew Word Layer */
         wform, heb, bdbheb, bdbarc, hu {{
-            font-family: 'SBL Hebrew', 'Ezra SIL', serif;
-            font-size: 1.8rem;
+            font-family: 'Ezra SIL', serif;
+            font-size: 1.6rem;
             direction: rtl;
             display: inline-block;
             line-height: 1.2em;

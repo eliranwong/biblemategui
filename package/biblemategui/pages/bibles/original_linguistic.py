@@ -9,6 +9,9 @@ import re, os
 
 def original_linguistic(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, **_):
 
+    dummy_label1 = None
+    dummy_label2 = None
+
     bible_selector = BibleSelector(on_version_changed=gui.change_area_1_bible_chapter if area == 1 else gui.change_area_2_bible_chapter, on_book_changed=gui.change_area_1_bible_chapter if area == 1 else gui.change_area_2_bible_chapter, on_chapter_changed=gui.change_area_1_bible_chapter if area == 1 else gui.change_area_2_bible_chapter, on_verse_changed=change_bible_chapter_verse)
 
     def wd(event):
@@ -17,14 +20,23 @@ def original_linguistic(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, *
         app.storage.user['tool_query'] = lexical_entry
         gui.load_area_2_content(title='Lexicons')
 
-    def luV(event):
-        nonlocal bible_selector, gui
+    def luV1(event):
+        nonlocal bible_selector, gui, db, dummy_label1, area
         b, c, v = event.args
         bible_selector.verse_select.value = v
-        gui.open_verse_context_menu(b, c, v)
+        with dummy_label1:
+            gui.open_verse_context_menu(db, b, c, v)
+
+    def luV2(event):
+        nonlocal bible_selector, gui, db, dummy_label2, area
+        b, c, v = event.args
+        bible_selector.verse_select.value = v
+        with dummy_label2:
+            gui.open_verse_context_menu(db, b, c, v)
 
     ui.on('wd', wd)
-    ui.on('luV', luV)
+    ui.on('luV1', luV1)
+    ui.on('luV2', luV2)
     #ui.on('luW', luW)
     #ui.on('lex', lex)
     #ui.on('bdbid', bdbid)
@@ -52,8 +64,9 @@ def original_linguistic(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, *
     content = re.sub(r'<vid id="v([0-9]+?)\.([0-9]+?)\.([0-9]+?)" onclick="luV\(([0-9]+?)\)">', r'<vid id="v\1.\2.\3" onclick="luV(\1, \2, \3)">', content)
     
     # Convert onclick and ondblclick links
-    content = re.sub(r'''(onclick|ondblclick)="(luV|luW|lex|bdbid|etcbcmorph|rmac|searchLexicalEntry|searchWord)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)
-    content = re.sub(r"""(onclick|ondblclick)='(luV|luW|lex|bdbid|etcbcmorph|rmac|searchLexicalEntry|searchWord)\((.*?)\)'""", r"""\1='emitEvent("\2", [\3]); return false;'""", content)
+    content = content.replace("luV(", "luV1(" if area == 1 else "luV2(")
+    content = re.sub(r'''(onclick|ondblclick)="(luV1|luV2|luW|lex|bdbid|etcbcmorph|rmac|searchLexicalEntry|searchWord)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)
+    content = re.sub(r"""(onclick|ondblclick)='(luV1|luV2|luW|lex|bdbid|etcbcmorph|rmac|searchLexicalEntry|searchWord)\((.*?)\)'""", r"""\1='emitEvent("\2", [\3]); return false;'""", content)
 
     # Inject CSS to handle the custom tags and layout
     if "</heb>" in content:
@@ -76,8 +89,8 @@ def original_linguistic(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, *
             }}
             /* Hebrew Word Layer */
             wform, heb, bdbheb, bdbarc, hu {{
-                font-family: 'SBL Hebrew', 'Ezra SIL', serif;
-                font-size: 1.8rem;
+                font-family: 'Ezra SIL', serif;
+                font-size: 1.6rem;
                 direction: rtl;
                 display: inline-block;
                 line-height: 1.2em;
@@ -224,15 +237,25 @@ def original_linguistic(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, *
                 ui.separator()
                 ui.menu_item('⏳ Timelines', on_click=lambda: open_tool(bible_selector.get_selection(), title="Timelines"))
                 ui.separator()
-                ui.menu_item('🔊 Bible Podcast', on_click=lambda: open_tool(bible_selector.get_selection(), title="Podcast"))
-                ui.menu_item('🎧 Bible Audio', on_click=lambda: open_tool(bible_selector.get_selection(), title="Audio"))
+                ui.menu_item('📡 Bible Podcast', on_click=lambda: open_tool(bible_selector.get_selection(), title="Podcast"))
+                ui.menu_item('🔊 Bible Audio', on_click=lambda: open_tool(bible_selector.get_selection(), title="Audio"))
                 ui.separator()
                 ui.menu_item('🔗 Cross-references', on_click=lambda: open_tool(bible_selector.get_selection(), title="Xrefs"))
+                #ui.menu_item('🧠 AI Commentary', on_click=lambda: (
+                #    app.storage.user.update(favorite_commentary="AIC"),
+                #    open_tool(bible_selector.get_selection(), title="Commentary")
+                #))
                 ui.menu_item('📑 Indexes', on_click=lambda: open_tool(bible_selector.get_selection(), title="Indexes"))
     bible_selector.create_ui("OLB", b, c, v, additional_items=additional_items)
 
+    # create a dummy label for being the parent of `open_verse_context_menu`, as ui.html can't take two context menus
+    # without a parent, the context menu doesn't close automatically
+    dummy_style = 'position: absolute; width: 0; height: 0; overflow: hidden;'
+    if area == 1:
+        dummy_label1 = ui.label().style(dummy_style)
+    else:
+        dummy_label2 = ui.label().style(dummy_style)
     # Render the HTML inside a styled container
-    # REMEMBER: sanitize=False is required to keep your onclick/onmouseover attributes
     ui.html(f'''<div class="bible-text-{'heb' if "</heb>" in content else 'grk'}">{content}</div>''', sanitize=False).classes(f'w-full pb-[70vh] {(tab1+"_chapter") if area == 1 else (tab2+"_chapter")}')
 
     # After the page is built and ready, run our JavaScript

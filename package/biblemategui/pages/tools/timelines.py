@@ -1,7 +1,6 @@
 import os
 from nicegui import ui, app
 from biblemategui.data.bible_timelines import bible_timelines as TIMELINE_DATA
-from biblemategui import BIBLEMATEGUI_DATA
 
 
 def bible_timelines(gui=None, b=1, q="", **_):
@@ -18,8 +17,6 @@ def bible_timelines(gui=None, b=1, q="", **_):
         for k, v in TIMELINE_DATA.items()
     }
 
-    # Serve the local folder containing images so NiceGUI can access them
-    app.add_static_files('/timelines', os.path.join(BIBLEMATEGUI_DATA, "books", "Timelines"))
     # --- Helper Functions ---
     def get_image_source(idx):
         if idx is None: return "" # Handle initial load safety
