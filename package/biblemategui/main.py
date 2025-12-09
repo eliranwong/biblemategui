@@ -190,6 +190,24 @@ def page_home(
     
     gui.swap_layout(l)
 
+    # capture text selection changes
+    ui.add_body_html('''
+    <script>
+    document.addEventListener('selectionchange', () => {
+        const selection = window.getSelection().toString();
+        if (selection) {
+            emitEvent('selection_changed', { text: selection });
+        }
+    });
+    </script>
+    ''')
+
+    async def on_selection(e):
+        app.storage.user['tool_query'] = e.args['text']
+        #print(f"Selected: {app.storage.user['tool_query']}")
+
+    ui.on('selection_changed', on_selection)
+
     # update the URL to reflect current settings without reloading
     '''def update_url():
         params = []

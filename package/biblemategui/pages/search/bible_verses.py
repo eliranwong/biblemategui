@@ -8,6 +8,7 @@ import re, apsw, os
 
 def search_bible_verses(gui=None, q='', **_):
 
+    last_entry = ""
     default_placeholder = 'Search for words or refs (e.g. Deut 6:4; John 3:16-18)'
     multiple_bibles = None
 
@@ -123,14 +124,15 @@ def search_bible_verses(gui=None, q='', **_):
     # ----------------------------------------------------------
     # Core: Fetch and Display
     # ----------------------------------------------------------
-    async def handle_enter(e, keep=True):
-        nonlocal SQL_QUERY
-        query = input_field.value.strip()
+    def handle_up_arrow():
+        nonlocal last_entry, input_field
+        if not input_field.value.strip():
+            input_field.value = last_entry
 
-        # update tab record
-        if keep:
-            gui.update_active_area2_tab_records(q=query)
-        
+    async def handle_enter(e, keep=True):
+        nonlocal SQL_QUERY, last_entry
+        query = input_field.value.strip()
+    
         # Clear existing rows first
         verses_container.clear()
 
@@ -139,20 +141,26 @@ def search_bible_verses(gui=None, q='', **_):
             input_field.props(f'placeholder="{default_placeholder}"')
             return
 
+        # update tab record
+        last_entry = query
+        if keep:
+            gui.update_active_area2_tab_records(q=query)
+
         input_field.disable()
 
         try:
-
+            highlights = False
             if search_morphology := re.search(r"^([EG][0-9]+?)\|", query): # search morphology
                 multiple_bibles.value = [app.storage.user["tool_book_text"]]
                 lexical_entry = search_morphology.group(1) + ",%"
                 suffix = ""
                 for i in query.split("|")[1:]:
                     suffix += f"AND Morphology LIKE '{i}' "
+                if books := re.search("WHERE (Book.*?) AND", SQL_QUERY):
+                    suffix += f"AND {books.group(1)} " # limit morphology search in particular books
                 db = os.path.join(BIBLEMATEGUI_DATA, "morphology.sqlite")
                 with apsw.Connection(db) as connn:
                     query = f"SELECT Book, Chapter, Verse FROM morphology WHERE LexicalEntry LIKE ? {suffix}ORDER BY Book, Chapter, Verse"
-                    print(query)
                     cursor = connn.cursor()
                     cursor.execute(query, (lexical_entry,))
                     fetch = cursor.fetchall()
@@ -212,11 +220,15 @@ def search_bible_verses(gui=None, q='', **_):
                 verses = await loading(get_bible_content, bible=get_bibles(), sql_query=SQL_QUERY, refs=fetch)
             else:
                 verses = await loading(get_bible_content, user_input=query, bible=get_bibles(), sql_query=SQL_QUERY)
+                highlights = True
 
             if not verses:
                 ui.notify('No verses found.', type='negative')
                 return
 
+            if not verses[-1]['ref']:
+                ui.notify(verses[-1]['content'])
+                verses = verses[:-1]
             with verses_container:
                 for v in verses:
                     # Row setup
@@ -248,6 +260,11 @@ def search_bible_verses(gui=None, q='', **_):
                             content = f"<div style='display: inline-block; direction: rtl;'>{content}</div>"
                         elif "</grk>" in content:
                             content = re.sub('(<grk id=")(.*?)"', r'\1\2" data-word="\2" class="tooltip-word"', content)
+                        if highlights:
+                            if app.storage.user["dark_mode"]:
+                                content = re.sub(f"({query})", r"<font color='orange'>\1</font>", content, flags=0 if app.storage.user['search_case_sensitivity'] else re.IGNORECASE)
+                            else:
+                                content = re.sub(f"({query})", r"<span style='background-color: orange;'>\1</span>", content, flags=0 if app.storage.user['search_case_sensitivity'] else re.IGNORECASE)
                         ui.html(content, sanitize=False).classes('grow min-w-0 leading-relaxed pl-2 text-base break-words')
 
             # Clear input so user can start typing to filter immediately
@@ -304,6 +321,7 @@ def search_bible_verses(gui=None, q='', **_):
 
         input_field.on('keydown.enter.prevent', handle_enter)
         input_field.on('update:model-value', filter_verses)
+        input_field.on('keydown.up', handle_up_arrow)
 
         # 2. Scope Dropdown
         # Options: All, None, OT, NT, then the books

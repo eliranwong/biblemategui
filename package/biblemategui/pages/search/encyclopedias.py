@@ -65,6 +65,7 @@ def fetch_all_encyclopedias(sql_table):
 
 def search_bible_encyclopedias(gui=None, q='', **_):
 
+    last_entry = ""
     scope_select = None
 
     def cr(event):
@@ -174,6 +175,11 @@ def search_bible_encyclopedias(gui=None, q='', **_):
         # Clear input so user can start typing to filter immediately
         input_field.value = ""
 
+    def handle_up_arrow():
+        nonlocal last_entry, input_field
+        if not input_field.value.strip():
+            input_field.value = last_entry
+
     async def handle_enter(e, keep=True):
         nonlocal sql_table, dialog, input_field
 
@@ -232,6 +238,7 @@ def search_bible_encyclopedias(gui=None, q='', **_):
         .props('outlined dense clearable autofocus enterkeyhint="search"')
 
         input_field.on('keydown.enter.prevent', handle_enter)
+        input_field.on('keydown.up', handle_up_arrow)
 
         async def get_all_entries(sql_table):
             all_entries = await loading(fetch_all_encyclopedias, sql_table)

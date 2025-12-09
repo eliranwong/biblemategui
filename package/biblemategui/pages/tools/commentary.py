@@ -44,7 +44,7 @@ def get_commentary_content(references: str):
 
 def bible_commentary(gui=None, b=1, c=1, v=1, q='', **_):
 
-    # --- Data: 66 Bible Books & ID Mapping ---
+    last_entry = ""
     BIBLE_BOOKS = [BibleBooks.abbrev["eng"][str(i)][0] for i in range(1,67)]
     client_commentaries = getCommentaryVersionList()
     scope_select = None
@@ -87,6 +87,11 @@ def bible_commentary(gui=None, b=1, c=1, v=1, q='', **_):
         app.storage.user['favorite_commentary'] = new_module
         if scope_select and scope_select.value != new_module:
             scope_select.value = new_module
+
+    def handle_up_arrow():
+        nonlocal last_entry, input_field
+        if not input_field.value.strip():
+            input_field.value = last_entry
 
     def handle_enter(_, keep=True):
         nonlocal content_container, gui, input_field
@@ -204,6 +209,7 @@ def bible_commentary(gui=None, b=1, c=1, v=1, q='', **_):
         .props('outlined dense clearable autofocus enterkeyhint="search"')
 
         input_field.on('keydown.enter.prevent', handle_enter)
+        input_field.on('keydown.up', handle_up_arrow)
 
         scope_select = ui.select(
             options=client_commentaries,

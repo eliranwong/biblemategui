@@ -28,7 +28,8 @@ config.avatar="{config.avatar}"
 config.embedding_model="{config.embedding_model}"
 config.custom_token="{config.custom_token}"
 config.storage_secret="{config.storage_secret}"
-config.port={config.port}"""
+config.port={config.port}
+config.verses_limit={config.verses_limit}"""
     writeTextFile(CONFIG_FILE_BACKUP, configurations)
 
 # restore config backup after upgrade
@@ -38,7 +39,8 @@ config.avatar=""
 config.embedding_model="paraphrase-multilingual"
 config.custom_token=""
 config.storage_secret="REPLACE_ME_WITH_A_REAL_SECRET"
-config.port=33355'''
+config.port=33355
+config.verses_limit=2000'''
 
 def load_config():
     """Loads the user's configuration from the config file."""

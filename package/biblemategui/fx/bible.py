@@ -12,6 +12,7 @@ def regexp(expr, item):
     return reg.search(item) is not None
 
 def get_bible_content(user_input="", bible=None, sql_query="", refs=[]) -> list:
+    verses_limit_reached = False
     if bible is None:
         bible = app.storage.user["primary_bible"]
     dbs = []
@@ -46,6 +47,9 @@ def get_bible_content(user_input="", bible=None, sql_query="", refs=[]) -> list:
             if ref not in distinct_refs:
                 distinct_refs.append(ref)
         refs = distinct_refs
+        if len(refs) > config.verses_limit:
+            refs = refs[:config.verses_limit]
+            verses_limit_reached = True
         query = "SELECT Scripture FROM Verses WHERE Book=? AND Chapter=? AND Verse =?"
         for db in dbs:
             this_bible = os.path.basename(db)[:-6]
@@ -89,11 +93,16 @@ def get_bible_content(user_input="", bible=None, sql_query="", refs=[]) -> list:
                 cursor = connn.cursor()
                 cursor.execute(query, (user_input,))
                 fetches = cursor.fetchall()
+                if fetches and len(fetches) > config.verses_limit:
+                    fetches = fetches[:config.verses_limit]
+                    verses_limit_reached = True
                 for verse in fetches:
                     ref = parser.bcvToVerseReference(verse[0], verse[1], verse[2])
                     if len(dbs) > 1:
                         ref += f" [{this_bible}]"
                     results.append({'ref': ref, 'content': verse[3].strip(), 'bible': this_bible, 'b': verse[0], 'c': verse[1], 'v': verse[2]})
+    if verses_limit_reached:
+        results.append({'ref': "", 'content': f"{config.verses_limit} verses limit reached!", 'bible': "", 'b': 0, 'c': 0, 'v': 0})
     return results
 
 # Bible Selection

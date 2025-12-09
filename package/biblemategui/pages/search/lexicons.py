@@ -33,6 +33,7 @@ def fetch_all_lexicons(client_lexicons, lexicon):
 
 def search_bible_lexicons(gui=None, q='', **_):
 
+    last_entry = ""
     client_lexicons = getLexiconList()
 
     if q:
@@ -98,6 +99,11 @@ def search_bible_lexicons(gui=None, q='', **_):
         input_field.props(f'placeholder="Search {new_module} ..."')
         if scope_select and scope_select.value != new_module:
             scope_select.value = new_module
+
+    def handle_up_arrow():
+        nonlocal last_entry, input_field
+        if not input_field.value.strip():
+            input_field.value = last_entry
 
     async def handle_enter(_, keep=True):
         nonlocal content_container, gui, input_field, lexicon_module
@@ -242,6 +248,7 @@ def search_bible_lexicons(gui=None, q='', **_):
         .props('outlined dense clearable autofocus enterkeyhint="search"')
 
         input_field.on('keydown.enter.prevent', handle_enter)
+        input_field.on('keydown.up', handle_up_arrow)
 
         async def get_all_entries(lexicon):
             all_entries = await loading(fetch_all_lexicons, client_lexicons, lexicon)

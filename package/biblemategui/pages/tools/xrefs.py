@@ -17,6 +17,7 @@ def fetch_xrefs(b, c, v):
 
 def xrefs(gui=None, b=1, c=1, v=1, q='', **_):
 
+    last_entry = ""
     SQL_QUERY = "PRAGMA case_sensitive_like = false; SELECT Book, Chapter, Verse, Scripture FROM Verses WHERE (Scripture REGEXP ?) ORDER BY Book, Chapter, Verse"
 
     # --- Data: 66 Bible Books & ID Mapping ---
@@ -87,6 +88,11 @@ def xrefs(gui=None, b=1, c=1, v=1, q='', **_):
     # ----------------------------------------------------------
     # Core: Fetch and Display
     # ----------------------------------------------------------
+    def handle_up_arrow():
+        nonlocal last_entry, input_field
+        if not input_field.value.strip():
+            input_field.value = last_entry
+
     async def handle_enter(e, keep=True):
         nonlocal SQL_QUERY
         query = input_field.value.strip()
@@ -186,7 +192,7 @@ def xrefs(gui=None, b=1, c=1, v=1, q='', **_):
 
         input_field.on('keydown.enter.prevent', handle_enter)
         input_field.on('update:model-value', filter_verses)
-
+        input_field.on('keydown.up', handle_up_arrow)
 
     # --- Main Content Area ---
     with ui.column().classes('w-full items-center'):

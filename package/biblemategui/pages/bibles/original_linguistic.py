@@ -18,15 +18,10 @@ def original_linguistic(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, *
         gui.load_area_2_content(title='Lexicons')
 
     def luV(event):
-        nonlocal bible_selector
+        nonlocal bible_selector, gui
         b, c, v = event.args
         bible_selector.verse_select.value = v
-        """
-        # Create a context menu at the click position
-        with ui.context_menu() as menu:
-            ui.menu_item('Bible Commentaries', on_click=lambda: ...))
-            ui.menu_item('Cross-references', on_click=lambda: ...))
-        menu.open()"""
+        gui.open_verse_context_menu(b, c, v)
 
     ui.on('wd', wd)
     ui.on('luV', luV)
@@ -218,26 +213,22 @@ def original_linguistic(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, *
             gui.load_area_2_content(title="Verses")
         with ui.button(icon='more_vert').props(f'flat round color={"white" if app.storage.user["dark_mode"] else "black"}'):
             with ui.menu():
-                ui.menu_item('Prev Chapter', on_click=lambda: previous_chapter(bible_selector.get_selection()))
-                ui.menu_item('Next Chapter', on_click=lambda: next_chapter(bible_selector.get_selection()))
+                ui.menu_item('◀️ Prev Chapter', on_click=lambda: previous_chapter(bible_selector.get_selection()))
+                ui.menu_item('▶️ Next Chapter', on_click=lambda: next_chapter(bible_selector.get_selection()))
                 if area == 1:
                     ui.separator()
-                    ui.menu_item('Search Bible', on_click=lambda: search_bible())
-                    ui.menu_item('Search OT', on_click=lambda: search_bible(q="OT:::"))
-                    ui.menu_item('Search NT', on_click=lambda: search_bible(q="NT:::"))
-                    ui.menu_item(f'Search {bible_selector.book_select.value}', on_click=lambda: search_bible(q=f"{bible_selector.book_select.value}:::"))
+                    ui.menu_item('🔍 Search Bible', on_click=lambda: search_bible())
+                    ui.menu_item('🔍 Search OT', on_click=lambda: search_bible(q=f"OT:::{app.storage.user['tool_query']}"))
+                    ui.menu_item('🔍 Search NT', on_click=lambda: search_bible(q=f"NT:::{app.storage.user['tool_query']}"))
+                    ui.menu_item(f'🔍 Search {bible_selector.book_select.value}', on_click=lambda: search_bible(q=f"{bible_selector.book_select.value}:::{app.storage.user['tool_query']}"))
                 ui.separator()
-                ui.menu_item('Bible Podcast', on_click=lambda: open_tool(bible_selector.get_selection(), title="Podcast"))
-                ui.menu_item('Bible Audio', on_click=lambda: open_tool(bible_selector.get_selection(), title="Audio"))
+                ui.menu_item('⏳ Timelines', on_click=lambda: open_tool(bible_selector.get_selection(), title="Timelines"))
                 ui.separator()
-                ui.menu_item('Cross-references', on_click=lambda: open_tool(bible_selector.get_selection(), title="Xrefs"))
-                ui.menu_item('Treasury', on_click=lambda: open_tool(bible_selector.get_selection(), title="Treasury"))
-                ui.menu_item('Commentary', on_click=lambda: open_tool(bible_selector.get_selection(), title="Commentary"))
+                ui.menu_item('🔊 Bible Podcast', on_click=lambda: open_tool(bible_selector.get_selection(), title="Podcast"))
+                ui.menu_item('🎧 Bible Audio', on_click=lambda: open_tool(bible_selector.get_selection(), title="Audio"))
                 ui.separator()
-                ui.menu_item('Timelines', on_click=lambda: open_tool(bible_selector.get_selection(), title="Timelines"))
-                ui.menu_item('Indexes', on_click=lambda: open_tool(bible_selector.get_selection(), title="Indexes"))
-                ui.separator()
-                ui.menu_item('Morphology', on_click=lambda: open_tool(bible_selector.get_selection(), title="Morphology"))
+                ui.menu_item('🔗 Cross-references', on_click=lambda: open_tool(bible_selector.get_selection(), title="Xrefs"))
+                ui.menu_item('📑 Indexes', on_click=lambda: open_tool(bible_selector.get_selection(), title="Indexes"))
     bible_selector.create_ui("OLB", b, c, v, additional_items=additional_items)
 
     # Render the HTML inside a styled container

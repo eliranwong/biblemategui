@@ -96,6 +96,8 @@ def word_morphology(gui=None, b=1, c=1, v=1, area=2, **_):
                 app.storage.user["tool_query"] = "|".join(queries)
                 gui.select_empty_area2_tab()
                 gui.load_area_2_content(title='Verses')
+            else:
+                ui.notify("Select morphology to search for first!")
 
         with ui.column().classes('w-full gap-4'):
             if results := fetch_morphology(b,c,v):

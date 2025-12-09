@@ -3,7 +3,7 @@ from nicegui import ui, app
 #from pathlib import Path
 import asyncio, datetime, threading
 
-def ai_chat(gui=None, **_):
+def ai_chat(gui=None, q="", **_):
 
     RUNNING = False
     SEND_BUTTON = None
@@ -97,10 +97,18 @@ def ai_chat(gui=None, **_):
                 MESSAGE_CONTAINER = ui.column().classes('w-full items-start gap-2')
 
         with ui.row().classes('w-full flex-nowrap items-end mb-30'):
-            REQUEST_INPUT = ui.textarea(placeholder='Enter your message...').props('rows=4').classes('flex-grow h-full resize-none')
+            REQUEST_INPUT = ui.textarea(placeholder='Enter your message...').props('rows=4').classes('flex-grow h-full resize-none').on('keydown.shift.enter.prevent', handle_send_click)
             with ui.column().classes('h-full justify-between gap-2'):
                 AUTO_SCROLL_CHECKBOX = ui.checkbox('Auto-scroll', value=True).classes('w-full')
                 SEND_BUTTON = ui.button('Send', on_click=handle_send_click).classes('w-full')
                 
 
         ui.label('BibleMate AI | © 2025 | Eliran Wong')
+
+        if q:
+            REQUEST_INPUT.set_value(q)
+        REQUEST_INPUT.run_method('focus')
+        ui.run_javascript(f'''
+            const el = document.getElementById({REQUEST_INPUT.id}).querySelector('textarea');
+            el.setSelectionRange(el.value.length, el.value.length);
+        ''')

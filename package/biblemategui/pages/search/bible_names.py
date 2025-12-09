@@ -9,6 +9,12 @@ import re, apsw, os, json, traceback
 
 def search_bible_names(gui=None, q='', **_):
 
+    last_entry = ""
+
+    def handle_up_arrow():
+        nonlocal last_entry, input_field
+        if not input_field.value.strip():
+            input_field.value = last_entry
 
     def fetch_bible_names_matches(search_term):
         db_file = os.path.join(BIBLEMATEGUI_DATA, "vectors", "exlb.db")
@@ -184,7 +190,7 @@ def search_bible_names(gui=None, q='', **_):
 
         input_field.on('keydown.enter.prevent', filter_names)
         input_field.on('update:model-value', show_all_names)
-
+        input_field.on('keydown.up', handle_up_arrow)
 
     # --- Main Content Area ---
     with ui.column().classes('w-full items-center'):

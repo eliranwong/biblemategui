@@ -11,6 +11,13 @@ import re, os
 
 def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, title="", **_):
 
+    dummy_label1 = None
+    dummy_label2 = None
+
+    db = getBiblePath(title)
+    if not os.path.isfile(db):
+        return None
+
     bible_selector = BibleSelector(on_version_changed=gui.change_area_1_bible_chapter if area == 1 else gui.change_area_2_bible_chapter, on_book_changed=gui.change_area_1_bible_chapter if area == 1 else gui.change_area_2_bible_chapter, on_chapter_changed=gui.change_area_1_bible_chapter if area == 1 else gui.change_area_2_bible_chapter, on_verse_changed=change_bible_chapter_verse)
 
     def strong_to_lex(match):
@@ -33,16 +40,19 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
         app.storage.user['tool_query'] = lexical_entry
         gui.load_area_2_content(title='Lexicons')
 
-    def luV(event):
-        nonlocal bible_selector
+    def luV1(event):
+        nonlocal bible_selector, gui, db, dummy_label1, area
         b, c, v = event.args
         bible_selector.verse_select.value = v
-        """
-        # Create a context menu at the click position
-        with ui.context_menu() as menu:
-            ui.menu_item('Bible Commentaries', on_click=lambda: ...))
-            ui.menu_item('Cross-references', on_click=lambda: ...))
-        menu.open()"""
+        with dummy_label1:
+            gui.open_verse_context_menu(db, b, c, v)
+
+    def luV2(event):
+        nonlocal bible_selector, gui, db, dummy_label2, area
+        b, c, v = event.args
+        bible_selector.verse_select.value = v
+        with dummy_label2:
+            gui.open_verse_context_menu(db, b, c, v)
 
     def cr(event):
         nonlocal gui
@@ -62,14 +72,12 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
             gui.change_area_2_bible_chapter(None, b, c, v) if area == 1 else gui.change_area_1_bible_chapter(None, b, c, v)
 
     ui.on('lex', lex)
-    ui.on('luV', luV)
+    ui.on('luV1', luV1)
+    ui.on('luV2', luV2)
     ui.on('wd', wd)
     ui.on('bcv', bcv)
     ui.on('cr', cr)
 
-    db = getBiblePath(title)
-    if not os.path.isfile(db):
-        return None
     content = getBibleChapter(db, b, c)
 
     # Fix known issues
@@ -109,8 +117,9 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
         content = re.sub(r'''<ref onclick='document.title="BIBLE:::([^<>]+?)"'>\1''', convert_uba_bible_link, content)
 
     # Convert onclick and ondblclick links
-    content = re.sub(r'''(onclick|ondblclick)="(cr|bcv|luV|luW|lex|bdbid|etcbcmorph|rmac|searchLexicalEntry|searchWord)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)
-    content = re.sub(r"""(onclick|ondblclick)='(cr|bcv|luV|luW|lex|bdbid|etcbcmorph|rmac|searchLexicalEntry|searchWord)\((.*?)\)'""", r"""\1='emitEvent("\2", [\3]); return false;'""", content)
+    content = content.replace("luV(", "luV1(" if area == 1 else "luV2(")
+    content = re.sub(r'''(onclick|ondblclick)="(cr|bcv|luV1|luV2|luW|lex|bdbid|etcbcmorph|rmac|searchLexicalEntry|searchWord)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)
+    content = re.sub(r"""(onclick|ondblclick)='(cr|bcv|luV1|luV2|luW|lex|bdbid|etcbcmorph|rmac|searchLexicalEntry|searchWord)\((.*?)\)'""", r"""\1='emitEvent("\2", [\3]); return false;'""", content)
 
     # adjust spacing
     content = content.replace("<br><br>", "<hr>")
@@ -277,32 +286,36 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
             gui.load_area_2_content(title="Verses")
         with ui.button(icon='more_vert').props(f'flat round color={"white" if app.storage.user["dark_mode"] else "black"}'):
             with ui.menu():
-                ui.menu_item('Prev Chapter', on_click=lambda: previous_chapter(bible_selector.get_selection()))
-                ui.menu_item('Next Chapter', on_click=lambda: next_chapter(bible_selector.get_selection()))
+                ui.menu_item('◀️ Prev Chapter', on_click=lambda: previous_chapter(bible_selector.get_selection()))
+                ui.menu_item('▶️ Next Chapter', on_click=lambda: next_chapter(bible_selector.get_selection()))
                 if area == 1:
                     ui.separator()
-                    ui.menu_item('Search Bible', on_click=lambda: search_bible())
-                    ui.menu_item('Search OT', on_click=lambda: search_bible(q="OT:::"))
-                    ui.menu_item('Search NT', on_click=lambda: search_bible(q="NT:::"))
-                    ui.menu_item(f'Search {bible_selector.book_select.value}', on_click=lambda: search_bible(q=f"{bible_selector.book_select.value}:::"))
+                    ui.menu_item('🔍 Search Bible', on_click=lambda: search_bible())
+                    ui.menu_item('🔍 Search OT', on_click=lambda: search_bible(q=f"OT:::{app.storage.user['tool_query']}"))
+                    ui.menu_item('🔍 Search NT', on_click=lambda: search_bible(q=f"NT:::{app.storage.user['tool_query']}"))
+                    ui.menu_item(f'🔍 Search {bible_selector.book_select.value}', on_click=lambda: search_bible(q=f"{bible_selector.book_select.value}:::{app.storage.user['tool_query']}"))
                 ui.separator()
-                ui.menu_item('Bible Podcast', on_click=lambda: open_tool(bible_selector.get_selection(), title="Podcast"))
-                ui.menu_item('Bible Audio', on_click=lambda: open_tool(bible_selector.get_selection(), title="Audio"))
+                ui.menu_item('⏳ Timelines', on_click=lambda: open_tool(bible_selector.get_selection(), title="Timelines"))
                 ui.separator()
-                ui.menu_item('Cross-references', on_click=lambda: open_tool(bible_selector.get_selection(), title="Xrefs"))
-                ui.menu_item('Treasury', on_click=lambda: open_tool(bible_selector.get_selection(), title="Treasury"))
-                ui.menu_item('Commentary', on_click=lambda: open_tool(bible_selector.get_selection(), title="Commentary"))
+                ui.menu_item('🔊 Bible Podcast', on_click=lambda: open_tool(bible_selector.get_selection(), title="Podcast"))
+                ui.menu_item('🎧 Bible Audio', on_click=lambda: open_tool(bible_selector.get_selection(), title="Audio"))
                 ui.separator()
-                ui.menu_item('Timelines', on_click=lambda: open_tool(bible_selector.get_selection(), title="Timelines"))
-                ui.menu_item('Indexes', on_click=lambda: open_tool(bible_selector.get_selection(), title="Indexes"))
-                ui.separator()
-                ui.menu_item('Morphology', on_click=lambda: open_tool(bible_selector.get_selection(), title="Morphology"))
+                ui.menu_item('🔗 Cross-references', on_click=lambda: open_tool(bible_selector.get_selection(), title="Xrefs"))
+                ui.menu_item('📑 Indexes', on_click=lambda: open_tool(bible_selector.get_selection(), title="Indexes"))
 
     bible_selector.create_ui(title, b, c, v, additional_items=additional_items)
 
+    # create a dummy label for being the parent of `open_verse_context_menu`, as ui.html can't take two context menus
+    # without a parent, the context menu doesn't close automatically
+    dummy_style = 'position: absolute; width: 0; height: 0; overflow: hidden;'
+    if area == 1:
+        dummy_label1 = ui.label().style(dummy_style)
+    else:
+        dummy_label2 = ui.label().style(dummy_style)
     # Render the HTML inside a styled container
-    # REMEMBER: sanitize=False is required to keep your onclick/onmouseover attributes
-    ui.html(f'<div class="bible-text">{content}</div>', sanitize=False).classes(f'w-full pb-[70vh] {(tab1+"_chapter") if area == 1 else (tab2+"_chapter")}')
+    chapter_label = (tab1+"_chapter") if area == 1 else (tab2+"_chapter")
+    ui.html(f'<div id="{chapter_label}" class="bible-text">{content}</div>', sanitize=False).classes(f'w-full pb-[70vh] {chapter_label}')
+    # Do not attach a context menu directly to ui.html, which make text unable to be selected on mobile device.
 
     # After the page is built and ready, run our JavaScript
     if (not area == 1) and tab1 and tab2:

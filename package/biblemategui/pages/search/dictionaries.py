@@ -67,6 +67,8 @@ def fetch_all_dictionaries():
 
 def search_bible_dictionaries(gui=None, q='', **_):
 
+    last_entry = ""
+
     def cr(event):
         nonlocal gui
         b, c, v, *_ = event.args
@@ -172,6 +174,11 @@ def search_bible_dictionaries(gui=None, q='', **_):
         # Clear input so user can start typing to filter immediately
         input_field.value = ""
 
+    def handle_up_arrow():
+        nonlocal last_entry, input_field
+        if not input_field.value.strip():
+            input_field.value = last_entry
+
     async def handle_enter(e, keep=True):
         query = input_field.value.strip()
 
@@ -225,6 +232,7 @@ def search_bible_dictionaries(gui=None, q='', **_):
         .props('outlined dense clearable autofocus enterkeyhint="search"')
 
         input_field.on('keydown.enter.prevent', handle_enter)
+        input_field.on('keydown.up', handle_up_arrow)
 
         async def get_all_dictionaries():
             all_dictionaries = await loading(fetch_all_dictionaries)

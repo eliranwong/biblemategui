@@ -74,6 +74,8 @@ def fetch_all_locations():
 
 def search_bible_locations(gui=None, q='', **_):
 
+    last_entry = ""
+
     def cr(event):
         nonlocal gui
         b, c, v, *_ = event.args
@@ -206,6 +208,11 @@ def search_bible_locations(gui=None, q='', **_):
         if keep:
             gui.update_active_area2_tab_records(q=path)
 
+    def handle_up_arrow():
+        nonlocal last_entry, input_field
+        if not input_field.value.strip():
+            input_field.value = last_entry
+
     async def handle_enter(e, keep=True):
         query = input_field.value.strip()
         if not query:
@@ -258,6 +265,7 @@ def search_bible_locations(gui=None, q='', **_):
 
         input_field.on('keydown.enter.prevent', handle_enter)
         #input_field.on('update:model-value', filter_verses)
+        input_field.on('keydown.up', handle_up_arrow)
 
         # update autocomplete
         async def get_all_locations():

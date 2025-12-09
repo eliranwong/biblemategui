@@ -78,6 +78,7 @@ def fetch_all_paralles_topics():
 
 def search_bible_parallels(gui=None, q='', **_):
 
+    last_entry = ""
     SQL_QUERY = "PRAGMA case_sensitive_like = false; SELECT Book, Chapter, Verse, Scripture FROM Verses WHERE (Scripture REGEXP ?) ORDER BY Book, Chapter, Verse"
 
     # --- Fuzzy Match Dialog ---
@@ -215,6 +216,11 @@ def search_bible_parallels(gui=None, q='', **_):
         input_field.props(f'placeholder="Type to filter {len(verses)} results..."')
         ui.notify(f"{len(verses)} {'result' if not verses or len(verses) == 1 else 'results'} found!")
 
+    def handle_up_arrow():
+        nonlocal last_entry, input_field
+        if not input_field.value.strip():
+            input_field.value = last_entry
+
     async def handle_enter(e, keep=True):
         query = input_field.value.strip()
         if not query:
@@ -273,6 +279,7 @@ def search_bible_parallels(gui=None, q='', **_):
 
         input_field.on('keydown.enter.prevent', handle_enter)
         input_field.on('update:model-value', filter_verses)
+        input_field.on('keydown.up', handle_up_arrow)
 
         async def get_all_topics():
             all_locations = await loading(fetch_all_paralles_topics)

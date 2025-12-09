@@ -1,4 +1,4 @@
-import os, traceback, re
+import os, traceback, re, apsw
 from nicegui import app, ui
 from functools import partial
 
@@ -7,6 +7,7 @@ from biblemategui import config, BIBLEMATEGUI_APP_DIR
 from biblemategui.pages.ai.chat import ai_chat
 
 from agentmake.plugins.uba.lib.BibleBooks import BibleBooks
+from agentmake.plugins.uba.lib.BibleParser import BibleVerseParser
 from biblemategui.fx.bible_selection_dialog import BibleSelectionDialog
 
 from biblemategui.js.bible import BIBLE_JS
@@ -71,6 +72,34 @@ class BibleMateGUI:
         # Tab number
         self.area1_tab_loaded = self.area1_tab_counter = 0
         self.area2_tab_loaded = self.area2_tab_counter = 0
+
+        # tools
+        self.tools = {
+            "chat": ai_chat,
+            "morphology": word_morphology,
+            "indexes": resource_indexes,
+            "podcast": bibles_podcast,
+            "audio": bibles_audio,
+            "verses": search_bible_verses,
+            "treasury": treasury,
+            "commentary": bible_commentary,
+            "chronology": bible_chronology,
+            "timelines": bible_timelines,
+            "xrefs": xrefs,
+            "promises": search_bible_promises,
+            "promises_": bible_promises_menu,
+            "parallels": search_bible_parallels,
+            "parallels_": bible_parallels_menu,
+            "topics": search_bible_topics,
+            "characters": search_bible_characters,
+            "locations": search_bible_locations,
+            "names": search_bible_names,
+            "dictionaries": search_bible_dictionaries,
+            "encyclopedias": search_bible_encyclopedias,
+            "lexicons": search_bible_lexicons,
+            "maps": search_bible_maps,
+            "relationships": search_bible_relationships,
+        }
 
     def work_in_progress(self, **_):
         with ui.column().classes('w-full items-center'):
@@ -411,78 +440,11 @@ class BibleMateGUI:
                 self.remove_tab_area2()
 
     def is_tool(self, title):
-        tools = (
-            "morphology",
-            "indexes",
-            "podcast",
-            "audio",
-            "verses",
-            "treasury",
-            "commentary",
-            "chronology",
-            "timelines",
-            "xrefs",
-            "promises",
-            "parallels",
-            "topics",
-            "characters",
-            "locations",
-            "names",
-            "dictionaries",
-            "encyclopedias",
-            "lexicons",
-            "maps",
-            "relationships",
-        )
-        return True if title.lower() in tools else False
+        return True if title.lower() in self.tools else False
 
     def get_content(self, title):
-        if title.lower() == "audio":
-            return bibles_audio
-        elif title.lower() == "commentary":
-            return bible_commentary
-        elif title.lower() == "morphology":
-            return word_morphology
-        elif title.lower() == "treasury":
-            return treasury
-        elif title.lower() == "indexes":
-            return resource_indexes
-        elif title.lower() == "podcast":
-            return bibles_podcast
-        elif title.lower() == "relationships":
-            return search_bible_relationships
-        elif title.lower() == "xrefs":
-            return xrefs
-        elif title.lower() == "maps":
-            return search_bible_maps
-        elif title.lower() == "promises":
-            return search_bible_promises
-        elif title.lower() == "promises_":
-            return bible_promises_menu
-        elif title.lower() == "parallels":
-            return search_bible_parallels
-        elif title.lower() == "parallels_":
-            return bible_parallels_menu
-        elif title.lower() == "topics":
-            return search_bible_topics
-        elif title.lower() == "characters":
-            return search_bible_characters
-        elif title.lower() == "locations":
-            return search_bible_locations
-        elif title.lower() == "names":
-            return search_bible_names
-        elif title.lower() == "dictionaries":
-            return search_bible_dictionaries
-        elif title.lower() == "encyclopedias":
-            return search_bible_encyclopedias
-        elif title.lower() == "lexicons":
-            return search_bible_lexicons
-        elif title.lower() == "verses":
-            return search_bible_verses
-        elif title.lower() == "chronology":
-            return bible_chronology
-        elif title.lower() == "timelines":
-            return bible_timelines
+        if title.lower() in self.tools:
+            return self.tools[title.lower()]
         elif title == "ORB":
             return original_reader
         elif title == "OIB":
@@ -499,6 +461,53 @@ class BibleMateGUI:
             return bible_translation
         else:
             return None
+
+    def copy_text(self, text=""):
+        if text:
+            # Escape quotes and newlines for JavaScript
+            escaped = text.replace('\\', '\\\\').replace('`', '\\`').replace('$', '\\$')
+            ui.run_javascript(f'navigator.clipboard.writeText(`{escaped}`)')
+            ui.notify(f'Copied: "{text}"')
+        else:
+            ui.notify('No text selected', type='warning')
+
+    def open_verse_context_menu(self, db, b, c, v):
+        app.storage.user["tool_book_number"] = b
+        app.storage.user["tool_chapter_number"] = c
+        app.storage.user["tool_verse_number"] = v
+        def get_verse_content():
+            nonlocal b, c, v
+            ref = BibleVerseParser(False).bcvToVerseReference(b, c, v)
+            with apsw.Connection(db) as connn:
+                query = "SELECT Scripture FROM Verses WHERE Book=? AND Chapter=? AND Verse =?"
+                cursor = connn.cursor()
+                cursor.execute(query, (b, c, v))
+                fetch = cursor.fetchone()
+            verse_text = re.sub("<[^<>]+?>", "", fetch[0]) if fetch else ""
+            return f"[{ref}] {verse_text}"
+        def ask_biblemate():
+            nonlocal self
+            app.storage.user["tool_query"] = get_verse_content()
+            self.select_empty_area2_tab()
+            self.load_area_2_content(title="chat", sync=False)
+        def open_tool(title):
+            self.select_empty_area2_tab()
+            self.load_area_2_content(title=title, sync=False)
+        with ui.context_menu() as menu:
+            ui.menu_item('📋 Copy', on_click=lambda: self.copy_text(get_verse_content()))
+            ui.separator()
+            ui.menu_item('🎧 Bible Audio', on_click=lambda: open_tool("Audio"))
+            ui.separator()
+            ui.menu_item('🔗 Cross-references', on_click=lambda: open_tool("Xrefs"))
+            ui.menu_item('🏦 Treasury', on_click=lambda: open_tool("Treasury"))
+            ui.menu_item('📚 Commentaries', on_click=lambda: open_tool("Commentary"))
+            ui.separator()
+            ui.menu_item('🧬 Morphology', on_click=lambda: open_tool("Morphology"))
+            ui.separator()
+            ui.menu_item('📑 Indexes', on_click=lambda: open_tool("Indexes"))
+            ui.separator()
+            ui.menu_item('💬 Ask BibleMate', on_click=ask_biblemate)
+        menu.open()
 
     def load_area_1_content(self, content=None, title="Bible", tab=None, args=None, keep=True):
         """Load example content in the active tab of Area 1"""
@@ -847,6 +856,19 @@ class BibleMateGUI:
 
     def create_menu(self):
         """Create the responsive header and navigation drawer."""
+
+        parser = BibleVerseParser(False)
+        def perform_quick_search(quick_search):
+            app.storage.user.update(left_drawer_open=False)
+            if search_item := quick_search.value.strip():
+                refs = parser.extractAllReferences(search_item)
+                if len(refs) == 1:
+                    b,c,v = refs[0]
+                    self.change_area_1_bible_chapter(book=b, chapter=c, verse=v)
+                else:
+                    app.storage.user["tool_query"] = search_item
+                    self.load_area_2_content(title='Verses', sync=app.storage.user["sync"])
+
         # --- Header ---
         with ui.header(elevated=True).classes('bg-primary text-white p-0'):
             # We use 'justify-between' to push the left and right groups apart
@@ -874,6 +896,11 @@ class BibleMateGUI:
                             
                             # This is just a label now; the parent button handles the click
                             ui.label('BibleMate AI').classes('text-lg ml-2') # Added margin-left for spacing
+
+                quick_search1 = ui.input(placeholder='🔍 Quick search ...') \
+                        .props('clearable outlined rounded dense autofocus enterkeyhint="search"') \
+                        .classes('gt-xs flex-grow')
+                quick_search1.on('keydown.enter.prevent', lambda: perform_quick_search(quick_search1))
 
                 # --- Right Aligned Group (Features & About Us) ---
                 with ui.row().classes('items-center no-wrap'):
@@ -982,7 +1009,7 @@ class BibleMateGUI:
                         with ui.menu():
                             ui.menu_item('AI Commentary', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             ui.menu_item('AI Q&A', on_click=lambda: self.load_area_2_content(self.work_in_progress))
-                            ui.menu_item('AI Chat', on_click=lambda: self.load_area_2_content(ai_chat, 'Chat'))
+                            ui.menu_item('AI Chat', on_click=lambda: self.load_area_2_content(title='Chat'))
                             ui.menu_item('Partner Mode', on_click=lambda: self.load_area_2_content(self.work_in_progress))
                             ui.menu_item('Agent Mode', on_click=lambda: self.load_area_2_content(self.work_in_progress))
 
@@ -1051,9 +1078,14 @@ class BibleMateGUI:
                     # This is just a label now; the parent button handles the click
                     ui.label('BibleMate AI').classes('text-lg ml-2')
 
+            quick_search2 = ui.input(placeholder='🔍 Quick search ...') \
+                    .props('clearable outlined rounded dense autofocus enterkeyhint="search" hide-bottom-space') \
+                    .classes('w-full !m-0 !p-0')
+            quick_search2.on('keydown.enter.prevent', lambda: perform_quick_search(quick_search2))
+
             ui.switch('Go').bind_value(app.storage.user, 'bible_select_button')
             ui.switch('Swap').bind_value(app.storage.user, 'layout_swap_button')
-            ui.switch('Sync').bind_value(app.storage.user, 'sync')
+            ui.switch('Menu').bind_value(app.storage.user, 'sync')
             ui.switch('Fullscreen').bind_value(app.storage.user, 'fullscreen')
             ui.switch('Dark Mode').bind_value(app.storage.user, 'dark_mode').on_value_change(lambda: ui.run_javascript('location.reload()'))
 
@@ -1257,7 +1289,7 @@ class BibleMateGUI:
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('AI Chat', on_click=lambda: (
-                    self.load_area_2_content(self.work_in_progress),
+                    self.load_area_2_content(title='Chat'),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.item('Partner Mode', on_click=lambda: (
