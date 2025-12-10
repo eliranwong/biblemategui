@@ -3,6 +3,7 @@ from nicegui import ui, app
 from biblemategui import config, BIBLEMATEGUI_APP_DIR, USER_DEFAULT_SETTINGS, getBibleVersionList, getLexiconList
 from biblemategui.pages.home import *
 from biblemategui.js.tooltip import TOOLTIP_JS
+from biblemategui.css.original import get_original_css
 from biblemategui.css.tooltip import get_tooltip_css
 from biblemategui.fx.tooltips import get_tooltip_data
 import os
@@ -143,19 +144,108 @@ def page_home(
     else:
         tv = app.storage.user.setdefault('tool_verse_number', 1)
 
-    ui.add_head_html('''
+    ui.add_head_html(f'''
         <style>
             /* Define the font family */
-            @font-face {
+            @font-face {{
                 font-family: 'Ezra SIL';
                 src: url('/fonts/sileot.ttf') format('truetype');
-            }
-            @font-face {
+            }}
+            @font-face {{
                 font-family: 'KoineGreek';
                 src: url('/fonts/KoineGreek.ttf') format('truetype');
-            }
+            }}
+            /* Hebrew Word Layer */
+            heb, bdbheb, bdbarc, hu {{
+                font-family: 'Ezra SIL', serif;
+                font-size: 1.6rem;
+                direction: rtl;
+                display: inline-block;
+                line-height: 1.2em;
+                margin-top: 0;
+                margin-bottom: -2px;
+                cursor: pointer;
+            }}
+            /* Greek Word Layer (targets <grk> tag) */
+            grk, gu {{
+                font-family: 'SBL Greek', 'Galatia SIL', 'Times New Roman', serif;
+                font-size: 1.6rem;
+                direction: ltr;
+                display: inline-block;
+                line-height: 1.2em;
+                margin-top: 0;
+                margin-bottom: -2px;
+                cursor: pointer;
+            }}
+            /* Greek Word Layer (targets <kgrk> tag) */
+            kgrk {{
+                font-family: 'KoineGreek', serif;
+                font-size: 1.6rem;
+                direction: ltr;
+                display: inline-block;
+                line-height: 1.2em;
+                margin-top: 0;
+                margin-bottom: -2px;
+                cursor: pointer;
+            }}
+            /* Lexical Form (lemma) & Strong's Number Layers */
+            wlex {{
+                display: block;
+                font-size: 1rem;
+                cursor: pointer;
+            }}
+            h1 {{
+                font-size: 2.0rem;
+                color: {app.storage.user['primary_color']};
+            }}
+            h2 {{
+                font-size: 1.7rem;
+                color: {app.storage.user['secondary_color']};
+            }}
+            h3 {{
+                font-size: 1.5rem;
+            }}
+            /* Main container for the Bible text - ensures RTL flow for verses */
+            .bible-text-heb {{
+                direction: rtl;
+                font-family: sans-serif;
+                padding: 0px;
+                margin: 0px;
+            }}
+            /* Main container for the Bible text - LTR flow for Greek */
+            .bible-text-grk {{
+                direction: ltr;
+                font-family: sans-serif;
+                padding: 0px;
+                margin: 0px;
+            }}
+            /* Main container for the Bible text - LTR flow for General Text */
+            .bible-text {{
+                direction: ltr;
+                font-family: sans-serif;
+                font-size: 1.3rem;
+                padding: 0px;
+                margin: 0px;
+            }}
+            /* Main container for the Tool text - ensures RTL flow for verses */
+            .content-text {{
+                direction: ltr;
+                font-family: sans-serif;
+                font-size: 1.1rem;
+                padding: 0px;
+                margin: 0px;
+            }}
+            /* Verse ID Number */
+            vid {{
+                color: {'#f2c522' if app.storage.user['dark_mode'] else 'navy'};
+                font-weight: bold;
+                font-size: 0.9rem;
+                cursor: pointer;
+                vertical-align: top;
+            }}
         </style>
     ''')
+    ui.add_head_html(get_original_css(app.storage.user['dark_mode']))
     ui.add_head_html(get_tooltip_css(app.storage.user["dark_mode"]))
     ui.add_body_html(TOOLTIP_JS)
 

@@ -7,33 +7,6 @@ from functools import partial
 
 def word_morphology(gui=None, b=1, c=1, v=1, area=2, **_):
 
-    ui.add_head_html(f"""
-    <style>
-        /* Hebrew Word Layer */
-        wform, heb, bdbheb, bdbarc, hu {{
-            font-family: 'Ezra SIL', serif;
-            font-size: 1.6rem;
-            direction: rtl;
-            display: inline-block;
-            line-height: 1.3em;
-            margin-top: 0;
-            margin-bottom: -2px;
-            cursor: pointer;
-        }}
-        /* Greek Word Layer (targets <grk> tag) */
-        wform, grk, kgrk, gu {{
-            font-family: 'SBL Greek', 'Galatia SIL', 'Times New Roman', serif; /* CHANGED */
-            font-size: 1.6rem;
-            direction: ltr;
-            display: inline-block;
-            line-height: 1.3em;
-            margin-top: 0;
-            margin-bottom: -2px;
-            cursor: pointer;
-        }}
-    </style>
-    """)
-
     def add_tooltips(verse_text):
         if "</heb>" in verse_text:
             verse_text = re.sub('(<heb id=")(.*?)"', r'\1\2" data-word="\2" class="tooltip-word"', verse_text)

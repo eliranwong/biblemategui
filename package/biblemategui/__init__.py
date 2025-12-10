@@ -283,7 +283,7 @@ USER_DEFAULT_SETTINGS = {
     'custom_token': '',
     'primary_bible': 'NET',
     'secondary_bible': 'KJV',
-    'favorite_commentary': 'CBSC',
+    'favorite_commentary': 'AIC',
     'favorite_encyclopedia': 'ISB',
     'favorite_lexicon': 'Morphology',
     'hebrew_lexicon': 'TBESH',

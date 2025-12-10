@@ -1,6 +1,5 @@
 from nicegui import ui, app
 from biblemategui import BIBLEMATEGUI_DATA
-from biblemategui.css.original import get_original_css
 from biblemategui.fx.bible import *
 from biblemategui.fx.original import *
 from biblemategui.js.sync_scrolling import *
@@ -67,86 +66,6 @@ def original_linguistic(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, *
     content = content.replace("luV(", "luV1(" if area == 1 else "luV2(")
     content = re.sub(r'''(onclick|ondblclick)="(luV1|luV2|luW|lex|bdbid|etcbcmorph|rmac|searchLexicalEntry|searchWord)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)
     content = re.sub(r"""(onclick|ondblclick)='(luV1|luV2|luW|lex|bdbid|etcbcmorph|rmac|searchLexicalEntry|searchWord)\((.*?)\)'""", r"""\1='emitEvent("\2", [\3]); return false;'""", content)
-
-    # Inject CSS to handle the custom tags and layout
-    if "</heb>" in content:
-        ui.add_head_html(f"""
-        <style>
-            /* Main container for the Bible text - ensures RTL flow for verses */
-            .bible-text-heb {{
-                direction: rtl;
-                font-family: sans-serif;
-                padding: 0px;
-                margin: 0px;
-            }}
-            /* Verse ID Number */
-            vid {{
-                color: {'#f2c522' if app.storage.user['dark_mode'] else 'navy'};
-                font-weight: bold;
-                font-size: 0.9rem;
-                margin-left: 10px; /* appears on the right due to RTL */
-                cursor: pointer;
-            }}
-            /* Hebrew Word Layer */
-            wform, heb, bdbheb, bdbarc, hu {{
-                font-family: 'Ezra SIL', serif;
-                font-size: 1.6rem;
-                direction: rtl;
-                display: inline-block;
-                line-height: 1.2em;
-                margin-top: 0;
-                margin-bottom: -2px;
-                cursor: pointer;
-            }}
-            /* Lexical Form & Strong's Number Layers */
-            wlex {{
-                display: block;
-                font-family: 'SBL Hebrew', serif;
-                font-size: 1rem;
-                cursor: pointer;
-            }}
-        </style>
-        """)
-    else:
-        ui.add_head_html(f"""
-        <style>
-            /* Main container for the Bible text - LTR flow for Greek */
-            .bible-text-grk {{
-                direction: ltr;
-                font-family: sans-serif;
-                padding: 0px;
-                margin: 0px;
-            }}
-            /* Verse ID Number */
-            vid {{
-                color: {'#f2c522' if app.storage.user['dark_mode'] else 'navy'};
-                font-weight: bold;
-                font-size: 0.9rem;
-                margin-right: 10px;
-                cursor: pointer;
-            }}
-            /* Greek Word Layer (targets <grk> tag) */
-            wform, grk, kgrk, gu {{
-                font-family: 'SBL Greek', 'Galatia SIL', 'Times New Roman', serif; /* CHANGED */
-                font-size: 1.6rem;
-                direction: ltr;
-                display: inline-block;
-                line-height: 1.2em;
-                margin-top: 0;
-                margin-bottom: -2px;
-                cursor: pointer;
-            }}
-            /* Lexical Form (lemma) & Strong's Number Layers */
-            wlex {{
-                display: block;
-                font-family: 'SBL Greek', 'Galatia SIL', 'Times New Roman', serif; /* CHANGED */
-                font-size: 1rem;
-                cursor: pointer;
-            }}
-        </style>
-        """)
-    
-    ui.add_head_html(get_original_css(app.storage.user['dark_mode']))
 
     # Bible Selection menu
     def additional_items():

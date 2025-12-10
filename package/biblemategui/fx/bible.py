@@ -236,21 +236,21 @@ class BibleSelector:
                 self.version_select = ui.select(
                     options=self.version_options,
                     #label='Bible',
-                    value=bible,
+                    value=bible if bible in self.version_options else self.version_options[0],
                     on_change=self.on_version_change
                 )
             # Book
             self.book_select = ui.select(
                 options=self.book_options,
                 #label='Book',
-                value=default_book, # b
+                value=default_book if default_book in self.book_options else self.book_options[0], # b
                 on_change=self.on_book_change
             )
             # Chapter
             self.chapter_select = ui.select(
                 options=self.chapter_options,
                 #label='Chapter',
-                value=c,
+                value=c if c in self.chapter_options else self.chapter_options[0],
                 on_change=self.on_chapter_change
             )
             # Verse
@@ -258,7 +258,7 @@ class BibleSelector:
                 self.verse_select = ui.select(
                     options=self.verse_options,
                     #label='Verse',
-                    value=v,
+                    value=v if v in self.verse_options else self.verse_options[0],
                     on_change=self.on_verse_change
                 )
             if additional_items:

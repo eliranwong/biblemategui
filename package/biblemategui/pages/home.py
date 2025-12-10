@@ -80,9 +80,9 @@ class BibleMateGUI:
             "indexes": resource_indexes,
             "podcast": bibles_podcast,
             "audio": bibles_audio,
-            "verses": search_bible_verses,
+            "verses": search_bible_verses, # API with additional options
             "treasury": treasury,
-            "commentary": bible_commentary,
+            "commentary": bible_commentary, # API with additional options
             "chronology": bible_chronology,
             "timelines": bible_timelines,
             "xrefs": xrefs,
@@ -95,8 +95,8 @@ class BibleMateGUI:
             "locations": search_bible_locations,
             "names": search_bible_names,
             "dictionaries": search_bible_dictionaries,
-            "encyclopedias": search_bible_encyclopedias,
-            "lexicons": search_bible_lexicons,
+            "encyclopedias": search_bible_encyclopedias, # API with additional options
+            "lexicons": search_bible_lexicons, # API with additional options
             "maps": search_bible_maps,
             "relationships": search_bible_relationships,
         }
@@ -471,6 +471,11 @@ class BibleMateGUI:
         else:
             ui.notify('No text selected', type='warning')
 
+    def ask_biblemate(self, context):
+        app.storage.user["tool_query"] = context
+        self.select_empty_area2_tab()
+        self.load_area_2_content(title="chat", sync=False)
+
     def open_verse_context_menu(self, db, b, c, v):
         app.storage.user["tool_book_number"] = b
         app.storage.user["tool_chapter_number"] = c
@@ -485,14 +490,18 @@ class BibleMateGUI:
                 fetch = cursor.fetchone()
             verse_text = re.sub("<[^<>]+?>", "", fetch[0]) if fetch else ""
             return f"[{ref}] {verse_text}"
-        def ask_biblemate():
-            nonlocal self
-            app.storage.user["tool_query"] = get_verse_content()
-            self.select_empty_area2_tab()
-            self.load_area_2_content(title="chat", sync=False)
         def open_tool(title):
             self.select_empty_area2_tab()
             self.load_area_2_content(title=title, sync=False)
+        def compare_verse():
+            nonlocal db, b, c, v
+            ref = BibleVerseParser(False).bcvToVerseReference(b, c, v)
+            bible_versions = sorted(list(set([app.storage.user["primary_bible"], app.storage.user["primary_bible"], os.path.basename(db)[:-6], "OHGBi"])))
+            app.storage.user["tool_query"] = f"{','.join(bible_versions)}:::{ref}"
+            open_tool("Verses")
+        def ask_biblemate():
+            nonlocal self
+            self.ask_biblemate(f"# Scripture\n\n{get_verse_content()}\n\n# Query\n\n")
         with ui.context_menu() as menu:
             ui.menu_item('📋 Copy', on_click=lambda: self.copy_text(get_verse_content()))
             ui.separator()
@@ -508,6 +517,7 @@ class BibleMateGUI:
             ui.separator()
             ui.menu_item('🧬 Morphology', on_click=lambda: open_tool("Morphology"))
             ui.separator()
+            ui.menu_item('👀 Comparison', on_click=compare_verse)
             ui.menu_item('📑 Indexes', on_click=lambda: open_tool("Indexes"))
             ui.separator()
             ui.menu_item('💬 Ask BibleMate', on_click=ask_biblemate)
@@ -861,17 +871,24 @@ class BibleMateGUI:
     def create_menu(self):
         """Create the responsive header and navigation drawer."""
 
+        auto_suggestions = [BibleBooks.abbrev[app.storage.user['ui_language']][str(i)][0] for i in range(1,67)]
+        auto_suggestions += [f"{i}:::" for i in self.tools.keys()]
+
         parser = BibleVerseParser(False)
         def perform_quick_search(quick_search):
             app.storage.user.update(left_drawer_open=False)
             if search_item := quick_search.value.strip():
-                refs = parser.extractAllReferences(search_item)
-                if len(refs) == 1:
-                    b,c,v = refs[0]
-                    self.change_area_1_bible_chapter(book=b, chapter=c, verse=v)
+                if ":::" in search_item and search_item.split(":::", 1)[0] in self.tools:
+                    tool, app.storage.user["tool_query"] = search_item.split(":::", 1)
+                    self.load_area_2_content(title=tool, sync=app.storage.user["sync"])
                 else:
-                    app.storage.user["tool_query"] = search_item
-                    self.load_area_2_content(title='Verses', sync=app.storage.user["sync"])
+                    refs = parser.extractAllReferences(search_item)
+                    if len(refs) == 1:
+                        b,c,v = refs[0]
+                        self.change_area_1_bible_chapter(book=b, chapter=c, verse=v)
+                    else:
+                        app.storage.user["tool_query"] = search_item
+                        self.load_area_2_content(title='Verses', sync=app.storage.user["sync"])
 
         # --- Header ---
         with ui.header(elevated=True).classes('bg-primary text-white p-0'):
@@ -901,7 +918,7 @@ class BibleMateGUI:
                             # This is just a label now; the parent button handles the click
                             ui.label('BibleMate AI').classes('text-lg ml-2') # Added margin-left for spacing
 
-                quick_search1 = ui.input(placeholder='🔍 Quick search ...') \
+                quick_search1 = ui.input(placeholder='🔍 Quick search ...', autocomplete=auto_suggestions) \
                         .props('clearable outlined rounded dense autofocus enterkeyhint="search"') \
                         .classes('gt-xs flex-grow')
                 quick_search1.on('keydown.enter.prevent', lambda: perform_quick_search(quick_search1))
@@ -1085,7 +1102,7 @@ class BibleMateGUI:
                     # This is just a label now; the parent button handles the click
                     ui.label('BibleMate AI').classes('text-lg ml-2')
 
-            quick_search2 = ui.input(placeholder='🔍 Quick search ...') \
+            quick_search2 = ui.input(placeholder='🔍 Quick search ...', autocomplete=auto_suggestions) \
                     .props('clearable outlined rounded dense autofocus enterkeyhint="search" hide-bottom-space') \
                     .classes('w-full !m-0 !p-0')
             quick_search2.on('keydown.enter.prevent', lambda: perform_quick_search(quick_search2))

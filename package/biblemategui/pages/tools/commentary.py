@@ -31,6 +31,7 @@ def get_ai_commentary_content(references: str):
                 content = re.sub(pattern, '', content, flags=re.DOTALL)
                 # convert md to html
                 content = markdown2.markdown(content, extras=["tables","fenced-code-blocks","toc","codelite"])
+                content = content.replace("<h1>", "<h2>").replace("</h1>", "</h2>")
                 results.append(content)
     return "<hr>".join(results) if results else ""
 
@@ -113,7 +114,7 @@ def bible_commentary(gui=None, b=1, c=1, v=1, q='', **_):
     ui.on('lex', lex)
 
     def change_module(new_module):
-        nonlocal input_field
+        nonlocal scope_select
         app.storage.user['favorite_commentary'] = new_module
         if scope_select and scope_select.value != new_module:
             scope_select.value = new_module
@@ -154,59 +155,12 @@ def bible_commentary(gui=None, b=1, c=1, v=1, q='', **_):
         content_container.clear()
 
         with content_container:
-            # html style
-            ui.add_head_html(f"""
-            <style>
-                /* Main container for the content - LTR flow */
-                .content-text {{
-                    direction: ltr;
-                    font-family: sans-serif;
-                    font-size: 1.1rem;
-                    padding: 0px;
-                    margin: 0px;
-                }}
-                /* CSS to target all h1 elements */
-                h1 {{
-                    font-size: 2.0rem;
-                    color: {app.storage.user['primary_color']};
-                }}
-                /* CSS to target all h2 elements */
-                h2 {{
-                    font-size: 1.7rem;
-                    color: {app.storage.user['secondary_color']};
-                }}
-            </style>
-            """)
-            ui.add_head_html(f"""
-            <style>
-                /* Hebrew Word Layer */
-                wform, heb, bdbheb, bdbarc, hu {{
-                    font-family: 'Ezra SIL', serif;
-                    font-size: 1.6rem;
-                    direction: rtl;
-                    display: inline-block;
-                    line-height: 1.2em;
-                    margin-top: 0;
-                    margin-bottom: -2px;
-                    cursor: pointer;
-                }}
-                /* Greek Word Layer (targets <grk> tag) */
-                wform, grk, kgrk, gu {{
-                    font-family: 'SBL Greek', 'Galatia SIL', 'Times New Roman', serif; /* CHANGED */
-                    font-size: 1.6rem;
-                    direction: ltr;
-                    display: inline-block;
-                    line-height: 1.2em;
-                    margin-top: 0;
-                    margin-bottom: -2px;
-                    cursor: pointer;
-                }}
-            </style>
-            """)
             # convert links, e.g. <ref onclick="bcv(3,19,26)">
             content = re.sub(r'''(onclick|ondblclick)="(bdbid|lex|cr|bcv|website)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)
             content = re.sub(r"""(onclick|ondblclick)='(bdbid|lex|cr|bcv|website)\((.*?)\)'""", r"""\1='emitEvent("\2", [\3]); return false;'""", content)
             # convert colors for dark mode, e.g. <font color="brown">
+            content = content.replace("<font color='3'>", "<font color='pink'>" if app.storage.user['dark_mode'] else "<font color='brown'>")
+            content = content.replace("<font color='4'>", "<font color='lightskyblue'>" if app.storage.user['dark_mode'] else "<font color='navy'>")
             if app.storage.user['dark_mode']:
                 content = content.replace('color="brown">', 'color="pink">')
                 content = content.replace('color="navy">', 'color="lightskyblue">')
@@ -225,13 +179,18 @@ def bible_commentary(gui=None, b=1, c=1, v=1, q='', **_):
     # ==============================================================================
     # UI LAYOUT
     # ==============================================================================
-    initial_module = ""
     if q and ":::" in q:
-        initial_module, q = q.split(":::")
-        if not initial_module in client_commentaries:
-            q = ""
+        additional_options, q = q.split(":::", 1)
+        if additional_options.strip() in client_commentaries:
+            app.storage.user['favorite_commentary'] = additional_options.strip()
 
     with ui.row().classes('w-full max-w-3xl mx-auto m-0 py-0 px-4 items-center'):
+        scope_select = ui.select(
+            options=client_commentaries,
+            value=app.storage.user.get('favorite_commentary', 'AIC'),
+            with_input=True
+        ).classes('w-22').props('dense')
+
         input_field = ui.input(
             autocomplete=BIBLE_BOOKS,
             placeholder=f'Enter verse reference(s) here ...'
@@ -240,15 +199,6 @@ def bible_commentary(gui=None, b=1, c=1, v=1, q='', **_):
 
         input_field.on('keydown.enter.prevent', handle_enter)
         input_field.on('keydown.up', handle_up_arrow)
-
-        scope_select = ui.select(
-            options=client_commentaries,
-            value=app.storage.user.get('favorite_commentary', 'CBSC'),
-            with_input=True
-        ).classes('w-22').props('dense')
-
-        if initial_module:
-            change_module(initial_module)
 
         def handle_scope_change(e):
             new_module = e.value

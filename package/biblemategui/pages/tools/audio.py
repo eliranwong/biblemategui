@@ -19,33 +19,6 @@ class BibleAudioPlayer:
         
     def create_ui(self):
 
-        ui.add_head_html(f"""
-        <style>
-            /* Hebrew Word Layer */
-            wform, heb, bdbheb, bdbarc, hu {{
-                font-family: 'Ezra SIL', serif;
-                font-size: 1.6rem;
-                direction: rtl;
-                display: inline-block;
-                line-height: 1.2em;
-                margin-top: 0;
-                margin-bottom: -2px;
-                cursor: pointer;
-            }}
-            /* Greek Word Layer (targets <grk> tag) */
-            wform, grk, kgrk, gu {{
-                font-family: 'SBL Greek', 'Galatia SIL', 'Times New Roman', serif; /* CHANGED */
-                font-size: 1.6rem;
-                direction: ltr;
-                display: inline-block;
-                line-height: 1.2em;
-                margin-top: 0;
-                margin-bottom: -2px;
-                cursor: pointer;
-            }}
-        </style>
-        """)
-
         with ui.card().classes('w-full max-w-4xl mx-auto mt-8 p-6'):
             # Title
             ui.label(self.title).classes('text-3xl font-bold mb-6 text-center')

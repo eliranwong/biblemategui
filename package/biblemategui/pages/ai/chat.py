@@ -106,6 +106,10 @@ def ai_chat(gui=None, q="", **_):
         ui.label('BibleMate AI | © 2025 | Eliran Wong')
 
         if q:
+            if not q.strip().endswith("# Query"):
+                q = f'# Selected text\n\n{q}\n\n# Query\n\n'
+            elif q.endswith("# Query"):
+                q += "\n\n"
             REQUEST_INPUT.set_value(q)
         REQUEST_INPUT.run_method('focus')
         ui.run_javascript(f'''

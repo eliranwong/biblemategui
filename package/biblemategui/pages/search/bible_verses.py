@@ -31,14 +31,23 @@ def search_bible_verses(gui=None, q='', **_):
     BOOK_MAP = {book: i + 1 for i, book in enumerate(BIBLE_BOOKS)}
 
     # Initialize with full selection state
-    initial_selection = ['All', 'OT', 'NT'] + BIBLE_BOOKS
+    all_bibles = getBibleVersionList()
+    initial_bibles = gui.get_area_1_bible_text()
+    initial_books = ['All', 'OT', 'NT'] + BIBLE_BOOKS
     if q and ":::" in q:
-        books, q = q.split(":::", 1)
-        valid_books = [i.strip() for i in books.split(",") if i.strip() in initial_selection+["None"]]
+        additional_options, q = q.split(":::", 1)
+        valid_books = []
+        valid_bibles = []
+        for i in additional_options.split(","):
+            if i.strip() in initial_books+["None"]:
+                valid_books.append(i.strip())
+            elif i.strip() in all_bibles:
+                valid_bibles.append(i.strip())
+        # refine valid books and bibles
         if "None" in valid_books:
             valid_books = ["None"]
         elif "All" in valid_books or ("OT" in valid_books and "NT" in valid_books):
-            valid_books = initial_selection
+            valid_books = initial_books
         else:
             if "OT" in valid_books:
                 valid_books += OT_BOOKS
@@ -47,9 +56,11 @@ def search_bible_verses(gui=None, q='', **_):
                 valid_books += NT_BOOKS
                 valid_books = list(set(valid_books))
         if valid_books:
-            initial_selection = valid_books
+            initial_books = valid_books
+        if valid_bibles:
+            initial_bibles = valid_bibles
     
-    state = {'previous': initial_selection}
+    state = {'previous': initial_books}
 
     # ----------------------------------------------------------
     # Helper: Filter Logic
@@ -236,6 +247,14 @@ def search_bible_verses(gui=None, q='', **_):
                         
                         row.verse_data = v # Store data for filter function
 
+                        def get_verse_content(ref, content):
+                            content = re.sub("<[^<>]+?>", "", content)
+                            return f"[{ref}] {content}"
+                        
+                        def ask_biblemate(ref, content):
+                            nonlocal gui
+                            gui.ask_biblemate(f"# Scripture\n\n{get_verse_content(ref, content)}\n\n# Query\n\n")
+
                         # --- Chip (Clickable & Removable) ---
                         with ui.element('div').classes('flex-none pt-1'): 
                             with ui.chip(
@@ -245,10 +264,14 @@ def search_bible_verses(gui=None, q='', **_):
                                 #on_click=partial(ui.notify, f'Clicked {v['ref']}'),
                             ).classes('cursor-pointer font-bold shadow-sm') as chip:
                                 with ui.menu():
-                                    ui.menu_item('Open in Bible Area', on_click=partial(gui.change_area_1_bible_chapter, v['bible'], v['b'], v['c'], v['v']))
-                                    ui.menu_item('Open Here', on_click=partial(gui.change_area_2_bible_chapter, v['bible'], v['b'], v['c'], v['v'], sync=False))
-                                    ui.menu_item('Open in Next Tab', on_click=partial(open_chapter_next_area2_tab, v['bible'], v['b'], v['c'], v['v']))
-                                    ui.menu_item('Open in New Tab', on_click=partial(open_chapter_empty_area2_tab, v['bible'], v['b'], v['c'], v['v']))
+                                    ui.menu_item('📋 Copy', on_click=partial(gui.copy_text, get_verse_content(v['ref'], v['content'])))
+                                    ui.separator()
+                                    ui.menu_item('📜 Open in Bible Area', on_click=partial(gui.change_area_1_bible_chapter, v['bible'], v['b'], v['c'], v['v']))
+                                    ui.menu_item('📜 Open Here', on_click=partial(gui.change_area_2_bible_chapter, v['bible'], v['b'], v['c'], v['v'], sync=False))
+                                    ui.menu_item('📜 Open in Next Tab', on_click=partial(open_chapter_next_area2_tab, v['bible'], v['b'], v['c'], v['v']))
+                                    ui.menu_item('📜 Open in New Tab', on_click=partial(open_chapter_empty_area2_tab, v['bible'], v['b'], v['c'], v['v']))
+                                    ui.separator()
+                                    ui.menu_item('💬 Ask BibleMate', on_click=partial(ask_biblemate, v['ref'], v['content']))
                             chip.on('remove', lambda _, r=row, ref=v['ref']: remove_verse_row(r, ref))
 
                         # --- Content ---
@@ -285,32 +308,6 @@ def search_bible_verses(gui=None, q='', **_):
     # ==============================================================================
     # 3. UI LAYOUT
     # ==============================================================================
-    ui.add_head_html(f"""
-    <style>
-        /* Hebrew Word Layer */
-        wform, heb, bdbheb, bdbarc, hu {{
-            font-family: 'Ezra SIL', serif;
-            font-size: 1.6rem;
-            direction: rtl;
-            display: inline-block;
-            line-height: 1.2em;
-            margin-top: 0;
-            margin-bottom: -2px;
-            cursor: pointer;
-        }}
-        /* Greek Word Layer (targets <grk> tag) */
-        wform, grk, kgrk, gu {{
-            font-family: 'SBL Greek', 'Galatia SIL', 'Times New Roman', serif; /* CHANGED */
-            font-size: 1.6rem;
-            direction: ltr;
-            display: inline-block;
-            line-height: 1.2em;
-            margin-top: 0;
-            margin-bottom: -2px;
-            cursor: pointer;
-        }}
-    </style>
-    """)
     
     with ui.row().classes('w-full max-w-3xl mx-auto m-0 py-0 px-4 items-center'):
         input_field = ui.input(
@@ -469,8 +466,8 @@ def search_bible_verses(gui=None, q='', **_):
 
         # Multi-select dropdown
         multiple_bibles = ui.select(
-            getBibleVersionList(),
-            value=gui.get_area_1_bible_text(),
+            all_bibles,
+            value=initial_bibles,
             #label='Select Bibles to search', 
             multiple=True,
             with_input=True,
@@ -480,7 +477,7 @@ def search_bible_verses(gui=None, q='', **_):
         scope_select.on_value_change(handle_scope_change)
 
         # Initialize
-        scope_select.value = initial_selection
+        scope_select.value = initial_books
 
     # --- Main Content Area ---
     with ui.column().classes('w-full items-center'):

@@ -119,29 +119,6 @@ def search_bible_locations(gui=None, q='', **_):
         content_container.clear()
 
         with content_container:
-            # html style
-            ui.add_head_html(f"""
-            <style>
-                /* Main container for the content - LTR flow */
-                .content-text {{
-                    direction: ltr;
-                    font-family: sans-serif;
-                    font-size: 1.1rem;
-                    padding: 0px;
-                    margin: 0px;
-                }}
-                /* CSS to target all h1 elements */
-                h1 {{
-                    font-size: 2.0rem;
-                    color: {app.storage.user['primary_color']};
-                }}
-                /* CSS to target all h2 elements */
-                h2 {{
-                    font-size: 1.7rem;
-                    color: {app.storage.user['secondary_color']};
-                }}
-            </style>
-            """)
             # Google Map links
             if "Click HERE for a Live Google Map" in content:
                 googleEarthLink = f"""https://earth.google.com/web/@{lat},{lng},654.97002989a,1336.11415664d,35y,0h,76.22542174t,-0r"""

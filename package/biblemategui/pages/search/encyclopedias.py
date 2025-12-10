@@ -117,29 +117,6 @@ def search_bible_encyclopedias(gui=None, q='', **_):
         content_container.clear()
 
         with content_container:
-            # html style
-            ui.add_head_html(f"""
-            <style>
-                /* Main container for the content - LTR flow */
-                .content-text {{
-                    direction: ltr;
-                    font-family: sans-serif;
-                    font-size: 1.1rem;
-                    padding: 0px;
-                    margin: 0px;
-                }}
-                /* CSS to target all h1 elements */
-                h1 {{
-                    font-size: 2.0rem;
-                    color: {app.storage.user['primary_color']};
-                }}
-                /* CSS to target all h2 elements */
-                h2 {{
-                    font-size: 1.7rem;
-                    color: {app.storage.user['secondary_color']};
-                }}
-            </style>
-            """)
             # convert links, e.g. <ref onclick="bcv(3,19,26)">
             content = re.sub(r'''(onclick|ondblclick)="(cr|bcv|website)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)
             content = re.sub(r"""(onclick|ondblclick)='(cr|bcv|website)\((.*?)\)'""", r"""\1='emitEvent("\2", [\3]); return false;'""", content)
@@ -230,7 +207,19 @@ def search_bible_encyclopedias(gui=None, q='', **_):
     # ==============================================================================
     # 3. UI LAYOUT
     # ==============================================================================
+    client_encyclopedias = list(config.encyclopedias.keys())
+    if q and ":::" in q:
+        additional_options, q = q.split(":::", 1)
+        if additional_options.strip() in client_encyclopedias:
+            app.storage.user['favorite_encyclopedia'] = additional_options.strip()
+
     with ui.row().classes('w-full max-w-3xl mx-auto m-0 py-0 px-4 items-center'):
+        scope_select = ui.select(
+            options=client_encyclopedias,
+            value=app.storage.user.get('favorite_encyclopedia', 'ISB'),
+            with_input=True
+        ).classes('w-22').props('dense')
+
         input_field = ui.input(
             autocomplete=[],
             placeholder=f'Search {config.encyclopedias[sql_table]} ...'
@@ -244,12 +233,6 @@ def search_bible_encyclopedias(gui=None, q='', **_):
             all_entries = await loading(fetch_all_encyclopedias, sql_table)
             input_field.set_autocomplete(all_entries)
         ui.timer(0, get_all_entries, once=True)
-
-        scope_select = ui.select(
-            options=list(config.encyclopedias.keys()),
-            value=app.storage.user.get('favorite_encyclopedia', 'ISB'),
-            with_input=True
-        ).classes('w-22').props('dense')
 
         async def handle_scope_change(e):
             nonlocal sql_table

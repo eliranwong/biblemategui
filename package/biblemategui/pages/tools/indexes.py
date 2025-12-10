@@ -39,29 +39,6 @@ def resource_indexes(gui=None, bt=None, b=1, c=1, v=1, area=2, **_):
         gui.load_area_2_content(title='Encyclopedias')
     ui.on('encyclopedia', encyclopedia)
 
-    ui.add_head_html(f"""
-    <style>
-        /* Main container for the content - LTR flow */
-        .content-text {{
-            direction: ltr;
-            font-family: sans-serif;
-            font-size: 1.1rem;
-            padding: 0px;
-            margin: 0px;
-        }}
-        /* CSS to target all h1 elements */
-        h1 {{
-            font-size: 2.0rem;
-            color: {app.storage.user['primary_color']};
-        }}
-        /* CSS to target all h2 elements */
-        h2 {{
-            font-size: 1.7rem;
-            color: {app.storage.user['secondary_color']};
-        }}
-    </style>
-    """)
-
     # --- CONFIGURATION ---
     DB_FILE = os.path.join(BIBLEMATEGUI_DATA, 'indexes2.sqlite')
 

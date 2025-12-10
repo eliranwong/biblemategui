@@ -143,29 +143,6 @@ def search_bible_lexicons(gui=None, q='', **_):
         content_container.clear()
 
         with content_container:
-            # html style
-            ui.add_head_html(f"""
-            <style>
-                /* Main container for the content - LTR flow */
-                .content-text {{
-                    direction: ltr;
-                    font-family: sans-serif;
-                    font-size: 1.1rem;
-                    padding: 0px;
-                    margin: 0px;
-                }}
-                /* CSS to target all h1 elements */
-                h1 {{
-                    font-size: 2.0rem;
-                    color: {app.storage.user['primary_color']};
-                }}
-                /* CSS to target all h2 elements */
-                h2 {{
-                    font-size: 1.7rem;
-                    color: {app.storage.user['secondary_color']};
-                }}
-            </style>
-            """)
             # Morhology Lexicon
             if lexicon_module == "Morphology":
                 content = re.sub(r'''\[<ref onclick="(searchBook|searchCode)\(.*?\)">search</ref>\]''', "", content)
@@ -197,33 +174,6 @@ def search_bible_lexicons(gui=None, q='', **_):
                     return match.group(0)  # return original if not found
             content = re.sub(r'<img src="getImage.php\?resource=([A-Z]+?)&id=(.+?)"/>', replace_img, content)
 
-            ui.add_head_html(f"""
-            <style>
-                /* Hebrew Word Layer */
-                wform, heb, bdbheb, bdbarc, hu {{
-                    font-family: 'Ezra SIL', serif;
-                    font-size: 1.6rem;
-                    direction: rtl;
-                    display: inline-block;
-                    line-height: 1.2em;
-                    margin-top: 0;
-                    margin-bottom: -2px;
-                    cursor: pointer;
-                }}
-                /* Greek Word Layer (targets <grk> tag) */
-                wform, grk, kgrk, gu {{
-                    font-family: 'SBL Greek', 'Galatia SIL', 'Times New Roman', serif; /* CHANGED */
-                    font-size: 1.6rem;
-                    direction: ltr;
-                    display: inline-block;
-                    line-height: 1.2em;
-                    margin-top: 0;
-                    margin-bottom: -2px;
-                    cursor: pointer;
-                }}
-            </style>
-            """)
-
             # display
             ui.html(f'<div class="content-text">{content}</div>', sanitize=False)
 
@@ -234,13 +184,18 @@ def search_bible_lexicons(gui=None, q='', **_):
     # ==============================================================================
     # 3. UI LAYOUT
     # ==============================================================================
-    initial_module = ""
     if q and ":::" in q:
-        initial_module, q = q.split(":::")
-        if not initial_module in client_lexicons:
-            q = ""
+        additional_options, q = q.split(":::", 1)
+        if additional_options.strip() in client_lexicons:
+            app.storage.user['favorite_lexicon'] = additional_options.strip()
 
     with ui.row().classes('w-full max-w-3xl mx-auto m-0 py-0 px-4 items-center'):
+        scope_select = ui.select(
+            options=client_lexicons,
+            value=app.storage.user.get('favorite_lexicon', 'Morphology'),
+            with_input=True
+        ).classes('w-22').props('dense')
+
         input_field = ui.input(
             autocomplete=[],
             placeholder=f'Search {lexicon_module} ...'
@@ -254,15 +209,6 @@ def search_bible_lexicons(gui=None, q='', **_):
             all_entries = await loading(fetch_all_lexicons, client_lexicons, lexicon)
             input_field.set_autocomplete(all_entries)
         ui.timer(0, get_all_entries, once=True)
-
-        scope_select = ui.select(
-            options=client_lexicons,
-            value=app.storage.user.get('favorite_lexicon', 'Morphology'),
-            with_input=True
-        ).classes('w-22').props('dense')
-
-        if initial_module:
-            ui.timer(0, lambda: change_module(initial_module), once=True)
 
         async def handle_scope_change(e):
             nonlocal lexicon_module

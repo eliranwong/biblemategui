@@ -112,29 +112,6 @@ def search_bible_characters(gui=None, q='', **_):
         content_container.clear()
 
         with content_container:
-            # html style
-            ui.add_head_html(f"""
-            <style>
-                /* Main container for the content - LTR flow */
-                .content-text {{
-                    direction: ltr;
-                    font-family: sans-serif;
-                    font-size: 1.1rem;
-                    padding: 0px;
-                    margin: 0px;
-                }}
-                /* CSS to target all h1 elements */
-                h1 {{
-                    font-size: 2.0rem;
-                    color: {app.storage.user['primary_color']};
-                }}
-                /* CSS to target all h2 elements */
-                h2 {{
-                    font-size: 1.7rem;
-                    color: {app.storage.user['secondary_color']};
-                }}
-            </style>
-            """)
             # remove a link
             content = content.replace('''<div align="center"><font color="navy">Click for more details</font></div>''', "")
             # convert links, e.g. <ref onclick="bcv(3,19,26)">
