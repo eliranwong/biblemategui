@@ -42,7 +42,7 @@ translation_sc = {
     "Partner Mode": "搭档模式",
     "Preferences": "偏好设定",
     "Promises": "圣经应许",
-    "Relationships": "人物关系图",
+    "Relationships": "人物关系",
     "Screen": "全萤幕",
     "Fullscreen": "全萤幕",
     "Swap": "版面转换",
@@ -74,4 +74,8 @@ translation_sc = {
     "Select Chapter": "选择章数",
     "Select Verse": "选择节数",
     "Back": "返回",
+    "Share": "分享",
+    "Note": "笔记",
+    "Notepad": "笔记本",
+    "Add Note": "新增笔记",
 }

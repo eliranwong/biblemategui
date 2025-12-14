@@ -281,17 +281,17 @@ def page_home(
 
     # load bible content at start
     if load_bible_at_start:
-        gui.select_empty_area1_tab()
-        gui.load_area_1_content(title=bbt, keep=k)
+        #gui.select_empty_area1_tab()
+        gui.load_area_1_content(title=bbt, keep=k, update_url=False)
     elif not gui.area1_tab_loaded: # when nothing is loaded
-        gui.load_area_1_content(title=app.storage.user["primary_bible"])
-    
+        gui.load_area_1_content(title=app.storage.user["primary_bible"], update_url=False)
+
     # load tool content at start
     if tool:
-        gui.select_empty_area2_tab()
-        gui.load_area_2_content(title=tbt if tool == "bible" else tool, keep=k, sync=s)
+        #gui.select_empty_area2_tab()
+        gui.load_area_2_content(title=tbt if tool == "bible" else tool, keep=k, sync=s, update_url=False)
     elif not gui.area2_tab_loaded: # when nothing is loaded
-        gui.load_area_2_content(title="Audio", sync=True)
+        gui.load_area_2_content(title="Audio", sync=True, update_url=False)
 
     if k:
         # update storage based on latest loaded content
@@ -536,7 +536,7 @@ def page_Settings(
         with ui.expansion('Language', icon='language').classes('w-full rounded-lg'):
             with ui.column().classes('w-full p-4'):
                 ui.select(label='Language',
-                          options={'eng': 'English', 'tc': 'Traditional Chinese', 'sc': 'Simplified Chinese'}) \
+                          options={'eng': 'English', 'tc': '繁體中文', 'sc': '简体中文'}) \
                     .bind_value(app.storage.user, 'ui_language')
 
         # --- Save Feedback ---

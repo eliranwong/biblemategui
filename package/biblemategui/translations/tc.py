@@ -42,7 +42,7 @@ translation_tc = {
     "Partner Mode": "搭檔模式",
     "Preferences": "偏好設定",
     "Promises": "聖經應許",
-    "Relationships": "人物關係圖",
+    "Relationships": "人物關係",
     "Screen": "全螢幕",
     "Fullscreen": "全螢幕",
     "Swap": "版面轉換",
@@ -74,4 +74,8 @@ translation_tc = {
     "Select Chapter": "選擇章數",
     "Select Verse": "選擇節數",
     "Back": "返回",
+    "Share": "分享",
+    "Note": "筆記",
+    "Notepad": "筆記本",
+    "Add Note": "新增筆記",
 }

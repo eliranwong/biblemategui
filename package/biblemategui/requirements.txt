@@ -3,3 +3,5 @@ biblemate>=0.2.44
 nicegui>=3.2.0
 apsw
 markdown2
+qrcode
+pillow

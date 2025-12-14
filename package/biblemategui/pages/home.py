@@ -1,4 +1,4 @@
-import os, traceback, re, apsw
+import os, traceback, re, apsw, base64, io, qrcode
 from nicegui import app, ui
 from functools import partial
 
@@ -34,6 +34,7 @@ from biblemategui.pages.tools.indexes import resource_indexes
 from biblemategui.pages.tools.promises import bible_promises_menu
 from biblemategui.pages.tools.parallels import bible_parallels_menu
 from biblemategui.pages.tools.morphology import word_morphology
+from biblemategui.pages.tools.notepad import notepad
 
 from biblemategui.pages.search.bible_verses import search_bible_verses
 from biblemategui.pages.search.bible_promises import search_bible_promises
@@ -79,6 +80,7 @@ class BibleMateGUI:
 
         # tools
         self.tools = {
+            "note": notepad,
             "parousia": parousia,
             "parousia_zh": parousia_zh,
             "chat": ai_chat,
@@ -470,6 +472,30 @@ class BibleMateGUI:
         else:
             return None
 
+    def generate_qr_base64(self, data: str) -> str:
+        """
+        Generates a QR code for the given string and returns it 
+        as a base64 encoded data URL for use in ui.image().
+        """
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(data)
+        qr.make(fit=True)
+        
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        # Save image to a memory buffer (avoiding file creation)
+        buffer = io.BytesIO()
+        img.save(buffer, format="PNG")
+        img_str = base64.b64encode(buffer.getvalue()).decode()
+        
+        # Return standard data URL format
+        return f'data:image/png;base64,{img_str}'
+
     def copy_text(self, text=""):
         if text:
             # Escape quotes and newlines for JavaScript
@@ -478,6 +504,11 @@ class BibleMateGUI:
             ui.notify(f'Copied: "{text}"')
         else:
             ui.notify('No text selected', type='warning')
+
+    def add_to_notepad(self, context):
+        app.storage.user["tool_query"] = context
+        self.select_empty_area2_tab()
+        self.load_area_2_content(title="note", sync=False)
 
     def ask_biblemate(self, context):
         app.storage.user["tool_query"] = context
@@ -507,9 +538,13 @@ class BibleMateGUI:
             bible_versions = sorted(list(set([app.storage.user["primary_bible"], app.storage.user["primary_bible"], os.path.basename(db)[:-6], "OHGBi"])))
             app.storage.user["tool_query"] = f"{','.join(bible_versions)}:::{ref}"
             open_tool("Verses")
+        def add_to_notepad():
+            nonlocal self
+            self.add_to_notepad(get_verse_content())
         def ask_biblemate():
             nonlocal self
-            self.ask_biblemate(f"# Scripture\n\n{get_verse_content()}\n\n# Query\n\n")
+            ref, verse_content = get_verse_content()[1:].split("] ", 1)
+            self.ask_biblemate(f"# {ref}\n\n{verse_content}\n\n# Query\n\n")
         with ui.context_menu() as menu:
             ui.menu_item(f'📋 {get_translation("Copy")}', on_click=lambda: self.copy_text(get_verse_content()))
             ui.separator()
@@ -528,10 +563,30 @@ class BibleMateGUI:
             ui.menu_item(f'👀 {get_translation("Comparison")}', on_click=compare_verse)
             ui.menu_item(f'📑 {get_translation("Indexes")}', on_click=lambda: open_tool("Indexes"))
             ui.separator()
+            ui.menu_item(f'📝 {get_translation("Add Note")}', on_click=add_to_notepad)
             ui.menu_item(f'💬 {get_translation("Ask BibleMate")}', on_click=ask_biblemate)
         menu.open()
 
-    def load_area_1_content(self, content=None, title="Bible", tab=None, args=None, keep=True):
+    async def replace_url(self):
+        new_url = ""
+        active_bible_tab = self.get_active_area1_tab()
+        if active_bible_tab in app.storage.user:
+            args = app.storage.user[active_bible_tab]
+            new_url = f'/?bbt={args.get("bt")}&bb={args.get("b")}&bc={args.get("c")}&bv={args.get("v")}'
+        active_tool_tab = self.get_active_area2_tab()
+        if active_tool_tab in app.storage.user:
+            args = app.storage.user[active_tool_tab]
+            title = args.get("bt")
+            if not new_url:
+                new_url = "/?"
+            else:
+                new_url += "&"
+            new_url += f'tool={title if title.lower() in self.tools else "bible"}&tbt={args.get("bt")}&tb={args.get("b")}&tc={args.get("c")}&tv={args.get("v")}&tq={args.get("q")}'
+        if new_url:
+            new_url += f"&l={app.storage.user['layout']}"
+        await ui.run_javascript(f"window.history.replaceState({{}}, '', '{new_url}')")
+
+    def load_area_1_content(self, content=None, title="Bible", tab=None, args=None, keep=True, update_url=True):
         """Load example content in the active tab of Area 1"""
 
         if app.storage.user['layout'] == 3:
@@ -568,6 +623,9 @@ class BibleMateGUI:
             # Clear and load new content
             active_panel.clear()
             # store as history
+            if update_url:
+                new_url = f'/?bbt={args.get("bt")}&bb={args.get("b")}&bc={args.get("c")}&bv={args.get("v")}'
+                ui.run_javascript(f"window.history.pushState({{}}, '', '{new_url}')")
             if keep:
                 app.storage.user[active_tab] = args
             # load content
@@ -583,7 +641,7 @@ class BibleMateGUI:
         except:
             print(traceback.format_exc())
 
-    def load_area_2_content(self, content=None, title="Tool", tab=None, args=None, keep=True, sync=True):
+    def load_area_2_content(self, content=None, title="Tool", tab=None, args=None, keep=True, sync=True, update_url=True):
         """Load example content in the active tab of Area 2"""
 
         if app.storage.user['layout'] == 1:
@@ -624,6 +682,9 @@ class BibleMateGUI:
             # Clear and load new content
             active_panel.clear()
             # store as history
+            if update_url:
+                new_url = f'/?tool={title if title.lower() in self.tools else "bible"}&tbt={args.get("bt")}&tb={args.get("b")}&tc={args.get("c")}&tv={args.get("v")}&tq={args.get("q")}'
+                ui.run_javascript(f"window.history.pushState({{}}, '', '{new_url}')")
             if keep:
                 app.storage.user[active_tab] = args
             # load content
@@ -914,6 +975,40 @@ class BibleMateGUI:
                         app.storage.user["tool_query"] = search_item
                         self.load_area_2_content(title='Verses', sync=app.storage.user["sync"])
 
+
+        # qr code dialog
+        with ui.dialog() as dialog, ui.card().classes('items-center text-center p-6'):
+            ui.label('URL & QR Code').classes('text-xl font-bold text-secondary')
+            
+            # Container to hold dynamic content (URL label + QR image)
+            qr_container = ui.column().classes('items-center gap-4')
+
+            ui.link("[source code]", "https://github.com/eliranwong/biblemategui").classes('break-all max-w-[300px]')
+            
+            ui.button('Close', on_click=dialog.close).props('outline align=center text-color=secondary')
+
+        # --- Event Handler ---
+        async def show_url_popup():
+            await self.replace_url()
+
+            # 1. Get the current URL from the user's browser
+            # We must await this because it requires a round-trip to the client
+            current_url = await ui.run_javascript('window.location.href')
+            
+            # 2. Update the dialog content
+            qr_container.clear() # Clear previous content
+            with qr_container:
+                # Show URL (clickable link)
+                ui.link(current_url, current_url).classes('break-all max-w-[300px]')
+                
+                # Show QR Code
+                # We generate it on the fly based on the fetched URL
+                base64_img = self.generate_qr_base64(current_url)
+                ui.image(base64_img).style('width: 250px; height: 250px')
+                
+            # 3. Open the dialog
+            dialog.open()
+
         # --- Header ---
         with ui.header(elevated=True).classes('bg-primary text-white p-0'):
             # We use 'justify-between' to push the left and right groups apart
@@ -931,7 +1026,7 @@ class BibleMateGUI:
 
                     # --- Desktop Avatar + Title (Home) ---
                     # The button contains a row with the avatar and the label
-                    with ui.button(on_click=lambda: ui.navigate.to('/')).props('flat text-color=white').classes('gt-xs'):
+                    with ui.button(on_click=lambda: ui.timer(0, show_url_popup, once=True)).props('flat text-color=white').classes('gt-xs'):
                         with ui.row().classes('items-center no-wrap'):
                             # Use a fallback icon in case the image fails to load
                             with ui.avatar(size='32px'):
@@ -1030,6 +1125,8 @@ class BibleMateGUI:
                             ui.menu_item(get_translation("Morphology"), on_click=lambda: self.load_area_2_content(title='Morphology', sync=True))
                             ui.separator()
                             ui.menu_item(get_translation("Indexes"), on_click=lambda: self.load_area_2_content(title='Indexes', sync=True))
+                            ui.separator()
+                            ui.menu_item(get_translation("Notepad"), on_click=lambda: self.load_area_2_content(title='Note', sync=True))
                     
                     with ui.button(icon='search').props('flat color=white round').tooltip(get_translation("Search")):
                         with ui.menu():
@@ -1115,7 +1212,10 @@ class BibleMateGUI:
                 .bind_value(app.storage.user, 'left_drawer_open') as left_drawer:
 
             # The button contains a row with the avatar and the label
-            with ui.button(on_click=lambda: ui.navigate.to('/')).props('flat text-color=white'):
+            with ui.button(on_click=lambda: (
+                ui.timer(0, show_url_popup, once=True),
+                app.storage.user.update(left_drawer_open=False)
+            )).props('flat text-color=white'):
                 with ui.row().classes('items-center no-wrap'):
                     # Use a fallback icon in case the image fails to load
                     with ui.avatar(size='32px'):
@@ -1274,6 +1374,11 @@ class BibleMateGUI:
                     self.load_area_2_content(title='Indexes', sync=True),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
+                ui.separator()
+                ui.item(get_translation("Notepad"), on_click=lambda: (
+                    self.load_area_2_content(title='Note', sync=True),
+                    app.storage.user.update(left_drawer_open=False)
+                )).props('clickable')
 
             # Search
             with ui.expansion(get_translation("Search"), icon='search').props('header-class="text-secondary"'):
@@ -1369,4 +1474,8 @@ class BibleMateGUI:
                     ui.navigate.to('/settings'),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
-                ui.separator()
+
+            #ui.button(get_translation("Share"), on_click=lambda: (
+            #    ui.timer(0, show_url_popup, once=True),
+            #    app.storage.user.update(left_drawer_open=False)
+            #), icon='qr_code').props('flat text-color=secondary')
