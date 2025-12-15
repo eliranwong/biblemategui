@@ -8,8 +8,27 @@ from biblemategui.css.tooltip import get_tooltip_css
 from biblemategui.fx.tooltips import get_tooltip_data
 from biblemategui.api.api import get_api_content
 from typing import Optional
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.requests import Request
+from starlette.responses import RedirectResponse
+from authlib.integrations.starlette_client import OAuth
 import os
 
+# --- 2. OAUTH SETUP ---
+app.add_middleware(SessionMiddleware, secret_key=config.storage_secret)
+oauth = OAuth()
+oauth.register(
+    name='google',
+    client_id=config.google_client_id,
+    client_secret=config.google_client_secret,
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={
+        'scope': 'https://www.googleapis.com/auth/drive.appdata openid email profile',
+        'prompt': 'consent',      # <--- FORCE new refresh token
+    }, 
+    # This is critical for the error you saw:
+    authorize_params={'access_type': 'offline'}
+)
 
 @app.get('/api/data')
 def api_data(query: str, language: str = 'eng', token: Optional[str] = None):
@@ -33,6 +52,22 @@ async def tooltip_api(word: str):
     if data:
         return data
     return {'error': 'Not found'}, 404
+
+@ui.page('/login')
+async def login(request: Request):
+    redirect_uri = request.url_for('auth')
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+@ui.page('/auth')
+async def auth(request: Request):
+    try:
+        # access_type='offline' in config ensures we get a refresh_token here
+        token = await oauth.google.authorize_access_token(request)
+        app.storage.user['google_token'] = token
+        return RedirectResponse('/')
+    except Exception as e:
+        ui.notify(f"Login failed: {e}")
+        return RedirectResponse('/')
 
 # Home Page
 @ui.page('/')

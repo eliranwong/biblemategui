@@ -115,12 +115,13 @@ class IndexManager:
         if verse_id in self.data:
             del self.data[verse_id]
             self.save_to_drive()
-            
-    def get_chapter_count(self, book, chapter):
+
+    def get_chapter_notes(self, book, chapter):
         prefix = f"{book}_{chapter}_"
-        chapter_notes = [k for k in self.data.keys() if k.startswith(prefix)]
-        print(chapter_notes)
-        return len(chapter_notes)
+        return [k for k in self.data.keys() if k.startswith(prefix)]
+
+    def get_chapter_count(self, book, chapter):
+        return len(self.get_chapter_notes(book, chapter))
 
 # --- 5. UI PAGES ---
 
