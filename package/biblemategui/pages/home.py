@@ -618,16 +618,16 @@ class BibleMateGUI:
                 "tab1": active_tab,
                 "tab2": self.get_active_area2_tab(),
             }
-            # Get the active tab's scroll area
-            active_panel = self.area1_tab_panels[active_tab]
-            # Clear and load new content
-            active_panel.clear()
             # store as history
             if update_url:
                 new_url = f'/?bbt={args.get("bt")}&bb={args.get("b")}&bc={args.get("c")}&bv={args.get("v")}'
                 ui.run_javascript(f"window.history.pushState({{}}, '', '{new_url}')")
             if keep:
                 app.storage.user[active_tab] = args
+            # Get the active tab's scroll area
+            active_panel = self.area1_tab_panels[active_tab]
+            # Clear and load new content
+            active_panel.clear()
             # load content
             with active_panel:
                 content(gui=self, **args)
@@ -677,16 +677,16 @@ class BibleMateGUI:
                 "tab1": bible_tab,
                 "tab2": active_tab,
             }
-            # Get the active tab's scroll area
-            active_panel = self.area2_tab_panels[active_tab]
-            # Clear and load new content
-            active_panel.clear()
             # store as history
             if update_url:
                 new_url = f'/?tool={title if title.lower() in self.tools else "bible"}&tbt={args.get("bt")}&tb={args.get("b")}&tc={args.get("c")}&tv={args.get("v")}&tq={args.get("q")}'
                 ui.run_javascript(f"window.history.pushState({{}}, '', '{new_url}')")
             if keep:
                 app.storage.user[active_tab] = args
+            # Get the active tab's scroll area
+            active_panel = self.area2_tab_panels[active_tab]
+            # Clear and load new content
+            active_panel.clear()
             # load content
             with active_panel:
                 content(gui=self, **args)
