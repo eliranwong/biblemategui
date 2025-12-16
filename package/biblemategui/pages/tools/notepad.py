@@ -10,20 +10,27 @@ class Notepad:
         self.parser = BibleVerseParser(False, language=app.storage.user['ui_language'])
         
     def setup_ui(self):
+
+        # Dialog to confirm deleting a note
+        with ui.dialog() as delete_dialog, ui.card():
+            ui.label('Are you sure you want to delete this note?')
+            with ui.row().classes('justify-end w-full'):
+                ui.button('Cancel', on_click=delete_dialog.close).props('flat text-color=secondary')
+                ui.button('Delete', color='red', on_click=lambda: (self.clear_text(), delete_dialog.close()))
         # --- Toolbar ---
-        with ui.row().classes('gap-2 mb-4 w-full items-center'):
-            with ui.column().classes('items-center'):
-                self.mode_btn = ui.button('Read Mode', icon='visibility', on_click=self.toggle_mode).props('color=primary')
-                with ui.row().classes('gap-2'):                
-                    ui.button(on_click=self.download_file, icon='download').props('flat round color=secondary').tooltip(get_translation("Download"))
-                    ui.button(on_click=self.clear_text, icon='delete').props('flat round color=negative').tooltip(get_translation("Clear"))
-            ui.space()
-            self.upload = ui.upload(on_upload=self.handle_upload, auto_upload=True).props('accept=.txt,.md round').classes('w-auto')
+        with ui.row().classes('gap-2 mb-0 w-full items-center'):
+            self.mode_btn = ui.button('Read Mode', icon='visibility', on_click=self.toggle_mode).props('color=primary')
+            ui.button(on_click=self.download_file, icon='download').props('flat round color=secondary').tooltip(get_translation("Download"))
+            ui.button(on_click=lambda: self.upload.run_method('pickFiles'), icon='upload').props('flat round color=secondary').tooltip(get_translation("Import"))
+            ui.button(on_click=delete_dialog.open, icon='delete').props('flat round color=negative').tooltip(get_translation("Clear"))
+            self.upload = ui.upload(
+                on_upload=self.handle_upload, 
+                auto_upload=True
+            ).props('accept=.txt,.md').classes('hidden')
 
         # --- Content Area ---
         # Card must be 'flex flex-col' so the child (textarea) can grow
-        with ui.card().classes('w-full h-[60vh] p-0 flex flex-col'):
-            
+        with ui.card().classes('w-full h-[70vh] p-0 flex flex-col'):
             # 1. Edit Mode: Text Area
             # We apply our custom 'full-height-textarea' class here
             self.textarea = ui.textarea(

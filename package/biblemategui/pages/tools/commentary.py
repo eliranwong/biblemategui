@@ -199,6 +199,10 @@ def bible_commentary(gui=None, b=1, c=1, v=1, q='', **_):
 
         input_field.on('keydown.enter.prevent', handle_enter)
         input_field.on('keydown.up', handle_up_arrow)
+        with input_field.add_slot('append'):
+            ui.icon('history') \
+                .on('click', handle_up_arrow) \
+                .classes('text-sm cursor-pointer text-secondary').tooltip('Restore last entry')
 
         def handle_scope_change(e):
             new_module = e.value

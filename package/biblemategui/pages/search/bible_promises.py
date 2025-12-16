@@ -281,6 +281,10 @@ def search_bible_promises(gui=None, q='', **_):
         input_field.on('keydown.enter.prevent', handle_enter)
         input_field.on('update:model-value', filter_verses)
         input_field.on('keydown.up', handle_up_arrow)
+        with input_field.add_slot('append'):
+            ui.icon('history') \
+                .on('click', handle_up_arrow) \
+                .classes('text-sm cursor-pointer text-secondary').tooltip('Restore last entry')
 
         async def get_all_promises_topics():
             all_topics = await loading(fetch_all_promises_topics)

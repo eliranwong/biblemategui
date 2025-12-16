@@ -1,10 +1,6 @@
-from biblemategui import config
+from biblemategui import config, loading
 import os, re, json, io
 from nicegui import app, ui
-from starlette.middleware.sessions import SessionMiddleware
-from starlette.requests import Request
-from starlette.responses import RedirectResponse
-from authlib.integrations.starlette_client import OAuth
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
@@ -30,6 +26,7 @@ class CloudIndexManager:
         self.service = drive_service
         self.filename = 'bible_index.json'
         self.file_id = None
+        self.data = {}
         # important - load master index
         if "cached_index" in app.storage.user:
             self.data = app.storage.user['cached_index']

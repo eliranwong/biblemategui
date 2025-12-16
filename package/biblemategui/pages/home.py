@@ -247,7 +247,7 @@ class BibleMateGUI:
                                 self.area1_tab_panels[tab_id] = ui.scroll_area().classes(f'w-full h-full {tab_id}')
                                 with self.area1_tab_panels[tab_id]:
                                     ui.label(f'Bible Area - Tab {i}').classes('text-2xl font-bold mb-4')
-                                    #ui.label('[Content will be displayed here.]').classes('text-gray-600')
+                                    ui.label('Please select a Bible from the menu.').classes('text-gray-600')
         
         # Area 2
         with self.splitter.after:
@@ -307,7 +307,7 @@ class BibleMateGUI:
                                 self.area2_tab_panels[tab_id] = ui.scroll_area().classes(f'w-full h-full {tab_id}')
                                 with self.area2_tab_panels[tab_id]:
                                     ui.label(f'Tool Area - Tab {i}').classes('text-2xl font-bold mb-4')
-                                    #ui.label('[Content will be displayed here.]').classes('text-gray-600')
+                                    ui.label('Please select a tool from the menu.').classes('text-gray-600')
 
         # A Draggable Container
         def make_draggable(element):
@@ -455,6 +455,8 @@ class BibleMateGUI:
         return True if title.lower() in self.tools else False
 
     def get_content(self, title):
+        if not isinstance(title, str):
+            title = "NET"
         if title.lower() in self.tools:
             return self.tools[title.lower()]
         elif title == "ORB":
@@ -523,7 +525,7 @@ class BibleMateGUI:
         app.storage.user["tool_verse_number"] = v
         def get_verse_content():
             nonlocal b, c, v
-            ref = BibleVerseParser(False).bcvToVerseReference(b, c, v)
+            ref = BibleVerseParser(False, language=app.storage.user['ui_language']).bcvToVerseReference(b, c, v)
             with apsw.Connection(db) as connn:
                 query = "SELECT Scripture FROM Verses WHERE Book=? AND Chapter=? AND Verse =?"
                 cursor = connn.cursor()
@@ -536,7 +538,7 @@ class BibleMateGUI:
             self.load_area_2_content(title=title, sync=False)
         def compare_verse():
             nonlocal db, b, c, v
-            ref = BibleVerseParser(False).bcvToVerseReference(b, c, v)
+            ref = BibleVerseParser(False, language=app.storage.user['ui_language']).bcvToVerseReference(b, c, v)
             bible_versions = sorted(list(set([app.storage.user["primary_bible"], app.storage.user["primary_bible"], os.path.basename(db)[:-6], "OHGBi"])))
             app.storage.user["tool_query"] = f"{','.join(bible_versions)}:::{ref}"
             open_tool("Verses")
@@ -625,8 +627,12 @@ class BibleMateGUI:
             }
             # store as history
             if update_url:
-                new_url = f'/?bbt={args.get("bt")}&bb={args.get("b")}&bc={args.get("c")}&bv={args.get("v")}'
-                ui.run_javascript(f"window.history.pushState({{}}, '', '{new_url}')")
+                with self.splitter: # attach to splitter to workaround `RuntimeError: The parent element this slot belongs to has been deleted.`
+                    if client := ui.context.client:
+                        new_url = f'/?bbt={args.get("bt")}&bb={args.get("b")}&bc={args.get("c")}&bv={args.get("v")}'
+                        client.run_javascript(f"window.history.pushState({{}}, '', '{new_url}')")
+                        ref = BibleVerseParser(False, language=app.storage.user['ui_language']).bcvToVerseReference(args.get("b"), args.get("c"), args.get("v"))
+                        client.run_javascript(f'document.title = "[{title}] {ref}"')
             if keep:
                 app.storage.user[active_tab] = args
             # Get the active tab's scroll area
@@ -684,8 +690,12 @@ class BibleMateGUI:
             }
             # store as history
             if update_url:
-                new_url = f'/?tool={title if title.lower() in self.tools else "bible"}&tbt={args.get("bt")}&tb={args.get("b")}&tc={args.get("c")}&tv={args.get("v")}&tq={args.get("q")}'
-                ui.run_javascript(f"window.history.pushState({{}}, '', '{new_url}')")
+                with self.splitter: # attach to splitter to workaround `RuntimeError: The parent element this slot belongs to has been deleted.`
+                    if client := ui.context.client:
+                        new_url = f'/?tool={title if title.lower() in self.tools else "bible"}&tbt={args.get("bt")}&tb={args.get("b")}&tc={args.get("c")}&tv={args.get("v")}&tq={args.get("q")}'
+                        client.run_javascript(f"window.history.pushState({{}}, '', '{new_url}')")
+                        ref = BibleVerseParser(False, language=app.storage.user['ui_language']).bcvToVerseReference(args.get("b"), args.get("c"), args.get("v"))
+                        client.run_javascript(f'document.title = "[{title.upper()}] {ref}"')
             if keep:
                 app.storage.user[active_tab] = args
             # Get the active tab's scroll area
@@ -840,7 +850,7 @@ class BibleMateGUI:
                 self.area1_tab_panels[new_tab_name] = ui.scroll_area().classes(f'w-full h-full {new_tab_name}')
                 with self.area1_tab_panels[new_tab_name]:
                     ui.label(f'Bible Area - Tab {self.area1_tab_counter}').classes('text-2xl font-bold mb-4')
-                    ui.label('[Content will be displayed here.]').classes('text-gray-600')
+                    ui.label('Please select a Bible from the menu.').classes('text-gray-600')
         self.area1_tabs.set_value(new_tab_name)
 
     def remove_tab_area1_any(self, id):
@@ -898,7 +908,7 @@ class BibleMateGUI:
                 self.area2_tab_panels[new_tab_name] = ui.scroll_area().classes(f'w-full h-full {new_tab_name}')
                 with self.area2_tab_panels[new_tab_name]:
                     ui.label(f'Tool Area - Tab {self.area2_tab_counter}').classes('text-2xl font-bold mb-4')
-                    ui.label('[Content will be displayed here.]').classes('text-gray-600')
+                    ui.label('Please select a tool from the menu.').classes('text-gray-600')
         self.area2_tabs.set_value(new_tab_name)
 
     def remove_tab_area2_any(self, id):
@@ -1132,7 +1142,7 @@ class BibleMateGUI:
                             ui.menu_item(get_translation("Indexes"), on_click=lambda: self.load_area_2_content(title='Indexes', sync=True))
                             ui.separator()
                             if config.google_client_id and config.google_client_secret:
-                                ui.menu_item(get_translation("Notes"), on_click=lambda: self.load_area_2_content(title='Notes', sync=True))
+                                ui.menu_item(get_translation("Bible Notes"), on_click=lambda: self.load_area_2_content(title='Notes', sync=True))
                             ui.menu_item(get_translation("Notepad"), on_click=lambda: self.load_area_2_content(title='Notepad', sync=True))
                     
                     with ui.button(icon='search').props('flat color=white round').tooltip(get_translation("Search")):
@@ -1167,6 +1177,16 @@ class BibleMateGUI:
 
                     with ui.button(icon='settings').props('flat color=white round').tooltip(get_translation("Settings")):
                         with ui.menu():
+                            with ui.row().classes('w-full justify-between'):                            
+                                # Back Button
+                                ui.button(icon='arrow_back', on_click=lambda: ui.run_javascript('history.back()')) \
+                                    .props('dense flat round') \
+                                    .tooltip('Go Back')
+                                #ui.space()
+                                # Forward Button
+                                ui.button(icon='arrow_forward', on_click=lambda: ui.run_javascript('history.forward()')) \
+                                    .props('dense flat round') \
+                                    .tooltip('Go Forward')
                             # swap layout
                             ui.menu_item(get_translation("Bible Only"), on_click=lambda: self.swap_layout(1))
                             ui.menu_item(get_translation("Tool Only"), on_click=lambda: self.swap_layout(3))
@@ -1185,6 +1205,14 @@ class BibleMateGUI:
                                 ui.menu_item(get_translation("Go"), on_click=toggleBibleSelectionButton)
                                 ui.space()
                                 ui.switch().bind_value(app.storage.user, 'bible_select_button')
+                            # notes
+                            def toggleNotes():
+                                app.storage.user["notes"] = not app.storage.user["notes"]
+                                ui.run_javascript('location.reload()')
+                            with ui.row().tooltip(get_translation("Toggle Note Indicators")):
+                                ui.menu_item(get_translation("Notes"), on_click=toggleNotes)
+                                ui.space()
+                                ui.switch(value=app.storage.user["notes"], on_change=toggleNotes)
                             # sync
                             def toggleSync():
                                 app.storage.user["sync"] = not app.storage.user["sync"]
@@ -1240,6 +1268,7 @@ class BibleMateGUI:
 
             ui.switch(get_translation("Go")).bind_value(app.storage.user, 'bible_select_button')
             ui.switch(get_translation("Swap")).bind_value(app.storage.user, 'layout_swap_button')
+            ui.switch(get_translation("Notes"), value=app.storage.user["notes"], on_change=toggleNotes)
             ui.switch(get_translation("Sync")).bind_value(app.storage.user, 'sync')
             ui.switch(get_translation("Fullscreen")).bind_value(app.storage.user, 'fullscreen')
             ui.switch(get_translation("Dark Mode")).bind_value(app.storage.user, 'dark_mode').on_value_change(lambda: ui.run_javascript('location.reload()'))
@@ -1383,7 +1412,7 @@ class BibleMateGUI:
                 )).props('clickable')
                 ui.separator()
                 if config.google_client_id and config.google_client_secret:
-                    ui.item(get_translation("Notes"), on_click=lambda: (
+                    ui.item(get_translation("Bible Notes"), on_click=lambda: (
                         self.load_area_2_content(title='Notes', sync=True),
                         app.storage.user.update(left_drawer_open=False)
                     )).props('clickable')

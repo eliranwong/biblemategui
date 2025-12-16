@@ -1,4 +1,4 @@
-from nicegui import ui
+from nicegui import ui, app
 from biblemategui import get_translation
 
 
@@ -11,6 +11,12 @@ class BibleSelectionDialog:
         self.parent = parent
         self.book_names = book_names
         self.verses = verses
+        bible_tab = parent.get_active_area1_tab()
+        if bible_tab in app.storage.user:
+            args = app.storage.user.get(bible_tab)
+            self.current_verse = (args.get("b"), args.get("c"), args.get("v"))
+        else:
+            self.current_verse = (1, 1, 1)
 
     def open(self):
         self.selection = {'book_id': None, 'chapter': None, 'verse': None}
@@ -41,8 +47,12 @@ class BibleSelectionDialog:
                 with ui.row().classes('w-full gap-2'):
                     for book_id in range(1, 67):
                         name = self.book_names.get(book_id, f"Book {book_id}")
-                        ui.button(name, on_click=lambda id=book_id: self.select_book(id)) \
-                            .props('outline align=center text-color=secondary').classes('w-20')
+                        if book_id == self.current_verse[0]:
+                            ui.button(name, on_click=lambda id=book_id: self.select_book(id)) \
+                                .props('outline align=center text-color=secondary').classes('w-20')
+                        else:
+                            ui.button(name, on_click=lambda id=book_id: self.select_book(id)) \
+                                .props('align=center').classes('w-20')                            
 
     def select_book(self, book_id):
         self.selection['book_id'] = book_id
@@ -61,8 +71,12 @@ class BibleSelectionDialog:
                 with ui.row().classes('w-full gap-2 p-2'):
                     chapters = self.verses.get(self.selection['book_id'], {})
                     for chap_num in chapters.keys():
-                        ui.button(str(chap_num), on_click=lambda c=chap_num: self.select_chapter(c)) \
-                            .classes('w-15')
+                        if chap_num == self.current_verse[1]:
+                            ui.button(str(chap_num), on_click=lambda c=chap_num: self.select_chapter(c)) \
+                                .classes('w-15').props('outline align=center text-color=secondary')
+                        else:
+                            ui.button(str(chap_num), on_click=lambda c=chap_num: self.select_chapter(c)) \
+                                .classes('w-15')
 
             ui.button(get_translation("Back"), on_click=self.render_books).props('outline color=grey').classes('w-full mt-2 shrink-0')
 
@@ -85,8 +99,12 @@ class BibleSelectionDialog:
                 # Reduced columns from 10 to 6 for better mobile layout
                 with ui.row().classes('w-full gap-2 p-2'): 
                     for v in range(1, max_verses + 1):
-                        ui.button(str(v), on_click=lambda verse=v: self.finish_selection(verse)) \
-                            .classes('w-15')
+                        if v == self.current_verse[2]:
+                            ui.button(str(v), on_click=lambda verse=v: self.finish_selection(verse)) \
+                                .classes('w-15').props('outline align=center text-color=secondary')
+                        else:
+                            ui.button(str(v), on_click=lambda verse=v: self.finish_selection(verse)) \
+                                .classes('w-15')
 
             ui.button(get_translation("Back"), on_click=self.render_chapters).props('outline color=grey').classes('w-full mt-2 shrink-0')
 

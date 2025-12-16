@@ -32,6 +32,7 @@ config.embedding_model="{config.embedding_model}"
 config.custom_token="{config.custom_token}"
 config.google_client_id="{config.google_client_id}"
 config.google_client_secret="{config.google_client_secret}"
+config.auth_uri="{config.auth_uri}"
 config.storage_secret="{config.storage_secret}"
 config.port={config.port}
 config.verses_limit={config.verses_limit}"""
@@ -45,6 +46,7 @@ config.embedding_model="paraphrase-multilingual"
 config.custom_token=""
 config.google_client_id=""
 config.google_client_secret=""
+config.auth_uri=""
 config.storage_secret="REPLACE_ME_WITH_A_REAL_SECRET"
 config.port=33355
 config.verses_limit=2000'''
@@ -307,6 +309,7 @@ USER_DEFAULT_SETTINGS = {
     'api_key': '',
     'ui_language': 'eng',
     'dark_mode': True,
+    'notes': True,
     'left_drawer_open': False,
     'search_case_sensitivity': False,
     'search_mode': 1,

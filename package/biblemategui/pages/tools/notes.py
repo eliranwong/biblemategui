@@ -1,4 +1,5 @@
 import os, re, apsw, zipfile, json, io, markdown2, re, base64
+import urllib.parse
 from nicegui import ui, app, run
 from biblemategui import config, BIBLEMATEGUI_DATA, get_translation, loading
 from biblemategui.fx.bible import BibleSelector
@@ -83,7 +84,15 @@ class CloudNotepad:
         self.html_view.content = ''
         ui.notify('Cleared!', type='info')
 
-def notes(gui=None, b=1, c=1, v=1, area=2, **_):
+def notes(gui=None, bt=None, b=1, c=1, v=1, area=2, **_):
+    if not bt:
+        bt = gui.get_area_1_bible_text()
+    elif bt in ("ORB", "OIB", "OPB", "ODB", "OLB"):
+        bt = "OHGB"
+    
+    # Book Note
+    if c == 0:
+        v = 0
 
     # 1. Auth Check
     token = app.storage.user.get('google_token', "")
@@ -111,10 +120,17 @@ def notes(gui=None, b=1, c=1, v=1, area=2, **_):
         nonlocal gui
         _, app.storage.user['tool_book_number'], app.storage.user['tool_chapter_number'], app.storage.user['tool_verse_number'] = version, book, chapter, verse
         gui.load_area_2_content(title='Notes', sync=False)
-    bible_selector = BibleSelector(version_options=["KJV"], on_book_changed=change_note, on_chapter_changed=change_note, on_verse_changed=change_note)
+    bible_selector = BibleSelector(version_options=[bt], on_book_changed=change_note, on_chapter_changed=change_note, on_verse_changed=change_note, chapter_zero=True, verse_zero=True)
 
     def refresh_ui():
-        ...
+        try:
+            nonlocal gui, b, c, v
+            active_area1_tab = gui.get_active_area1_tab()
+            if active_area1_tab in app.storage.user and app.storage.user[active_area1_tab]["b"] == b and app.storage.user[active_area1_tab]["c"] == c:
+                gui.change_area_1_bible_chapter(book=b, chapter=c, verse=v)
+        except:
+            import traceback
+            traceback.print_exc()
 
     def get_filename(verse_id):
         return f"{verse_id}.json"
@@ -227,7 +243,166 @@ def notes(gui=None, b=1, c=1, v=1, area=2, **_):
             ui.notify(f'Download error: {e}', type='negative')
 
     # ---------------------------------------------------------
-    # 1. The Heavy Lifter (Runs in a separate thread)
+    # Import a single json or a zip
+    # ---------------------------------------------------------
+
+    def process_import_sync(file_bytes, is_zip, drive_service):
+        """
+        Parses the uploaded bytes (Zip or JSON) and uploads them to Drive.
+        Returns a list of successfully imported verse_ids.
+        """
+        imported_ids = []
+        files_to_process = {} # {filename: json_content_dict}
+
+        try:
+            # A. Parse the Input (Zip or Single JSON)
+            if is_zip:
+                with zipfile.ZipFile(io.BytesIO(file_bytes)) as z:
+                    for filename in z.namelist():
+                        if filename.endswith('.json') and filename != 'bible_index.json':
+                            try:
+                                content = z.read(filename)
+                                data = json.loads(content)
+                                files_to_process[filename] = data
+                            except:
+                                print(f"Skipping invalid file: {filename}")
+            else:
+                # Single JSON file
+                try:
+                    data = json.loads(file_bytes)
+                    # Quick check if it's a note file
+                    if 'verse_id' in data:
+                        filename = f"{data['verse_id']}.json"
+                        files_to_process[filename] = data
+                except:
+                    pass
+
+            # B. Upload Loop
+            # Note: This loops through every note. For 100+ notes, this takes time.
+            for filename, data in files_to_process.items():
+                verse_id = data.get('verse_id')
+                if not verse_id: continue
+
+                # Prepare content
+                # We strictly re-dump the data to ensure clean JSON
+                media = MediaIoBaseUpload(
+                    io.BytesIO(json.dumps(data).encode('utf-8')), 
+                    mimetype='application/json'
+                )
+                
+                # 1. Check if file exists in Drive
+                results = drive_service.files().list(
+                    q=f"name='{filename}' and 'appDataFolder' in parents and trashed=false",
+                    spaces='appDataFolder',
+                    fields='files(id)'
+                ).execute()
+                existing_files = results.get('files', [])
+
+                if existing_files:
+                    # Update existing
+                    file_id = existing_files[0]['id']
+                    drive_service.files().update(fileId=file_id, media_body=media).execute()
+                else:
+                    # Create new
+                    meta = {'name': filename, 'parents': ['appDataFolder']}
+                    drive_service.files().create(body=meta, media_body=media).execute()
+                
+                imported_ids.append(verse_id)
+
+        except Exception as e:
+            print(f"Import process failed: {e}")
+        
+        return imported_ids
+
+    async def handle_import(e):
+        """
+        UI Callback for the upload button.
+        """
+        #print(dir(e))
+        # 1. Check login
+        if not service:
+            ui.notify('Please log in to Google first!', type='warning')
+            return
+
+        n = ui.notification('Processing Import... Please wait.', timeout=None, spinner=True)
+        
+        try:
+            # 2. Read file bytes
+            file_bytes = await e.file.read() 
+            filename = getattr(e.file, 'name', 'unknown.json').lower()
+            #print(filename)
+            is_zip = filename.endswith('.zip')
+
+            # Run background worker
+            imported_ids = await run.io_bound(
+                process_import_sync, 
+                file_bytes, 
+                is_zip, 
+                service
+            )
+
+            # 4. Update Local Index
+            if imported_ids:
+                count = len(imported_ids)
+                for vid in imported_ids:
+                    index_mgr.add_verse(vid) # Updates local memory
+                
+                # Sync index to Drive once at the end
+                index_mgr.save_to_drive() 
+                app.storage.user['cached_index'] = index_mgr.data
+                
+                ui.notify(f'Successfully imported {count} notes!', type='positive')
+                refresh_ui() # Update your stats/counters
+                change_note(book=b, chapter=c, verse=v)
+            else:
+                ui.notify('No valid notes found to import.', type='warning')
+
+        except Exception as err:
+            ui.notify(f'Import failed: {err}', type='negative')
+        finally:
+            n.dismiss()
+
+    # ---------------------------------------------------------
+    # Download a single (the current) note
+    # ---------------------------------------------------------
+    
+    def download_current_note():
+        """
+        Exports the currently visible note as a JSON file.
+        This format is compatible with the 'Import' feature.
+        """
+        vid = get_vid() # Uses your existing helper
+        content = notepad.textarea.value or ''
+        
+        if not content.strip():
+            ui.notify('Cannot download an empty note.', type='warning')
+            return
+
+        try:
+            # 1. Structure the data exactly like it is stored in Drive
+            note_data = {
+                "verse_id": vid,
+                "content": content,
+                "exported_at": "true" # Optional flag
+            }
+            
+            # 2. Convert to JSON bytes
+            json_str = json.dumps(note_data, indent=2)
+            json_bytes = json_str.encode('utf-8')
+            
+            # 3. Encode to Base64 (Safe for all browsers/characters)
+            b64_str = base64.b64encode(json_bytes).decode()
+            
+            # 4. Trigger Download
+            filename = f"{vid}.json"
+            ui.download(f'data:application/json;base64,{b64_str}', filename)
+            ui.notify(f'Downloaded {filename}')
+            
+        except Exception as e:
+            ui.notify(f'Download error: {e}', type='negative')
+
+    # ---------------------------------------------------------
+    # 1. The Heavy Lifter (Download ALL)
     # ---------------------------------------------------------
     def generate_zip_sync(data, drive_service):
         """
@@ -290,6 +465,13 @@ def notes(gui=None, b=1, c=1, v=1, area=2, **_):
         except Exception as e:
             n.dismiss()
             ui.notify(f'Zip error: {e}', type='negative')
+    
+    # Dialog to confirm deleting a note
+    with ui.dialog() as delete_dialog, ui.card():
+        ui.label('Are you sure you want to delete this note?')
+        with ui.row().classes('justify-end w-full'):
+            ui.button('Cancel', on_click=delete_dialog.close).props('flat text-color=secondary')
+            ui.button('Delete', color='red', on_click=lambda: (delete_current_note(), delete_dialog.close()))
 
     # Bible Selection menu
     def additional_items():
@@ -299,15 +481,25 @@ def notes(gui=None, b=1, c=1, v=1, area=2, **_):
                 ui.menu_item(f'👁️ {get_translation("Read")} / {get_translation("Edit")}', on_click=notepad.toggle_mode)
                 ui.separator()
                 ui.menu_item(f'💾 {get_translation("Save")}', on_click=save_current_note)
-                ui.menu_item(f'❌ {get_translation("Delete")}', on_click=delete_current_note)
-                ui.menu_item(f'📥 {get_translation("Download")}', on_click=notepad.download_file)
+                ui.menu_item(f'❌ {get_translation("Delete")}', on_click=delete_dialog.open)
+                ui.menu_item(f'📥 {get_translation("Download")}', on_click=download_current_note)
                 ui.menu_item(f'📥 {get_translation("Download All")}', on_click=download_all_notes_zip)
                 ui.separator()
-                ui.menu_item(f'🛠️ {get_translation("Rebuild Index")}', on_click=run_rebuild)
+                with ui.menu_item(f'📤 {get_translation("Import")}', on_click=lambda: upload_element.run_method('pickFiles')):
+                    ui.tooltip('Import a single note (*.json file) or a zip file containing multiple notes.')
+                ui.separator()
+                with ui.menu_item(f'🛠️ {get_translation("Rebuild Index")}', on_click=run_rebuild):
+                    ui.tooltip('Rebuild search index for maintenance or repair.')
                 ui.menu_item(f'📥 {get_translation("Download Index")}', on_click=download_index_backup)
                 ui.separator()
-                ui.menu_item(f'🔒 {get_translation("Logout")}', on_click=lambda: (app.storage.user.clear(), ui.navigate.to('/')))
-    bible_selector.create_ui("KJV", b, c, v, additional_items=additional_items, show_versions=False)
+                with ui.menu_item(f'🔒 {get_translation("Logout")}', on_click=lambda: (app.storage.user.clear(), ui.navigate.to('/'))):
+                    ui.tooltip('Log out to keep your account secure, especially on shared devices.')
+    bible_selector.create_ui(bt, b, c, v, additional_items=additional_items, show_versions=False)
+
+    upload_element = ui.upload(
+        on_upload=handle_import, 
+        auto_upload=True
+    ).props('accept=.json,.zip').classes('hidden')
 
     notepad.setup_ui()
     def load_initial_content():

@@ -177,22 +177,13 @@ def getBibleVerseList(db, b, c) -> list:
         verseList = sorted([verse[0] for verse in cursor.fetchall()])
     return verseList
 
-def getBibleVerseList(db, b, c) -> list:
-    query = "SELECT DISTINCT Verse FROM Verses WHERE Book=? AND Chapter=? ORDER BY Verse"
-    verseList = ""
-    with apsw.Connection(db) as connn:
-        cursor = connn.cursor()
-        cursor.execute(query, (b, c))
-        verseList = sorted([verse[0] for verse in cursor.fetchall()])
-    return verseList
-
 def change_bible_chapter_verse(_, book, chapter, verse):
     ui.run_javascript(f'scrollToVerse("v{book}.{chapter}.{verse}")')
 
 class BibleSelector:
     """Class to manage Bible verse selection with dynamic dropdowns"""
     
-    def __init__(self, on_version_changed=None, on_book_changed=None, on_chapter_changed=None, on_verse_changed=None, version_options=[]):
+    def __init__(self, on_version_changed=None, on_book_changed=None, on_chapter_changed=None, on_verse_changed=None, version_options=[], chapter_zero=False, verse_zero=False):
         # Handlers that replace the default on_change functions
         self.on_version_changed, self.on_book_changed, self.on_chapter_changed, self.on_verse_changed = on_version_changed, on_book_changed, on_chapter_changed, on_verse_changed
 
@@ -214,6 +205,8 @@ class BibleSelector:
         self.book_options: List[str] = []
         self.chapter_options: List[int] = []
         self.verse_options: List[int] = []
+
+        self.chapter_zero, self.verse_zero = chapter_zero, verse_zero
         
     def create_ui(self, bible, b, c, v, additional_items=None, show_versions=True, show_verses=True):
         self.selected_version = bible
@@ -227,14 +220,22 @@ class BibleSelector:
         bible_book_list = getBibleBookList(getBiblePath(self.selected_version))
         self.book_options = [BibleBooks.abbrev[app.storage.user['ui_language']][str(i)][0] for i in bible_book_list if str(i) in BibleBooks.abbrev[app.storage.user['ui_language']]]
         self.chapter_options = getBibleChapterList(getBiblePath(self.selected_version), self.selected_book)
-        self.verse_options = getBibleVerseList(getBiblePath(self.selected_version), self.selected_book, self.selected_chapter)
+        if self.chapter_zero:
+            self.chapter_options.insert(0, 0)
+        self.verse_options = [0] if self.chapter_zero and self.selected_chapter == 0 else getBibleVerseList(getBiblePath(self.selected_version), self.selected_book, self.selected_chapter)
+        if self.verse_zero and not (self.chapter_zero and self.selected_chapter == 0):
+            self.verse_options.insert(0, 0)
         try:
             default_book = BibleBooks.abbrev[app.storage.user['ui_language']][str(self.selected_book)][0]
         except:
             self.selected_book = bible_book_list[0]
             default_book = self.book_options[0]
             self.chapter_options = getBibleChapterList(getBiblePath(self.selected_version), self.selected_book)
-            self.verse_options = getBibleVerseList(getBiblePath(self.selected_version), self.selected_book, self.selected_chapter)
+            if self.chapter_zero:
+                self.chapter_options.insert(0, 0)
+            self.verse_options = [0] if self.chapter_zero and self.selected_chapter == 0 else getBibleVerseList(getBiblePath(self.selected_version), self.selected_book, self.selected_chapter)
+            if self.verse_zero and not (self.chapter_zero and self.selected_chapter == 0):
+                self.verse_options.insert(0, 0)
         with ui.row().classes('w-full justify-center items-center'):
             # Versions
             if show_versions:
@@ -324,6 +325,8 @@ class BibleSelector:
     def reset_chapter_dropdown(self):
         """Reset chapter dropdown to initial state"""
         self.chapter_options = getBibleChapterList(getBiblePath(self.selected_version), self.selected_book)
+        if self.chapter_zero:
+            self.chapter_options.insert(0, 0)
         self.chapter_select.options = self.chapter_options
         self.chapter_select.value = self.chapter_options[0]
         self.selected_chapter = self.chapter_options[0]
@@ -334,7 +337,9 @@ class BibleSelector:
         """Reset verse dropdown to initial state"""
         if not self.show_verses:
             return
-        self.verse_options = getBibleVerseList(getBiblePath(self.selected_version), self.selected_book, self.selected_chapter)
+        self.verse_options = [0] if self.chapter_zero and self.selected_chapter == 0 else getBibleVerseList(getBiblePath(self.selected_version), self.selected_book, self.selected_chapter)
+        if self.verse_zero and not (self.chapter_zero and self.selected_chapter == 0):
+            self.verse_options.insert(0, 0)
         self.verse_select.options = self.verse_options
         self.verse_select.value = self.verse_options[0]
         self.selected_verse = self.verse_options[0]

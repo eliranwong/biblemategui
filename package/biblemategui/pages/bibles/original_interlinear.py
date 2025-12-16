@@ -90,7 +90,8 @@ def original_interlinear(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, 
     content = re.sub(r'<vid id="v([0-9]+?)\.([0-9]+?)\.([0-9]+?)" onclick="luV\(([0-9]+?)\)">', r'<vid id="v\1.\2.\3" onclick="luV(\1, \2, \3)">', content)
     
     # add notes
-    content = re.sub(f">({'|'.join(verses_with_notes)})</vid>", rf'''>\1</vid> <ref onclick="note({b},{c},\1)">📝</ref>''', content)
+    if app.storage.user["notes"]:
+        content = re.sub(f">({'|'.join(verses_with_notes)})</vid>", rf'''>\1</vid> <ref onclick="note({b},{c},\1)">📝</ref>''', content)
     # Convert onclick and ondblclick links
     content = content.replace("luV(", "luV1(" if area == 1 else "luV2(")
     content = re.sub(r'''(onclick|ondblclick)="(note|luV1|luV2|luW|lex|bdbid|etcbcmorph|rmac|searchLexicalEntry|searchWord)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)
@@ -189,11 +190,12 @@ def original_interlinear(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, 
                 ui.menu_item(f'🔊 {get_translation("Bible Audio")}', on_click=lambda: open_tool(bible_selector.get_selection(), title="Audio"))
                 ui.separator()
                 ui.menu_item(f'🔗 {get_translation("Cross-references")}', on_click=lambda: open_tool(bible_selector.get_selection(), title="Xrefs"))
-                #ui.menu_item(f'🧠 {get_translation("AI Commentary")}', on_click=lambda: (
-                #    app.storage.user.update(favorite_commentary="AIC"),
-                #    open_tool(bible_selector.get_selection(), title="Commentary")
-                #))
                 ui.menu_item(f'📑 {get_translation("Indexes")}', on_click=lambda: open_tool(bible_selector.get_selection(), title="Indexes"))
+                if config.google_client_id and config.google_client_secret:
+                    ui.separator()
+                    ui.menu_item(f'📝 {get_translation("Book Note")}', on_click=lambda: open_tool((bible_selector.selected_version, bible_selector.selected_book, 0, 0), title="Notes"))
+                    ui.menu_item(f'📝 {get_translation("Chapter Note")}', on_click=lambda: open_tool((bible_selector.selected_version, bible_selector.selected_book, bible_selector.selected_chapter, 0), title="Notes"))
+                    ui.menu_item(f'📝 {get_translation("Verse Note")}', on_click=lambda: open_tool(bible_selector.get_selection(), title="Notes"))
     bible_selector.create_ui("OIB", b, c, v, additional_items=additional_items)
 
     # create a dummy label for being the parent of `open_verse_context_menu`, as ui.html can't take two context menus

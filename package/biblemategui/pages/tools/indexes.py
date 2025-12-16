@@ -170,7 +170,7 @@ def resource_indexes(gui=None, bt=None, b=1, c=1, v=1, area=2, **_):
                             ui.chip(
                                 topic,
                                 icon='book',
-                                color='secondary',
+                                color='primary',
                                 on_click=partial(open_collection, "Promises" if i == "PROMISES_INDEXES" else "Parallels", tool, number),
                             ).props('text-color=white').classes('cursor-pointer font-bold shadow-sm')
                     else:

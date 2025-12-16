@@ -55,7 +55,7 @@ async def tooltip_api(word: str):
 
 @ui.page('/login')
 async def login(request: Request):
-    redirect_uri = request.url_for('auth')
+    redirect_uri = config.auth_uri if config.auth_uri else request.url_for('auth') # specify an exact uri in config.auth_uri if there is a uri mismatch issue.
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @ui.page('/auth')
@@ -564,9 +564,20 @@ def page_Settings(
                           options={'eng': 'English', 'tc': '繁體中文', 'sc': '简体中文'}) \
                     .bind_value(app.storage.user, 'ui_language')
 
-        # --- Save Feedback ---
+        # --- Reset All Preferences ---
+        # Dialog to confirm the reset
+        with ui.dialog() as delete_dialog, ui.card():
+            ui.label('Are you sure you want to delete reset all preferences to default values?')
+            with ui.row().classes('justify-end w-full'):
+                ui.button('Cancel', on_click=delete_dialog.close).props('flat text-color=secondary')
+                ui.button('Delete', color='negative', on_click=lambda: (app.storage.user.clear(), ui.navigate.to('/')))
+        ui.button('Reset All Preferences', on_click=delete_dialog.open) \
+            .classes('mt-6 w-full py-3 bg-negative text-white rounded-lg font-semibold') \
+            .tooltip('All preferences will be reset to default values.')
+
+        # --- Go Home ---
         ui.button('Home', on_click=lambda: ui.navigate.to('/')) \
-            .classes('mt-6 w-full py-3 bg-blue-600 text-white rounded-lg font-semibold') \
+            .classes('mt-6 w-full py-3 bg-primary text-white rounded-lg font-semibold') \
             .tooltip('All settings are saved automatically as you change them. Click this to open the home page.')
 
 # Entry_point

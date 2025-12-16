@@ -206,6 +206,10 @@ def search_bible_characters(gui=None, q='', **_):
         input_field.on('keydown.enter.prevent', handle_enter)
         #input_field.on('update:model-value', filter_verses)
         input_field.on('keydown.up', handle_up_arrow)
+        with input_field.add_slot('append'):
+            ui.icon('history') \
+                .on('click', handle_up_arrow) \
+                .classes('text-sm cursor-pointer text-secondary').tooltip('Restore last entry')
 
         # update autocomplete
         async def get_all_characters():
