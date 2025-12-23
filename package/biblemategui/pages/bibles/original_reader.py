@@ -1,5 +1,5 @@
 from nicegui import ui, app
-from biblemategui import get_translation
+from biblemategui import get_translation, VerseEventObj
 from biblemategui import BIBLEMATEGUI_DATA
 from biblemategui.fx.bible import *
 from biblemategui.fx.original import *
@@ -10,12 +10,15 @@ import re, os
 
 def original_reader(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, **_):
 
+    book_note = False
     verses_with_notes = []
     token = app.storage.user.get('google_token', "")
     if token:
         service = get_drive_service(token)
         index_mgr = CloudIndexManager(service)
         verses_with_notes = index_mgr.get_chapter_notes_verselist(b, c)
+        if f"{b}_0_0" in index_mgr.data:
+            book_note = True
 
     dummy_label1 = None
     dummy_label2 = None
@@ -45,8 +48,32 @@ def original_reader(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, **_):
         app.storage.user['tool_book_number'], app.storage.user['tool_chapter_number'], app.storage.user['tool_verse_number'], *_ = event.args
         open_tool("Notes")
 
+    def book_studies(event):
+        nonlocal gui, db, dummy_label1, area, verses_with_notes, book_note, bible_selector
+        b, c, v = event.args
+        with bible_selector.verse_select:
+            gui.open_book_context_menu(db, b, c, v, book_note)
+
+    def chapter_studies(event):
+        nonlocal gui, db, dummy_label1, area, verses_with_notes, bible_selector
+        b, c, v = event.args
+        with bible_selector.verse_select:
+            gui.open_chapter_context_menu(db, b, c, v, ("0" in verses_with_notes))
+
+    def luV1_m(event):
+        nonlocal bible_selector, gui, db, verses_with_notes
+        b, c, v = event.args
+        with bible_selector.verse_select:
+            gui.open_verse_context_menu(db, b, c, v, (str(v) in verses_with_notes))
+
+    def luV2_m(event):
+        nonlocal bible_selector, gui, db, verses_with_notes
+        b, c, v = event.args
+        with bible_selector.verse_select:
+            gui.open_verse_context_menu(db, b, c, v, (str(v) in verses_with_notes))
+
     def luV1(event):
-        nonlocal bible_selector, gui, db, dummy_label1, area
+        nonlocal bible_selector, gui, db, dummy_label1, verses_with_notes
         b, c, v = event.args
         bible_selector.verse_select.value = v
         gui.update_active_area1_tab_records(v=v)
@@ -54,7 +81,7 @@ def original_reader(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, **_):
             gui.open_verse_context_menu(db, b, c, v, (str(v) in verses_with_notes))
 
     def luV2(event):
-        nonlocal bible_selector, gui, db, dummy_label2, area
+        nonlocal bible_selector, gui, db, dummy_label2, verses_with_notes
         b, c, v = event.args
         bible_selector.verse_select.value = v
         gui.update_active_area2_tab_records(v=v)
@@ -186,13 +213,9 @@ def original_reader(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, **_):
                     ui.menu_item(f'🔍 {get_translation("Search")} {get_translation("NT")}', on_click=lambda: search_bible(q=f"NT:::{app.storage.user['tool_query']}"))
                     ui.menu_item(f'🔍 {get_translation("Search")} {bible_selector.book_select.value}', on_click=lambda: search_bible(q=f"{bible_selector.book_select.value}:::{app.storage.user['tool_query']}"))
                 ui.separator()
-                ui.menu_item(f'⏳ {get_translation("Timelines")}', on_click=lambda: open_tool(bible_selector.get_selection(), title="Timelines"))
-                ui.separator()
-                ui.menu_item(f'📡 {get_translation("Bible Podcast")}', on_click=lambda: open_tool(bible_selector.get_selection(), title="Podcast"))
-                ui.menu_item(f'🔊 {get_translation("Bible Audio")}', on_click=lambda: open_tool(bible_selector.get_selection(), title="Audio"))
-                ui.separator()
-                ui.menu_item(f'🔗 {get_translation("Cross-references")}', on_click=lambda: open_tool(bible_selector.get_selection(), title="Xrefs"))
-                ui.menu_item(f'📑 {get_translation("Indexes")}', on_click=lambda: open_tool(bible_selector.get_selection(), title="Indexes"))
+                ui.menu_item(f'💡 {get_translation("Book Tools")}', on_click=lambda: book_studies(VerseEventObj(args=bible_selector.get_selection())))
+                ui.menu_item(f'💡 {get_translation("Chapter Tools")}', on_click=lambda: chapter_studies(VerseEventObj(args=bible_selector.get_selection())))
+                ui.menu_item(f'💡 {get_translation("Verse Tools")}', on_click=lambda: luV1_m(VerseEventObj(args=bible_selector.get_selection())) if area == 1 else luV2_m(VerseEventObj(args=bible_selector.get_selection())))
                 if config.google_client_id and config.google_client_secret:
                     ui.separator()
                     ui.menu_item(f'📝 {get_translation("Book Note")}', on_click=lambda: open_tool((bible_selector.selected_version, bible_selector.selected_book, 0, 0), title="Notes"))

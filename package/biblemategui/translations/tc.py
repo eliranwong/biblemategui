@@ -94,5 +94,10 @@ translation_tc = {
     "Download All": "下載所有筆記",
     "Book Note": "書卷筆記",
     "Chapter Note": "全章筆記",
-    "Verse Note": "單節筆記",
+    "Verse Note": "經文筆記",
+    "Book Tools": "書卷工具",
+    "Chapter Tools": "全章工具",
+    "Verse Tools": "單節工具",
+    "Chapter Summary": "全章摘要",
+    "AI Summary": "AI 摘要",
 }

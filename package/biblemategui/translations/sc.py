@@ -94,5 +94,10 @@ translation_sc = {
     "Download All": "下载所有笔记",
     "Book Note": "书卷笔记",
     "Chapter Note": "全章笔记",
-    "Verse Note": "单节笔记",
+    "Verse Note": "经文笔记",
+    "Book Tools": "书卷工具",
+    "Chapter Tools": "全章工具",
+    "Verse Tools": "单节工具",
+    "Chapter Summary": "全章摘要",
+    "AI Summary": "AI 摘要",
 }

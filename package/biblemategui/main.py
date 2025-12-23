@@ -258,7 +258,7 @@ def page_home(
             }}
             h1 {{
                 font-size: 2.0rem;
-                color: {app.storage.user['primary_color']};
+                color: {app.storage.user['secondary_color']};
             }}
             h2 {{
                 font-size: 1.7rem;
@@ -266,6 +266,7 @@ def page_home(
             }}
             h3 {{
                 font-size: 1.5rem;
+                color: {app.storage.user['secondary_color']};
             }}
             /* Main container for the Bible text - ensures RTL flow for verses */
             .bible-text-heb {{
