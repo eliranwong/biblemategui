@@ -32,6 +32,8 @@ translation_tc = {
     "Encyclopedias": "百科全書",
     "Go": "開啓",
     "Indexes": "資源索引",
+    "Chapter Indexes": "全章索引",
+    "Verse Indexes": "單節索引",
     "Lexicons": "原文詞典",
     "Locations": "聖經地點",
     "Maps": "聖經地圖",

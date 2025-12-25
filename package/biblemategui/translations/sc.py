@@ -32,6 +32,8 @@ translation_sc = {
     "Encyclopedias": "百科全书",
     "Go": "开启",
     "Indexes": "资源索引",
+    "Chapter Indexes": "全章索引",
+    "Verse Indexes": "单节索引",
     "Lexicons": "原文词典",
     "Locations": "圣经地点",
     "Maps": "圣经地图",

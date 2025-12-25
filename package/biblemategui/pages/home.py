@@ -31,6 +31,7 @@ from biblemategui.pages.tools.commentary import bible_commentary
 from biblemategui.pages.tools.chronology import bible_chronology
 from biblemategui.pages.tools.timelines import bible_timelines
 from biblemategui.pages.tools.indexes import resource_indexes
+from biblemategui.pages.tools.chapter_indexes import chapter_indexes
 from biblemategui.pages.tools.promises import bible_promises_menu
 from biblemategui.pages.tools.parallels import bible_parallels_menu
 from biblemategui.pages.tools.morphology import word_morphology
@@ -94,6 +95,7 @@ class BibleMateGUI:
             "agent": ai_agent,
             "morphology": word_morphology,
             "indexes": resource_indexes,
+            "chapterindexes": chapter_indexes,
             "podcast": bibles_podcast,
             "audio": bibles_audio,
             "verses": search_bible_verses, # API with additional options
@@ -592,11 +594,12 @@ class BibleMateGUI:
         with ui.context_menu() as menu:
             ui.menu_item(f'📋 {get_translation("Copy")}', on_click=lambda: self.copy_text(get_chapter_content()))
             ui.separator()
-            ui.menu_item(f'💎 {get_translation("Chapter Summary")}', on_click=lambda: open_tool("Summary"))
-            ui.menu_item(f'🗺️ {get_translation("Chapter Map")}', on_click=open_map)
-            ui.separator()
             ui.menu_item(f'📡 {get_translation("Bible Podcast")}', on_click=lambda: open_tool("Podcast"))
             ui.menu_item(f'🔊 {get_translation("Bible Audio")}', on_click=lambda: open_tool("Audio"))
+            ui.separator()
+            ui.menu_item(f'💎 {get_translation("Chapter Summary")}', on_click=lambda: open_tool("Summary"))
+            ui.menu_item(f'🗺️ {get_translation("Chapter Map")}', on_click=open_map)
+            ui.menu_item(f'📑 {get_translation("Chapter Indexes")}', on_click=lambda: open_tool("Chapterindexes"))
             if config.google_client_id and config.google_client_secret:
                 ui.separator()
                 ui.menu_item(f'📝 {get_translation("Edit Note" if note else "Add Note")}', on_click=open_chapter_note)
@@ -1225,7 +1228,8 @@ class BibleMateGUI:
                             ui.separator()
                             ui.menu_item(get_translation("Morphology"), on_click=lambda: self.load_area_2_content(title='Morphology', sync=True))
                             ui.separator()
-                            ui.menu_item(get_translation("Indexes"), on_click=lambda: self.load_area_2_content(title='Indexes', sync=True))
+                            ui.menu_item(get_translation("Chapter Indexes"), on_click=lambda: self.load_area_2_content(title='Chapterindexes', sync=True))
+                            ui.menu_item(get_translation("Verse Indexes"), on_click=lambda: self.load_area_2_content(title='Indexes', sync=True))
                             ui.separator()
                             if config.google_client_id and config.google_client_secret:
                                 ui.menu_item(get_translation("Bible Notes"), on_click=lambda: self.load_area_2_content(title='Notes', sync=True))
@@ -1504,7 +1508,11 @@ class BibleMateGUI:
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.separator()
-                ui.item(get_translation("Indexes"), on_click=lambda: (
+                ui.item(get_translation("Chapter Indexes"), on_click=lambda: (
+                    self.load_area_2_content(title='Chapterindexes', sync=True),
+                    app.storage.user.update(left_drawer_open=False)
+                )).props('clickable')
+                ui.item(get_translation("Verse Indexes"), on_click=lambda: (
                     self.load_area_2_content(title='Indexes', sync=True),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
