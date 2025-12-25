@@ -1,7 +1,7 @@
 from agentmake.plugins.uba.lib.BibleBooks import BibleBooks
 from agentmake.plugins.uba.lib.BibleParser import BibleVerseParser
 from biblemategui.fx.bible import get_bible_content
-from biblemategui import BIBLEMATEGUI_DATA, config, getBibleVersionList
+from biblemategui import BIBLEMATEGUI_DATA, config, getBibleVersionList, get_translation
 from functools import partial
 from nicegui import ui, app, run
 import re, apsw, os
@@ -10,7 +10,7 @@ import re, apsw, os
 def search_bible_verses(gui=None, q='', **_):
 
     last_entry = q
-    default_placeholder = 'Search for words or refs (e.g. Deut 6:4; John 3:16-18)'
+    default_placeholder = get_translation("Search for words or refs")
     multiple_bibles = None
 
     def get_bibles():
@@ -295,8 +295,8 @@ def search_bible_verses(gui=None, q='', **_):
 
             # Clear input so user can start typing to filter immediately
             input_field.value = ""
-            input_field.props(f'placeholder="Type to filter {len(verses)} results..."')
-            ui.notify(f"{len(verses)} {'result' if not verses or len(verses) == 1 else 'results'} found!")
+            input_field.props(f'''placeholder="{get_translation('Type to filter')} {len(verses)} {get_translation('results')}..."''')
+            ui.notify(f"{len(verses)} {get_translation('result') if not verses or len(verses) == 1 else get_translation('results')}")
 
         except Exception as e:
             # Handle errors (e.g., network failure)
@@ -458,7 +458,7 @@ def search_bible_verses(gui=None, q='', **_):
 
         # Checkbox
         ui.checkbox(
-            'Case-sensitive'
+            get_translation('Case-sensitive')
         ).bind_value(
             app.storage.user, 'search_case_sensitivity'
         ).props('dense')
@@ -467,7 +467,7 @@ def search_bible_verses(gui=None, q='', **_):
         # options: dictionary maps the stored value (keys) to the display label (values)
         # props('inline'): makes the radio buttons layout horizontally
         modes = ui.radio(
-            options={1: 'Literal', 2: 'Regex', 3: 'Semantic'},
+            options={1: get_translation('Literal'), 2: get_translation('Regex'), 3: get_translation('Semantic')},
         ).bind_value(
             app.storage.user, 'search_mode'
         ).props('dense inline color=primary')

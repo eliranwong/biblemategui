@@ -1,3 +1,4 @@
+from biblemategui import get_translation
 from biblemategui.data.bible_locations import BIBLE_LOCATIONS
 from biblemategui.fx.location_finder import LocationFinder
 from agentmake.plugins.uba.lib.BibleBooks import BibleBooks
@@ -45,6 +46,13 @@ def haversine_distance(coord1, coord2, unit='km'):
 # --- 3. UI LAYOUT ---
 
 def search_bible_maps(gui=None, q='', **_):
+
+    last_entry = q
+
+    def handle_up_arrow():
+        nonlocal last_entry, search_input
+        if not search_input.value.strip():
+            search_input.value = last_entry
 
     def exlbl(event):
         nonlocal gui
@@ -129,7 +137,7 @@ def search_bible_maps(gui=None, q='', **_):
                 # Multi-select dropdown
                 location_multiselect = ui.select(
                     multi_options, 
-                    label='Locations', 
+                    label=get_translation('Locations'), 
                     multiple=True,
                     with_input=True
                 ).classes('w-30').props('dense clearable')  # min-w-[40px]
@@ -138,13 +146,16 @@ def search_bible_maps(gui=None, q='', **_):
                 search_input = ui.input(
                     #label='Search',
                     autocomplete=list(LOCATION_OPTIONS.values())+BIBLE_BOOKS,
-                    placeholder='Search for location(s) or verse reference(s) ...',
+                    placeholder=f'{get_translation("Search for location(s) or verse reference(s)")}...',
                 ).classes('flex-grow text-lg').props('outlined clearable autofocus enterkeyhint="search"')
                 
                 def on_search_enter(keep=True):
                     """Finds a location by name and adds it to the multiselect (which triggers map update)"""
+                    nonlocal search_input, location_multiselect, last_entry, gui
+
                     query = search_input.value.strip()
                     if not query: return
+                    last_entry = query
 
                     if keep:
                         gui.update_active_area2_tab_records(q=query)
@@ -195,6 +206,11 @@ def search_bible_maps(gui=None, q='', **_):
                         ui.notify("Location not found", type='warning')
 
                 search_input.on('keydown.enter.prevent', on_search_enter)
+                search_input.on('keydown.up', handle_up_arrow)
+                with search_input.add_slot('append'):
+                    ui.icon('history') \
+                        .on('click', handle_up_arrow) \
+                        .classes('text-sm cursor-pointer text-secondary').tooltip('Restore last entry')
 
                 # Intercept selection to handle "All" and "None" logic
                 def handle_selection_change(e):
@@ -227,14 +243,14 @@ def search_bible_maps(gui=None, q='', **_):
             
             with ui.row().classes('w-full items-center gap-4 p-0'):
                 # Location Selectors
-                loc1_select = ui.select(LOCATION_OPTIONS, label='From', with_input=True).classes('w-35').props('dense')
-                loc2_select = ui.select(LOCATION_OPTIONS, label='To', with_input=True).classes('w-35').props('dense')
+                loc1_select = ui.select(LOCATION_OPTIONS, label=get_translation('From'), with_input=True).classes('w-35').props('dense')
+                loc2_select = ui.select(LOCATION_OPTIONS, label=get_translation('To'), with_input=True).classes('w-35').props('dense')
                 
                 # Unit Toggle
-                unit_radio = ui.radio(['km', 'miles'], value='km').props('dense inline')
+                unit_radio = ui.radio({'km': get_translation('km'), 'miles': get_translation('miles')}, value='km').props('dense inline')
                 
                 # Result Label
-                result_label = ui.label('Distance').classes('dense text-lg font-medium text-secondary ml-auto mr-4')
+                result_label = ui.label(get_translation('Distance')).classes('dense text-lg font-medium text-secondary ml-auto mr-4')
 
                 # Calculation Logic
                 def calculate():
@@ -255,7 +271,7 @@ def search_bible_maps(gui=None, q='', **_):
                     coord2 = (BIBLE_LOCATIONS[id2][1], BIBLE_LOCATIONS[id2][2])
                     
                     dist = haversine_distance(coord1, coord2, unit_radio.value)
-                    unit_label = "km" if unit_radio.value == 'km' else "miles"
+                    unit_label = get_translation('km') if unit_radio.value == 'km' else get_translation('miles')
                     
                     result_label.text = f"{dist:.2f} {unit_label}"
 

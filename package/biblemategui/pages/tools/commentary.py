@@ -1,5 +1,5 @@
 from nicegui import ui, app
-from biblemategui import BIBLEMATEGUI_DATA, getCommentaryVersionList
+from biblemategui import BIBLEMATEGUI_DATA, getCommentaryVersionList, get_translation
 from biblemategui.data.cr_books import cr_books
 from agentmake.plugins.uba.lib.BibleBooks import BibleBooks
 from agentmake.plugins.uba.lib.BibleParser import BibleVerseParser
@@ -131,12 +131,13 @@ def bible_commentary(gui=None, b=1, c=1, v=1, q='', **_):
             input_field.value = last_entry
 
     def handle_enter(_, keep=True):
-        nonlocal content_container, gui, input_field
+        nonlocal content_container, gui, input_field, last_entry
 
         references = input_field.value.strip()
         if not references:
             return
 
+        last_entry = references
         input_field.disable()
 
         try:
@@ -199,7 +200,7 @@ def bible_commentary(gui=None, b=1, c=1, v=1, q='', **_):
 
         input_field = ui.input(
             autocomplete=BIBLE_BOOKS,
-            placeholder=f'Enter verse reference(s) here ...'
+            placeholder=get_translation("Enter bible verse reference(s) here...")
         ).classes('flex-grow text-lg') \
         .props('outlined dense clearable autofocus enterkeyhint="search"')
 

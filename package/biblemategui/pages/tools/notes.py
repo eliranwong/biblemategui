@@ -1,17 +1,10 @@
-import os, re, apsw, zipfile, json, io, markdown2, re, base64
+import re, zipfile, json, io, markdown2, re, base64
 import urllib.parse
 from nicegui import ui, app, run
-from biblemategui import config, BIBLEMATEGUI_DATA, get_translation, loading
+from biblemategui import get_translation, loading
 from biblemategui.fx.bible import BibleSelector
-from functools import partial
 from agentmake.plugins.uba.lib.BibleParser import BibleVerseParser
 from biblemategui.fx.cloud_index_manager import get_drive_service, CloudIndexManager
-from starlette.middleware.sessions import SessionMiddleware
-from starlette.requests import Request
-from starlette.responses import RedirectResponse
-from authlib.integrations.starlette_client import OAuth
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 
 
@@ -30,7 +23,7 @@ class CloudNotepad:
             # 1. Edit Mode: Text Area
             # We apply our custom 'full-height-textarea' class here
             self.textarea = ui.textarea(
-                placeholder='Start typing your notes here...',
+                placeholder=get_translation("Start typing your notes here..."),
                 value=self.text_content
             ).classes('w-full flex-grow full-height-textarea p-2 border-none focus:outline-none') \
              .props('flat squares resize-none') \

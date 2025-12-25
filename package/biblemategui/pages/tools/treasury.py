@@ -1,5 +1,5 @@
 from agentmake.plugins.uba.lib.BibleBooks import BibleBooks
-from biblemategui import BIBLEMATEGUI_DATA
+from biblemategui import BIBLEMATEGUI_DATA, get_translation
 from agentmake.plugins.uba.lib.BibleParser import BibleVerseParser
 from biblemategui.data.cr_books import cr_books
 from nicegui import ui, app
@@ -31,10 +31,12 @@ def treasury(gui=None, b=1, c=1, v=1, q='', **_):
             input_field.value = last_entry
 
     def handle_enter(e, keep=True):
-        nonlocal gui, SQL_QUERY
+        nonlocal gui, SQL_QUERY, input_field, last_entry, content_container
+
         query = input_field.value.strip()
         if not query:
             return
+        last_entry = query
         parser = BibleVerseParser(False)
         refs = parser.extractAllReferences(query)
         if not refs:
@@ -97,7 +99,7 @@ def treasury(gui=None, b=1, c=1, v=1, q='', **_):
     with ui.row().classes('w-full max-w-3xl mx-auto m-0 py-0 px-4 items-center'):
         input_field = ui.input(
             autocomplete=BIBLE_BOOKS,
-            placeholder='Enter bible verse reference(s) here ...'
+            placeholder=get_translation("Enter bible verse reference(s) here...")
         ).classes('flex-grow text-lg') \
         .props('outlined dense clearable autofocus enterkeyhint="search"')
 

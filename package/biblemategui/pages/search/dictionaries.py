@@ -1,4 +1,4 @@
-from biblemategui import BIBLEMATEGUI_DATA, config, load_vectors_from_db
+from biblemategui import BIBLEMATEGUI_DATA, config, load_vectors_from_db, get_translation
 from nicegui import ui, app, run
 from agentmake.utils.rag import get_embeddings, cosine_similarity_matrix
 import numpy as np
@@ -158,9 +158,9 @@ def search_bible_dictionaries(gui=None, q='', **_):
     # ----------------------------------------------------------
 
     async def show_entry(path, keep=True):
-        nonlocal content_container, gui, dialog, input_field
+        nonlocal content_container, gui, dialog, input_field, last_entry
 
-        n = ui.notification('Loading ...', timeout=None, spinner=True)
+        n = ui.notification(get_translation('Loading...'), timeout=None, spinner=True)
         content = await run.io_bound(fetch_bible_dictionaries_entry, path)
         n.dismiss()
 
@@ -205,6 +205,7 @@ def search_bible_dictionaries(gui=None, q='', **_):
                     .props('size=lg rounded color=primary')
 
         # Clear input so user can start typing to filter immediately
+        last_entry = path
         input_field.value = ""
 
     def handle_up_arrow():
@@ -213,6 +214,7 @@ def search_bible_dictionaries(gui=None, q='', **_):
             input_field.value = last_entry
 
     async def handle_enter(e, keep=True):
+        nonlocal input_field, dialog, selection_container, last_entry
         query = input_field.value.strip()
 
         modules = "|".join(list(config.dictionaries.keys()))
@@ -222,6 +224,7 @@ def search_bible_dictionaries(gui=None, q='', **_):
             await show_entry(query, keep=keep)
             return
 
+        last_entry = query
         input_field.disable()
 
         try:
@@ -260,7 +263,7 @@ def search_bible_dictionaries(gui=None, q='', **_):
     with ui.row().classes('w-full max-w-3xl mx-auto m-0 py-0 px-4 items-center'):
         input_field = ui.input(
             autocomplete=[],
-            placeholder='Search Bible dictionaries ...'
+            placeholder=f'{get_translation("Search Bible dictionaries")}...'
         ).classes('flex-grow text-lg') \
         .props('outlined dense clearable autofocus enterkeyhint="search"')
 
@@ -274,7 +277,7 @@ def search_bible_dictionaries(gui=None, q='', **_):
         async def get_all_dictionaries():
             all_dictionaries = await run.io_bound(fetch_all_dictionaries)
             input_field.set_autocomplete(all_dictionaries)
-        n = ui.notification('Loading ...', timeout=None, spinner=True)
+        n = ui.notification(get_translation('Loading...'), timeout=None, spinner=True)
         ui.timer(0, get_all_dictionaries, once=True)
         n.dismiss()
 

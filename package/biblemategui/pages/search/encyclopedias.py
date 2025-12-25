@@ -1,4 +1,4 @@
-from biblemategui import BIBLEMATEGUI_DATA, config, load_vectors_from_db
+from biblemategui import BIBLEMATEGUI_DATA, config, load_vectors_from_db, get_translation
 from nicegui import ui, app, run
 from agentmake.utils.rag import get_embeddings, cosine_similarity_matrix
 import numpy as np
@@ -158,9 +158,9 @@ def search_bible_encyclopedias(gui=None, q='', **_):
     # ----------------------------------------------------------
 
     async def show_entry(path, keep=True):
-        nonlocal content_container, gui, dialog, input_field, sql_table
+        nonlocal content_container, gui, dialog, input_field, sql_table, last_entry
 
-        n = ui.notification('Loading ...', timeout=None, spinner=True)
+        n = ui.notification(get_translation('Loading...'), timeout=None, spinner=True)
         content = await run.io_bound(fetch_bible_encyclopedias_entry, path, sql_table)
         n.dismiss()
 
@@ -205,6 +205,7 @@ def search_bible_encyclopedias(gui=None, q='', **_):
                     .props('size=lg rounded color=primary')
 
         # Clear input so user can start typing to filter immediately
+        last_entry = path
         input_field.value = ""
 
     def handle_up_arrow():
@@ -213,7 +214,7 @@ def search_bible_encyclopedias(gui=None, q='', **_):
             input_field.value = last_entry
 
     async def handle_enter(e, keep=True):
-        nonlocal sql_table, dialog, input_field
+        nonlocal sql_table, dialog, input_field, last_entry, selection_container
 
         query = input_field.value.strip()
 
@@ -224,6 +225,7 @@ def search_bible_encyclopedias(gui=None, q='', **_):
             await show_entry(query, keep=keep)
             return
 
+        last_entry = query
         input_field.disable()
 
         try:
@@ -275,7 +277,7 @@ def search_bible_encyclopedias(gui=None, q='', **_):
 
         input_field = ui.input(
             autocomplete=[],
-            placeholder=f'Search {config.encyclopedias[sql_table]} ...'
+            placeholder=f'{get_translation("Search")} {config.encyclopedias[sql_table]} ...'
         ).classes('flex-grow text-lg') \
         .props('outlined dense clearable autofocus enterkeyhint="search"')
 
@@ -289,7 +291,7 @@ def search_bible_encyclopedias(gui=None, q='', **_):
         async def get_all_entries(sql_table):
             all_entries = await run.io_bound(fetch_all_encyclopedias, sql_table)
             input_field.set_autocomplete(all_entries)
-        n = ui.notification('Loading ...', timeout=None, spinner=True)
+        n = ui.notification(get_translation('Loading...'), timeout=None, spinner=True)
         ui.timer(0, get_all_entries, once=True)
         n.dismiss()
 
@@ -297,7 +299,7 @@ def search_bible_encyclopedias(gui=None, q='', **_):
             nonlocal sql_table
             sql_table = e.value
             app.storage.user['favorite_encyclopedia'] = sql_table
-            n = ui.notification('Loading ...', timeout=None, spinner=True)
+            n = ui.notification(get_translation('Loading...'), timeout=None, spinner=True)
             all_entries = await run.io_bound(fetch_all_encyclopedias, sql_table)
             n.dismiss()
             input_field.set_autocomplete(all_entries)

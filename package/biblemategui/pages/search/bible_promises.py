@@ -1,4 +1,4 @@
-from biblemategui import BIBLEMATEGUI_DATA, load_topic_vectors_from_db
+from biblemategui import BIBLEMATEGUI_DATA, load_topic_vectors_from_db, get_translation
 from biblemategui.fx.bible import get_bible_content
 from functools import partial
 from nicegui import ui, app, run
@@ -214,9 +214,9 @@ def search_bible_promises(gui=None, q='', **_):
     # ----------------------------------------------------------
 
     async def show_verses(path, keep=True):
-        nonlocal SQL_QUERY, verses_container, gui, dialog, input_field, topic_label
+        nonlocal SQL_QUERY, verses_container, gui, dialog, input_field, topic_label, last_entry
 
-        n = ui.notification('Loading ...', timeout=None, spinner=True)
+        n = ui.notification(get_translation('Loading...'), timeout=None, spinner=True)
         topic, query = await run.io_bound(fetch_promises_topic, path)
         n.dismiss()
 
@@ -238,7 +238,7 @@ def search_bible_promises(gui=None, q='', **_):
             ui.notify('Display cleared', type='positive', position='top')
             return
 
-        n = ui.notification('Loading ...', timeout=None, spinner=True)
+        n = ui.notification(get_translation('Loading...'), timeout=None, spinner=True)
         parser = BibleVerseParser(False, language=app.storage.user['ui_language'])
         verses = await run.io_bound(get_bible_content, query, bible=gui.get_area_1_bible_text(), sql_query=SQL_QUERY, parser=parser)
         n.dismiss()
@@ -273,9 +273,10 @@ def search_bible_promises(gui=None, q='', **_):
                     ui.html(v['content'], sanitize=False).classes('grow min-w-0 leading-relaxed pl-2 text-base break-words')
 
         # Clear input so user can start typing to filter immediately
+        last_entry = path
         input_field.value = ""
-        input_field.props(f'placeholder="Type to filter {len(verses)} results..."')
-        ui.notify(f"{len(verses)} {'result' if not verses or len(verses) == 1 else 'results'} found!")
+        input_field.props(f'''placeholder="{get_translation('Type to filter')} {len(verses)} {get_translation('results')}..."''')
+        ui.notify(f"{len(verses)} {get_translation('result') if not verses or len(verses) == 1 else get_translation('results')}")
 
     def handle_up_arrow():
         nonlocal last_entry, input_field
@@ -283,6 +284,8 @@ def search_bible_promises(gui=None, q='', **_):
             input_field.value = last_entry
 
     async def handle_enter(e, keep=True):
+        nonlocal input_field, dialog, selection_container, last_entry
+
         query = input_field.value.strip()
         if not query:
             return
@@ -290,6 +293,7 @@ def search_bible_promises(gui=None, q='', **_):
             await show_verses(query, keep=keep)
             return
 
+        last_entry = query
         input_field.disable()
 
         try:
@@ -320,7 +324,7 @@ def search_bible_promises(gui=None, q='', **_):
             with selection_container:
                 # We use a radio button for selection
                 radio = ui.radio(options).classes('w-full').props('color=primary')
-                ui.button('Show Verses', on_click=lambda: handle_selection(radio.value)) \
+                ui.button(get_translation('Show Verses'), on_click=lambda: handle_selection(radio.value)) \
                     .classes('w-full mt-4 bg-blue-500 text-white shadow-md')    
             dialog.open()
         else:
@@ -332,7 +336,7 @@ def search_bible_promises(gui=None, q='', **_):
     with ui.row().classes('w-full max-w-3xl mx-auto m-0 py-0 px-4 items-center'):
         input_field = ui.input(
             autocomplete=[],
-            placeholder='Search for bible promises ...'
+            placeholder=f'{get_translation("Search for bible promises")}...'
         ).classes('flex-grow text-lg') \
         .props('outlined dense clearable autofocus enterkeyhint="search"')
 
@@ -347,7 +351,7 @@ def search_bible_promises(gui=None, q='', **_):
         async def get_all_promises_topics():
             all_topics = await run.io_bound(fetch_all_promises_topics)
             input_field.set_autocomplete(all_topics)
-        n = ui.notification('Loading ...', timeout=None, spinner=True)
+        n = ui.notification(get_translation('Loading...'), timeout=None, spinner=True)
         ui.timer(0, get_all_promises_topics, once=True)
         n.dismiss()
 

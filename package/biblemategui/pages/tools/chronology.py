@@ -1,6 +1,6 @@
 from nicegui import ui, app
 from biblemategui.data.bible_events import bible_events
-
+from biblemategui import get_translation
 
 def bible_chronology(gui=None, **_):
     #ui.page_title('Bible Chronology')

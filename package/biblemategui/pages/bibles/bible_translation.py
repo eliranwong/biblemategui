@@ -268,9 +268,9 @@ def bible_translation(gui=None, b=1, c=1, v=1, area=1, tab1=None, tab2=None, tit
                     ui.menu_item(f'🔍 {get_translation("Search")} {get_translation("NT")}', on_click=lambda: search_bible(q=f"NT:::{app.storage.user['tool_query']}"))
                     ui.menu_item(f'🔍 {get_translation("Search")} {bible_selector.book_select.value}', on_click=lambda: search_bible(q=f"{bible_selector.book_select.value}:::{app.storage.user['tool_query']}"))
                 ui.separator()
-                ui.menu_item(f'💡 {get_translation("Book Tools")}', on_click=lambda: book_studies(VerseEventObj(args=bible_selector.get_selection())))
-                ui.menu_item(f'💡 {get_translation("Chapter Tools")}', on_click=lambda: chapter_studies(VerseEventObj(args=bible_selector.get_selection())))
-                ui.menu_item(f'💡 {get_translation("Verse Tools")}', on_click=lambda: luV1_m(VerseEventObj(args=bible_selector.get_selection())) if area == 1 else luV2_m(VerseEventObj(args=bible_selector.get_selection())))
+                ui.menu_item(f'🧩 {get_translation("Book Tools")}', on_click=lambda: book_studies(VerseEventObj(args=bible_selector.get_selection())))
+                ui.menu_item(f'🧩 {get_translation("Chapter Tools")}', on_click=lambda: chapter_studies(VerseEventObj(args=bible_selector.get_selection())))
+                ui.menu_item(f'🧩 {get_translation("Verse Tools")}', on_click=lambda: luV1_m(VerseEventObj(args=bible_selector.get_selection())) if area == 1 else luV2_m(VerseEventObj(args=bible_selector.get_selection())))
                 if config.google_client_id and config.google_client_secret:
                     ui.separator()
                     ui.menu_item(f'📝 {get_translation("Book Note")}', on_click=lambda: open_tool((bible_selector.selected_version, bible_selector.selected_book, 0, 0), title="Notes"))

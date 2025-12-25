@@ -37,6 +37,7 @@ from biblemategui.pages.tools.morphology import word_morphology
 from biblemategui.pages.tools.notepad import notepad
 from biblemategui.pages.tools.notes import notes
 from biblemategui.pages.tools.summary import chapter_summary
+from biblemategui.pages.tools.analysis import book_analysis
 
 from biblemategui.pages.search.bible_verses import search_bible_verses
 from biblemategui.pages.search.bible_promises import search_bible_promises
@@ -82,6 +83,7 @@ class BibleMateGUI:
 
         # tools
         self.tools = {
+            "analysis": book_analysis,
             "summary": chapter_summary,
             "notes": notes,
             "notepad": notepad,
@@ -531,22 +533,40 @@ class BibleMateGUI:
 
     def open_book_context_menu(self, db, b, c, v, note=False):
         app.storage.user["tool_book_number"] = b
-        app.storage.user["tool_chapter_number"] = 0
-        app.storage.user["tool_verse_number"] = 0
+        app.storage.user["tool_chapter_number"] = c
+        app.storage.user["tool_verse_number"] = v
         def open_tool(title):
             self.select_empty_area2_tab()
             self.load_area_2_content(title=title, sync=False)
+        def open_analysis(section):
+            app.storage.user["tool_query"] = section
+            open_tool("Analysis")
+        def open_book_note():
+            app.storage.user["tool_chapter_number"] = 0
+            app.storage.user["tool_verse_number"] = 0
+            open_tool("Notes")
         with ui.context_menu() as menu:
             ui.menu_item(f'⏳ {get_translation("Timelines")}', on_click=lambda: open_tool("Timelines"))
+            ui.separator()
+            ui.menu_item(f'🔘 {get_translation("Overview")}', on_click=lambda: open_analysis("Overview"))
+            ui.menu_item(f'📐 {get_translation("Structural Outline")}', on_click=lambda: open_analysis("Structural Outline"))
+            ui.menu_item(f'🧵 {get_translation("Logical Flow")}', on_click=lambda: open_analysis("Logical Flow"))
+            ui.menu_item(f'🕰️ {get_translation("Historical Setting")}', on_click=lambda: open_analysis("Historical Setting"))
+            ui.menu_item(f'🎨 {get_translation("Themes")}', on_click=lambda: open_analysis("Themes"))
+            ui.menu_item(f'🏷️ {get_translation("Keywords")}', on_click=lambda: open_analysis("Keywords"))
+            ui.menu_item(f'⛪ {get_translation("Theology")}', on_click=lambda: open_analysis("Theology"))
+            ui.menu_item(f'🚩 {get_translation("Canonical Placement")}', on_click=lambda: open_analysis("Canonical Placement"))
+            ui.menu_item(f'🌱 {get_translation("Practical Living")}', on_click=lambda: open_analysis("Practical Living"))
+            ui.menu_item(f'💎 {get_translation("Summary")}', on_click=lambda: open_analysis("Summary"))
             if config.google_client_id and config.google_client_secret:
                 ui.separator()
-                ui.menu_item(f'📝 {get_translation("Edit Note" if note else "Add Note")}', on_click=lambda: open_tool("Notes"))
+                ui.menu_item(f'📝 {get_translation("Edit Note" if note else "Add Note")}', on_click=open_book_note)
         menu.open()
 
     def open_chapter_context_menu(self, db, b, c, v, note=False):
         app.storage.user["tool_book_number"] = b
         app.storage.user["tool_chapter_number"] = c
-        app.storage.user["tool_verse_number"] = 0
+        app.storage.user["tool_verse_number"] = v
         def get_chapter_content():
             nonlocal b, c, v
             ref = BibleVerseParser(False, language=app.storage.user['ui_language']).bcvToVerseReference(b, c, v, isChapter=True)
@@ -561,14 +581,25 @@ class BibleMateGUI:
         def open_tool(title):
             self.select_empty_area2_tab()
             self.load_area_2_content(title=title, sync=False)
+        def open_map():
+            nonlocal b, c, v
+            ref = BibleVerseParser(False, language=app.storage.user['ui_language']).bcvToVerseReference(b, c, v, isChapter=True)
+            app.storage.user["tool_query"] = f"{ref}:1-180"
+            open_tool("Maps")
+        def open_chapter_note():
+            app.storage.user["tool_verse_number"] = 0
+            open_tool("Notes")
         with ui.context_menu() as menu:
             ui.menu_item(f'📋 {get_translation("Copy")}', on_click=lambda: self.copy_text(get_chapter_content()))
             ui.separator()
             ui.menu_item(f'💎 {get_translation("Chapter Summary")}', on_click=lambda: open_tool("Summary"))
+            ui.menu_item(f'🗺️ {get_translation("Chapter Map")}', on_click=open_map)
+            ui.separator()
             ui.menu_item(f'📡 {get_translation("Bible Podcast")}', on_click=lambda: open_tool("Podcast"))
+            ui.menu_item(f'🔊 {get_translation("Bible Audio")}', on_click=lambda: open_tool("Audio"))
             if config.google_client_id and config.google_client_secret:
                 ui.separator()
-                ui.menu_item(f'📝 {get_translation("Edit Note" if note else "Add Note")}', on_click=lambda: open_tool("Notes"))
+                ui.menu_item(f'📝 {get_translation("Edit Note" if note else "Add Note")}', on_click=open_chapter_note)
         menu.open()
 
     def open_verse_context_menu(self, db, b, c, v, note=False):
@@ -1176,6 +1207,7 @@ class BibleMateGUI:
                             ui.menu_item(get_translation("Bible Podcast"), on_click=lambda: self.load_area_2_content(title='Podcast', sync=True))
                             ui.menu_item(get_translation("Bible Audio"), on_click=lambda: self.load_area_2_content(title='Audio', sync=True))
                             ui.separator()
+                            ui.menu_item(get_translation("Book Analysis"), on_click=lambda: self.load_area_2_content(title='Analysis', sync=True))
                             ui.menu_item(get_translation("Chapter Summary"), on_click=lambda: self.load_area_2_content(title='Summary', sync=True))
                             ui.separator()
                             ui.menu_item(get_translation("Bible Commentaries"), on_click=lambda: self.load_area_2_content(title='Commentary', sync=True))
@@ -1220,8 +1252,9 @@ class BibleMateGUI:
 
                     with ui.button(icon='auto_awesome').props('flat color=white round').tooltip(get_translation("AI")):
                         with ui.menu():
-                            ui.menu_item(get_translation("AI Summary"), on_click=lambda: self.load_area_2_content(title='Summary'))
-                            ui.menu_item(get_translation("AI Commentary"), on_click=lambda: (
+                            ui.menu_item(get_translation("Book Analysis"), on_click=lambda: self.load_area_2_content(title='Analysis'))
+                            ui.menu_item(get_translation("Chapter Summary"), on_click=lambda: self.load_area_2_content(title='Summary'))
+                            ui.menu_item(get_translation("Verse Commentary"), on_click=lambda: (
                                 app.storage.user.update(favorite_commentary=self.get_aic()),
                                 self.load_area_2_content(title='Commentary', sync=True)
                             ))
@@ -1414,6 +1447,10 @@ class BibleMateGUI:
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
                 ui.separator()
+                ui.item(get_translation("Book Analysis"), on_click=lambda: (
+                    self.load_area_2_content(title='Analysis', sync=True),
+                    app.storage.user.update(left_drawer_open=False)
+                )).props('clickable')
                 ui.item(get_translation("Chapter Summary"), on_click=lambda: (
                     self.load_area_2_content(title='Summary', sync=True),
                     app.storage.user.update(left_drawer_open=False)
@@ -1535,11 +1572,15 @@ class BibleMateGUI:
             
             # AI
             with ui.expansion(get_translation("AI"), icon='auto_awesome').props('header-class="text-secondary"'):
-                ui.item(get_translation("AI Summary"), on_click=lambda: (
+                ui.item(get_translation("Book Analysis"), on_click=lambda: (
+                    self.load_area_2_content(title='Analysis'),
+                    app.storage.user.update(left_drawer_open=False)
+                )).props('clickable')
+                ui.item(get_translation("Chapter Summary"), on_click=lambda: (
                     self.load_area_2_content(title='Summary'),
                     app.storage.user.update(left_drawer_open=False)
                 )).props('clickable')
-                ui.item(get_translation("AI Commentary"), on_click=lambda: (
+                ui.item(get_translation("Verse Commentary"), on_click=lambda: (
                     app.storage.user.update(favorite_commentary=self.get_aic()),
                     self.load_area_2_content(title='Commentary', sync=True),
                     app.storage.user.update(left_drawer_open=False)

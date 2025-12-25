@@ -1,7 +1,7 @@
 import apsw
 import re, os
 from nicegui import ui, app
-from biblemategui import BIBLEMATEGUI_DATA
+from biblemategui import BIBLEMATEGUI_DATA, get_translation
 #from agentmake.plugins.uba.lib.BibleParser import BibleVerseParser
 from biblemategui.fx.bible import BibleSelector
 
@@ -33,7 +33,7 @@ def bible_promises_menu(gui=None, **_):
                 # Create the Expansion with specific icon
                 with ui.expansion(chapter, icon='auto_stories', value=False) \
                         .classes('w-full border rounded-lg shadow-sm') \
-                        .props('header-class="font-bold text-lg text-primary"'):
+                        .props('header-class="font-bold text-lg text-secondary"'):
                     
                     # convert links, e.g. <ref onclick="bcv(3,19,26)">
                     content = re.sub(r'''(onclick|ondblclick)="(cr|bcv|promise)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)

@@ -1,5 +1,5 @@
 import os, re
-from biblemategui import BIBLEMATEGUI_DATA
+from biblemategui import BIBLEMATEGUI_DATA, get_translation
 import apsw
 from nicegui import ui, app
 from biblemategui.fx.bible import BibleSelector
@@ -39,7 +39,7 @@ def word_morphology(gui=None, b=1, c=1, v=1, area=2, **_):
                 else:
                     app.storage.user['tool_book_text'], app.storage.user['tool_book_number'], app.storage.user['tool_chapter_number'], app.storage.user['tool_verse_number'] = selection
                     gui.load_area_2_content(title="Morphology", sync=False)
-            ui.button('Go', on_click=lambda: change_morphology(bible_selector.get_selection()))
+            ui.button(get_translation('Go'), on_click=lambda: change_morphology(bible_selector.get_selection()))
         bible_selector.create_ui("KJV", b, c, v, additional_items=additional_items, show_versions=False)
 
         def open_lexicon(module, entry):

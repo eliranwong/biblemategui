@@ -94,7 +94,7 @@ async def loading(func, *args, **kwargs):
         awaitable = asyncio.to_thread(func, *args, **kwargs)
         task = asyncio.create_task(awaitable)
         while not task.done():
-            n.message = f'Loading ...'
+            n.message = get_translation('Loading...')
             n.spinner = True
             await asyncio.sleep(0.2)
         #n.message = 'Done!'
@@ -370,4 +370,6 @@ USER_DEFAULT_SETTINGS = {
     'default_number_of_tabs2': 3,
     'layout_swap_button': True,
     'bible_select_button': True,
+    'loop_audio': True,
+    'loop_podcast': True,
 }

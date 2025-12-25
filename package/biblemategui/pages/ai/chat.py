@@ -2,6 +2,7 @@ from agentmake import agentmake
 from nicegui import ui, app
 #from pathlib import Path
 import asyncio, datetime, threading
+from biblemategui import get_translation
 
 def ai_chat(gui=None, q="", **_):
 
@@ -45,7 +46,7 @@ def ai_chat(gui=None, q="", **_):
             awaitable = asyncio.to_thread(agentmake, MESSAGES, follow_up_prompt=user_request, stream=True, print_on_terminal=False, streaming_event=STREAMING_EVENT)
             task = asyncio.create_task(awaitable)
             while RUNNING and not task.done():
-                n.message = f'Loading ...'
+                n.message = get_translation('Loading...')
                 n.spinner = True
                 await asyncio.sleep(0.2)
             if not RUNNING:

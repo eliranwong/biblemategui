@@ -1,4 +1,4 @@
-from biblemategui import BIBLEMATEGUI_DATA, loading
+from biblemategui import BIBLEMATEGUI_DATA, get_translation
 from biblemategui.data.bible_names import bible_names
 from agentmake.utils.rag import get_embeddings, cosine_similarity_matrix
 import numpy as np
@@ -149,6 +149,8 @@ def search_bible_names(gui=None, q='', **_):
         Filters visibility based on input.
         Iterates over default_slot.children to find rows.
         """
+        nonlocal input_field, names_container, last_entry
+        
         total_matches = 0
         # Robustly determine the search text
         text = ""
@@ -156,6 +158,7 @@ def search_bible_names(gui=None, q='', **_):
             text = e.value 
         else:
             text = input_field.value 
+        last_entry = text
 
         input_field.disable()
 
@@ -270,8 +273,6 @@ def search_bible_names(gui=None, q='', **_):
 
         # Clear input so user can start typing to filter immediately
         input_field.value = ""
-        #input_field.props(f'placeholder="Type to filter {len(bible_names)} results..."')
-        #ui.notify(f"{len(bible_names)} results found!")
         input_field.run_method('focus')
 
     # ==============================================================================
@@ -280,7 +281,7 @@ def search_bible_names(gui=None, q='', **_):
     with ui.row().classes('w-full max-w-3xl mx-auto m-0 py-0 px-4 items-center'):
         input_field = ui.input(
             autocomplete=list(bible_names.keys()),
-            placeholder='Search for a name or meaning'
+            placeholder=f'{get_translation("Search for a name or meaning")}...'
         ).classes('flex-grow text-lg') \
         .props('outlined dense clearable autofocus enterkeyhint="search"')
 

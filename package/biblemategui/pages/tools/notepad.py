@@ -19,7 +19,7 @@ class Notepad:
                 ui.button('Delete', color='red', on_click=lambda: (self.clear_text(), delete_dialog.close()))
         # --- Toolbar ---
         with ui.row().classes('gap-2 mb-0 w-full items-center'):
-            self.mode_btn = ui.button('Read Mode', icon='visibility', on_click=self.toggle_mode).props('color=primary')
+            self.mode_btn = ui.button(get_translation('Read Mode'), icon='visibility', on_click=self.toggle_mode).props('color=primary')
             ui.button(on_click=self.download_file, icon='download').props('flat round color=secondary').tooltip(get_translation("Download"))
             ui.button(on_click=lambda: self.upload.run_method('pickFiles'), icon='upload').props('flat round color=secondary').tooltip(get_translation("Import"))
             ui.button(on_click=delete_dialog.open, icon='delete').props('flat round color=negative').tooltip(get_translation("Clear"))
@@ -53,7 +53,7 @@ class Notepad:
             self.mode_btn.text = 'Read Mode'
             self.mode_btn.props('icon=visibility')
         else:
-            self.mode_btn.text = 'Edit Mode'
+            self.mode_btn.text = get_translation('Edit Mode')
             self.mode_btn.props('icon=edit')
             self.update_preview()
 

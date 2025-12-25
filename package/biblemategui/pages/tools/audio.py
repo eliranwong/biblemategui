@@ -1,21 +1,21 @@
 from nicegui import ui, app
 import asyncio, os, re
-from biblemategui import config
+from biblemategui import config, get_translation
 from biblemategui.fx.bible import *
 from agentmake.plugins.uba.lib.BibleBooks import BibleBooks
 
 
 class BibleAudioPlayer:
-    def __init__(self, text_list: list, audio_list: list, start_verse=1, title="Bible Audio"):
+    def __init__(self, text_list: list, audio_list: list, start_verse=1, title="Bible Audio", next_chapter_callback=None):
         self.title = title
         self.text_list = text_list
         self.audio_list = audio_list
         self.current_verse = None
         self.is_playing = False
-        self.loop_enabled = True
         self.audio_element = None
         self.verse_buttons = {}
-        self.start_verse = start_verse  # Start with verse 2 when page loads
+        self.start_verse = start_verse
+        self.next_chapter_callback = next_chapter_callback
         
     def create_ui(self):
 
@@ -31,9 +31,8 @@ class BibleAudioPlayer:
                 
                 # Loop toggle
                 with ui.row().classes('items-center gap-2'):
-                    ui.label('Loop:').classes('text-sm font-medium')
-                    self.loop_toggle = ui.switch(value=True).on('update:model-value', 
-                        self.set_loop)
+                    ui.label(get_translation("Loop")).classes('text-sm font-medium')
+                    self.loop_toggle = ui.switch().bind_value(app.storage.user, 'loop_audio')
             
             ui.separator().classes('mb-4')
             # Verse list
@@ -62,9 +61,6 @@ class BibleAudioPlayer:
                                 #ui.item_label(
                                 #    f"{verse_num}. {verse_text}"
                                 #).classes('text-base')
-    
-    def set_loop(self):
-        self.loop_enabled = not self.loop_enabled
 
     def toggle_verse(self, verse_num):
         if self.current_verse == verse_num and self.is_playing:
@@ -112,13 +108,15 @@ class BibleAudioPlayer:
             
             # Check if we've reached the end
             if next_verse > len(self.text_list):
-                if self.loop_enabled:
+                if app.storage.user.get("loop_audio"):
                     # Loop back to verse 1
                     self.play_verse(1)
                 else:
                     # Stop playing
                     self.is_playing = False
                     self.current_verse = None
+                    if self.next_chapter_callback is not None:
+                        self.next_chapter_callback()
             else:
                 # Play next verse
                 self.play_verse(next_verse)
@@ -132,6 +130,39 @@ class BibleAudioPlayer:
 def bibles_audio(gui=None, bt=None, b=1, c=1, v=1, area=2, **_):
     if not bt:
         bt = gui.get_area_1_bible_text()
+
+    def next_chapter(selection):
+        nonlocal gui
+        selected_text, selected_b, selected_c, _ = selection
+        db = getBiblePath(selected_text)
+        bookList = getBibleBookList(db)
+        chapterList = getBibleChapterList(db, selected_b)
+        if len(chapterList) == 1 or selected_c == chapterList[-1]:
+            if selected_b == bookList[-1]:
+                new_b = bookList[0]
+                new_c = getBibleChapterList(db, new_b)[0]
+            else:
+                new_b = selected_b + 1
+                for i in bookList:
+                    previous_book = None
+                    if previous_book is not None:
+                        new_b = i
+                        break
+                    elif i == selected_b:
+                        previous_book = i
+                new_c = getBibleChapterList(db, new_b)[0]
+        else:
+            new_b = selected_b
+            new_c = selected_c + 1
+            for i in chapterList:
+                previous_chapter = None
+                if previous_chapter is not None:
+                    new_c = i
+                    break
+                elif i == selected_c:
+                    previous_chapter = i
+        app.storage.user["tool_book_text"], app.storage.user["tool_book_number"], app.storage.user["tool_chapter_number"], app.storage.user["tool_verse_number"] = selected_text, new_b, new_c, 1
+        gui.load_area_2_content(title="Audio", sync=False)
 
     # version options
     version_options = list(config.audio.keys())
@@ -160,7 +191,7 @@ def bibles_audio(gui=None, bt=None, b=1, c=1, v=1, area=2, **_):
             else:
                 app.storage.user['tool_book_text'], app.storage.user['tool_book_number'], app.storage.user['tool_chapter_number'], app.storage.user['tool_verse_number'] = selection
                 gui.load_area_2_content(title="Audio", sync=False)
-        ui.button('Go', on_click=lambda: change_audio_chapter(bible_selector.get_selection()))
+        ui.button(get_translation('Go'), on_click=lambda: change_audio_chapter(bible_selector.get_selection()))
     bible_selector.create_ui(version, b, c, v, additional_items=additional_items)
     # Text file list
     text_list = getBibleChapterVerses(getBiblePath(version), b, c)
@@ -168,7 +199,7 @@ def bibles_audio(gui=None, bt=None, b=1, c=1, v=1, area=2, **_):
     bible_audio_dir = config.audio_custom[version] if version in config.audio_custom else config.audio[version]
     audio_list = [os.path.join(bible_audio_dir, f"{b}_{c}", f"{version}_{b}_{c}_{verse[2]}.mp3") for verse in text_list]
     # Start the player
-    player = BibleAudioPlayer(text_list=text_list, audio_list=audio_list, start_verse=v, title=BibleBooks.abbrev["eng"][str(b)][-1]+f" {c}")
+    player = BibleAudioPlayer(text_list=text_list, audio_list=audio_list, start_verse=v, title=BibleBooks.abbrev[app.storage.user["ui_language"]][str(b)][-1]+f" {c}", next_chapter_callback=lambda: next_chapter((bt, b, c, v)))
     player.create_ui()
     # Auto-start playing after page loads
     ui.timer(0.5, player.auto_start, once=True)

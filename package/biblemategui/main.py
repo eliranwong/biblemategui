@@ -422,10 +422,10 @@ def page_Settings(
     ui.fullscreen().bind_value(app.storage.user, 'fullscreen')
 
     with ui.card().classes('w-full max-w-2xl mx-auto p-6 shadow-xl rounded-lg'):
-        ui.label('BibleMate AI Settings').classes('text-3xl font-bold text-secondary mb-6')
+        ui.label(f'BibleMate AI {get_translation("Settings")}').classes('text-3xl font-bold text-secondary mb-6')
         
         # --- Appearance Section ---
-        with ui.expansion('Appearance', icon='palette').classes('w-full rounded-lg'):
+        with ui.expansion(get_translation("Appearance"), icon='palette').classes('w-full rounded-lg'):
             with ui.column().classes('w-full p-4'):
                 # font-size
                 with ui.row().classes('w-full items-center'):
@@ -463,7 +463,7 @@ def page_Settings(
                     ui.switch().bind_value(app.storage.user, 'fullscreen').tooltip('Toggle fullscreen mode for the app.')
 
         # --- tab management ---
-        with ui.expansion('Tabs Management', icon='tab').classes('w-full rounded-lg'):
+        with ui.expansion(get_translation("Tabs Management"), icon='tab').classes('w-full rounded-lg'):
             with ui.column().classes('w-full p-4'):
                 # Bible Tabs
                 with ui.row().classes('w-full items-center'):
@@ -487,7 +487,7 @@ def page_Settings(
                     .tooltip('Adjust the number of tool tabs to be opened by default (3 to 10)')
 
         # --- User & Custom Data Section ---
-        with ui.expansion('User & Custom Data', icon='person').classes('w-full rounded-lg'):
+        with ui.expansion(get_translation("User & Custom Data"), icon='person').classes('w-full rounded-lg'):
             with ui.column().classes('w-full p-4 gap-4'):
                 ui.input(label='Avatar URL', placeholder='https://example.com/avatar.png') \
                     .bind_value(app.storage.user, 'avatar') \
@@ -500,7 +500,7 @@ def page_Settings(
                     .tooltip('Token for using custom data sources or personal APIs.')
 
         # --- Default Resources Section ---
-        with ui.expansion('Frequently Used Resources', icon='book', value=True).classes('w-full rounded-lg'):
+        with ui.expansion(get_translation("Frequently Used Resources"), icon='book', value=True).classes('w-full rounded-lg'):
             # Use a grid for a more compact layout
             with ui.grid(columns=2).classes('w-full p-4 gap-4'):
                 ui.select(label='Primary Bible',
@@ -517,7 +517,7 @@ def page_Settings(
                     .bind_value(app.storage.user, 'greek_lexicon')
 
         # --- Semantic Searches ---
-        with ui.expansion('Semantic Searches', icon='search').classes('w-full rounded-lg'):
+        with ui.expansion(get_translation("Semantic Searches"), icon='search').classes('w-full rounded-lg'):
             with ui.column().classes('w-full p-4'):
                 # Similar Entries
                 with ui.row().classes('w-full items-center'):
@@ -541,7 +541,7 @@ def page_Settings(
                     .tooltip('Adjust the global top similar verses in a semantic search (5 to 100)')
 
         # --- AI Backend Section ---
-        with ui.expansion('AI Backend', icon='memory').classes('w-full rounded-lg'):
+        '''with ui.expansion('AI Backend', icon='memory').classes('w-full rounded-lg'):
             with ui.column().classes('w-full p-4 gap-4'):
                 ui.select(label='AI Backend',
                           options=['googleai', 'openai', 'azure', 'xai']) \
@@ -556,28 +556,28 @@ def page_Settings(
                 ui.input(label='API Key', password=True, password_toggle_button=True) \
                     .bind_value(app.storage.user, 'api_key') \
                     .classes('w-full') \
-                    .tooltip('Your API key for the selected backend.')
+                    .tooltip('Your API key for the selected backend.')'''
 
         # --- Localization Section ---
-        with ui.expansion('Language', icon='language').classes('w-full rounded-lg'):
+        with ui.expansion(get_translation("Language"), icon='language').classes('w-full rounded-lg'):
             with ui.column().classes('w-full p-4'):
-                ui.select(label='Language',
+                ui.select(label=get_translation("Language"),
                           options={'eng': 'English', 'tc': '繁體中文', 'sc': '简体中文'}) \
                     .bind_value(app.storage.user, 'ui_language')
 
         # --- Reset All Preferences ---
         # Dialog to confirm the reset
         with ui.dialog() as delete_dialog, ui.card():
-            ui.label('Are you sure you want to delete reset all preferences to default values?')
+            ui.label(f'{get_translation("Reset All Preferences")}?')
             with ui.row().classes('justify-end w-full'):
-                ui.button('Cancel', on_click=delete_dialog.close).props('flat text-color=secondary')
-                ui.button('Delete', color='negative', on_click=lambda: (app.storage.user.clear(), ui.navigate.to('/')))
-        ui.button('Reset All Preferences', on_click=delete_dialog.open) \
+                ui.button(get_translation("Cancel"), on_click=delete_dialog.close).props('flat text-color=secondary')
+                ui.button(get_translation("Delete"), color='negative', on_click=lambda: (app.storage.user.clear(), ui.navigate.to('/')))
+        ui.button(get_translation("Reset All Preferences"), on_click=delete_dialog.open) \
             .classes('mt-6 w-full py-3 bg-negative text-white rounded-lg font-semibold') \
             .tooltip('All preferences will be reset to default values.')
 
         # --- Go Home ---
-        ui.button('Home', on_click=lambda: ui.navigate.to('/')) \
+        ui.button(get_translation("Back"), on_click=lambda: ui.navigate.to('/')) \
             .classes('mt-6 w-full py-3 bg-primary text-white rounded-lg font-semibold') \
             .tooltip('All settings are saved automatically as you change them. Click this to open the home page.')
 

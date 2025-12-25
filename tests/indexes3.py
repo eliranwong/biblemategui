@@ -139,7 +139,7 @@ def main_page():
             # Run IO-bound DB operations
             results = {}
             for title, config in TABLE_CONFIG.items():
-                n = ui.notification('Loading ...', timeout=None, spinner=True)
+                n = ui.notification(get_translation('Loading...'), timeout=None, spinner=True)
                 data = await run.io_bound(fetch_data, config['table'], book_id, chapter, verse)
                 n.dismiss()
                 results[title] = data

@@ -1,5 +1,5 @@
 from nicegui import ui, app
-from biblemategui import BIBLEMATEGUI_DATA
+from biblemategui import BIBLEMATEGUI_DATA, get_translation
 import os, apsw, re
 
 # ==========================================

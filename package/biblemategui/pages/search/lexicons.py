@@ -1,4 +1,4 @@
-from biblemategui import config, getLexiconList, loading
+from biblemategui import config, getLexiconList, get_translation
 from nicegui import ui, app, run
 import re, apsw
 from biblemategui.data.cr_books import cr_books
@@ -94,11 +94,11 @@ def search_bible_lexicons(gui=None, q='', **_):
         nonlocal input_field, lexicon_module
         lexicon_module = new_module
         app.storage.user['favorite_lexicon'] = new_module
-        n = ui.notification('Loading ...', timeout=None, spinner=True)
+        n = ui.notification(get_translation('Loading...'), timeout=None, spinner=True)
         all_entries = await run.io_bound(fetch_all_lexicons, client_lexicons, new_module)
         n.dismiss()
         input_field.set_autocomplete(all_entries)
-        input_field.props(f'placeholder="Search {new_module} ..."')
+        input_field.props(f'''placeholder="{get_translation('Search')} {new_module} ..."''')
         if scope_select and scope_select.value != new_module:
             scope_select.value = new_module
 
@@ -108,12 +108,13 @@ def search_bible_lexicons(gui=None, q='', **_):
             input_field.value = last_entry
 
     async def handle_enter(_, keep=True):
-        nonlocal content_container, gui, input_field, lexicon_module
+        nonlocal content_container, gui, input_field, lexicon_module, last_entry
 
         topic = input_field.value.strip()
         if not topic:
             return
 
+        last_entry = topic
         input_field.disable()
 
         try:
@@ -129,7 +130,7 @@ def search_bible_lexicons(gui=None, q='', **_):
             elif topic.startswith("BDB") or (topic.startswith("H") and lexicon_module in ("Morphology", "ConcordanceMorphology", "ConcordanceBook")):
                 await change_module("BDB")
 
-            n = ui.notification('Loading ...', timeout=None, spinner=True)
+            n = ui.notification(get_translation('Loading...'), timeout=None, spinner=True)
             content = await run.io_bound(fetch_bible_lexicons_entry, client_lexicons, lexicon_module, topic)
             n.dismiss()
 
@@ -216,7 +217,7 @@ def search_bible_lexicons(gui=None, q='', **_):
         async def get_all_entries(lexicon):
             all_entries = await run.io_bound(fetch_all_lexicons, client_lexicons, lexicon)
             input_field.set_autocomplete(all_entries)
-        n = ui.notification('Loading ...', timeout=None, spinner=True)
+        n = ui.notification(get_translation('Loading...'), timeout=None, spinner=True)
         ui.timer(0, get_all_entries, once=True)
         n.dismiss()
 

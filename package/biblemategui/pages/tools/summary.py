@@ -1,6 +1,6 @@
 from nicegui import ui, app, run
-import os, re, apsw, markdown2
-from biblemategui import BIBLEMATEGUI_DATA
+import os, re, apsw, markdown2, asyncio
+from biblemategui import BIBLEMATEGUI_DATA, get_translation
 from biblemategui.fx.bible import BibleSelector
 
 def fetch_summary(b, c, lang="eng"):
@@ -38,22 +38,25 @@ def chapter_summary(gui=None, b=1, c=1, v=1, area=2, **_):
             else:
                 _, app.storage.user['tool_book_number'], app.storage.user['tool_chapter_number'], app.storage.user['tool_verse_number'] = selection
                 gui.load_area_2_content(title="Summary", sync=False)
-        ui.button('Go', on_click=lambda: change_summary_chapter(bible_selector.get_selection()))
+        ui.button(get_translation('Go'), on_click=lambda: change_summary_chapter(bible_selector.get_selection()))
     bible_selector.create_ui("KJV", b, c, v, additional_items=additional_items, show_versions=False, show_verses=False)
 
     # Summary display
     async def load_summary(b, c):
+        n = ui.notification("Loading ...", timeout=None, spinner=True)
+        await asyncio.sleep(0)
+        # fetch content
         content = await run.io_bound(fetch_summary, b, c, app.storage.user['ui_language'])
         # clean up content
         if app.storage.user['ui_language'] == "tc":
-            pattern = r'^好的，我將為你\s*.*?#'
+            pattern = r'^好的，我將為[你您]\s*.*?#'
             content = re.sub(pattern, '#', content, flags=re.DOTALL)
-            pattern = r'\n---\s*\n如果你願意，\s*.*$'
+            pattern = r'\n---\s*\n如果[你您]願意，\s*.*$'
             content = re.sub(pattern, '', content, flags=re.DOTALL)
         elif app.storage.user['ui_language'] == "sc":
-            pattern = r'^好的，我将为你\s*.*?#'
+            pattern = r'^好的，我将为[你您]\s*.*?#'
             content = re.sub(pattern, '#', content, flags=re.DOTALL)
-            pattern = r'\n---\s*\n如果你愿意，\s*.*$'
+            pattern = r'\n---\s*\n如果[你您]愿意，\s*.*$'
             content = re.sub(pattern, '', content, flags=re.DOTALL)
         else:
             pattern = r'^Alright\s*.*?#'
@@ -67,7 +70,8 @@ def chapter_summary(gui=None, b=1, c=1, v=1, area=2, **_):
         content = re.sub(r'''(onclick|ondblclick)="(bcv)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)
         # display content
         ui.html(f'<div class="content-text">{content}</div>', sanitize=False)
+        # dismiss notification
+        n.dismiss()
 
-    n = ui.notification("Loading ...", timeout=None, spinner=True)
-    ui.timer(0, lambda: load_summary(b, c), once=True)
-    n.dismiss()    
+    
+    ui.timer(0, lambda: load_summary(b, c), once=True)   

@@ -1,7 +1,7 @@
 import os
 from nicegui import ui, app
 from biblemategui.data.bible_timelines import bible_timelines as TIMELINE_DATA
-
+from biblemategui import get_translation
 
 def bible_timelines(gui=None, b=1, q="", **_):
 

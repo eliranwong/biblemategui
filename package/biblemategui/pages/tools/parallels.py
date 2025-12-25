@@ -1,7 +1,7 @@
 import apsw
 import re, os
 from nicegui import ui, app
-from biblemategui import BIBLEMATEGUI_DATA
+from biblemategui import BIBLEMATEGUI_DATA, get_translation
 
 
 def bible_parallels_menu(gui=None, **_):
@@ -31,7 +31,7 @@ def bible_parallels_menu(gui=None, **_):
                 # Create the Expansion with specific icon
                 with ui.expansion(chapter, icon='auto_stories', value=False) \
                         .classes('w-full border rounded-lg shadow-sm') \
-                        .props('header-class="font-bold text-lg text-primary"'):
+                        .props('header-class="font-bold text-lg text-secondary"'):
                     
                     # convert links, e.g. <ref onclick="bcv(3,19,26)">
                     content = re.sub(r'''(onclick|ondblclick)="(cr|bcv|harmony)\((.*?)\)"''', r'''\1="emitEvent('\2', [\3]); return false;"''', content)

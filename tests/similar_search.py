@@ -99,7 +99,7 @@ def search_page():
                 with selection_container:
                     # We use a radio button for selection
                     radio = ui.radio(matches).classes('w-full').props('color=primary')
-                    ui.button('Show Verses', on_click=lambda: handle_fuzzy_selection(radio.value)) \
+                    ui.button(get_translation('Show Verses'), on_click=lambda: handle_fuzzy_selection(radio.value)) \
                         .classes('w-full mt-4 bg-blue-500 text-white shadow-md')
                 
                 dialog.open()

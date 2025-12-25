@@ -1,5 +1,5 @@
 from agentmake.plugins.uba.lib.BibleBooks import BibleBooks
-from biblemategui import BIBLEMATEGUI_DATA
+from biblemategui import BIBLEMATEGUI_DATA, get_translation
 from biblemategui.fx.bible import get_bible_content
 from agentmake.plugins.uba.lib.BibleParser import BibleVerseParser
 from functools import partial
@@ -94,10 +94,11 @@ def xrefs(gui=None, b=1, c=1, v=1, q='', **_):
             input_field.value = last_entry
 
     async def handle_enter(e, keep=True):
-        nonlocal SQL_QUERY
+        nonlocal SQL_QUERY, input_field, verses_container, last_entry
         query = input_field.value.strip()
         if not query:
             return
+        last_entry = query
         parser = BibleVerseParser(False)
         refs = parser.extractAllReferences(query)
         if not refs:
@@ -117,7 +118,7 @@ def xrefs(gui=None, b=1, c=1, v=1, q='', **_):
                 for ref2 in parser.extractExhaustiveReferences([ref]):
                     b, c, v = ref2
                     query = ""
-                    n = ui.notification('Loading ...', timeout=None, spinner=True)
+                    n = ui.notification(get_translation('Loading...'), timeout=None, spinner=True)
                     query = await run.io_bound(fetch_xrefs, b, c, v)
                     n.dismiss()
                     if query:
@@ -170,8 +171,8 @@ def xrefs(gui=None, b=1, c=1, v=1, q='', **_):
 
                     # Clear input so user can start typing to filter immediately
                     input_field.value = ""
-                    input_field.props(f'placeholder="Type to filter {len(verses)} results..."')
-                    ui.notify(f"{len(verses)} {'result' if not verses or len(verses) == 1 else 'results'} found!")
+                    input_field.props(f'''placeholder="{get_translation('Type to filter')} {len(verses)} {get_translation('results')}..."''')
+                    ui.notify(f"{len(verses)} {get_translation('result') if not verses or len(verses) == 1 else get_translation('results')}")
 
         except Exception as e:
             # Handle errors (e.g., network failure)
@@ -189,7 +190,7 @@ def xrefs(gui=None, b=1, c=1, v=1, q='', **_):
     with ui.row().classes('w-full max-w-3xl mx-auto m-0 py-0 px-4 items-center'):
         input_field = ui.input(
             autocomplete=BIBLE_BOOKS,
-            placeholder='Enter bible verse reference(s) here ...'
+            placeholder=get_translation("Enter bible verse reference(s) here...")
         ).classes('flex-grow text-lg') \
         .props('outlined dense clearable autofocus enterkeyhint="search"')
 
