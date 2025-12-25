@@ -22,7 +22,7 @@ class BiblePodcastPlayer:
 
         with ui.card().classes('w-full max-w-4xl mx-auto mt-8 p-6'):
             # Title
-            ui.label(self.title).classes('text-3xl font-bold mb-6 text-center')
+            self.reference = ui.label(self.title).classes('text-3xl font-bold mb-6 text-center')
             
             # Audio player and controls container
             with ui.row().classes('w-full items-center justify-between mb-6 gap-4'):
@@ -74,6 +74,7 @@ class BiblePodcastPlayer:
         # Update state
         self.current_verse = verse_num
         self.is_playing = True
+        self.reference.text = f"{self.title} {verse_num}" if verse_num else self.title
         
         # Update UI
         self.verse_buttons[verse_num].props('icon=volume_up')
